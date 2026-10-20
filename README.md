@@ -1,6 +1,6 @@
 # 📖 Azerloot
 
-**The loot book for [Azeroth Survivors](https://discord.gg/CXAvQ6ZTXe)** – every boss drop, ring, trinket and amulet, a build planner, a chronicle of your runs and a wishlist that ticks itself. A World of Warcraft 1.12.1 addon by Kindagrey.
+**The loot book for [Azeroth Survivors](https://discord.gg/CXAvQ6ZTXe)** – every boss drop, ring, trinket and amulet, a build planner, a chronicle of your runs and a wishlist that ticks itself. 
 
 ## ✨ What's inside
 * 💍 **Jewelry** – every ring, trinket, basic amulet and class amulet, with its value at every rarity.
