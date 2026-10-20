@@ -1,0 +1,20 @@
+## Interface: 11200
+## Title: Azerloot
+## Notes: Every boss drop, ring, trinket and amulet, a build planner, a chronicle of your runs and a wishlist that ticks itself. For Azeroth Survivors by Kindagrey.
+## Notes-deDE: Jede Bossbeute, jeder Ring, jedes Schmuckstück und Amulett, ein Build-Planer, eine Chronik deiner Läufe und eine Wunschliste, die sich selbst abhakt. Für Azeroth Survivors von Kindagrey.
+## Notes-frFR: Chaque butin de boss, anneau, bijou et amulette, un planificateur de builds, une chronique de vos parties et une liste qui se coche seule. Pour Azeroth Survivors, par Kindagrey.
+## Notes-esES: Todo el botín de jefes, anillos, abalorios y amuletos, un planificador de builds, una crónica de tus partidas y una lista que se marca sola. Para Azeroth Survivors, de Kindagrey.
+## Notes-ptBR: Todo o saque de chefes, anéis, berloques e amuletos, um planejador de builds, uma crônica das suas partidas e uma lista que se marca sozinha. Para Azeroth Survivors, por Kindagrey.
+## Author: Kindagrey
+## Version: 2.1.0
+## SavedVariables: AzerlootDB
+core\Locale.lua
+locales\Strings.lua
+locales\GameText.lua
+locales\JewelryNames.lua
+locales\Tooltips.lua
+data\Jewelry.lua
+data\BossLoot.lua
+core\Azerloot.lua
+modules\Builds.lua
+modules\Chronicle.lua

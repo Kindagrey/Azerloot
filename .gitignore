@@ -1,0 +1,6 @@
+# editor and system leftovers
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*.tmp

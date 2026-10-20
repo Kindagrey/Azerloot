@@ -1,0 +1,5 @@
+<Bindings>
+  <Binding name="AZERLOOT_TOGGLE" header="AZERLOOT">
+    Azerloot_Toggle()
+  </Binding>
+</Bindings>
