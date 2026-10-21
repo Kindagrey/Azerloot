@@ -16,7 +16,6 @@ AzlW = {}
 local W = AzlW
 local MEDIA = "Interface\\AddOns\\Azerloot\\media\\textures\\"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
-local BAR_W = 300
 local bar   -- the boss bar (built on first use)
 
 local function DB()
@@ -39,6 +38,7 @@ local function Lookup(name)
       local bosses = zones[zi].bosses or {}
       for bi = 1, table.getn(bosses) do
         local b = bosses[bi]
+        b.zi, b.bi = zi, bi   -- (where its page is, for a click on the strip)
         byName[string.lower(b.name)] = b
         -- the same boss in each of the game's languages
         if type(Azerloot_GT) == "table" then
@@ -144,12 +144,9 @@ end
 function W.ShowAlert(text, sub, icon, sound)
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
-  -- right under the boss bar, wherever it has been put: the game's own banners (a boss or
-  -- a guardian coming, a stampede, a lair taken back) keep the middle of the screen
-  if not bar and W.Build then W.Build() end
+  -- high in the middle of the screen, clear of the game's own banners
   alert:ClearAllPoints()
-  if bar then alert:SetPoint("TOP", bar, "BOTTOM", 0, -10)
-  else alert:SetPoint("TOP", UIParent, "TOP", 0, -200) end
+  alert:SetPoint("TOP", UIParent, "TOP", 0, -150)
   alert.icon:ClearAllPoints()
   alert.icon:SetPoint("RIGHT", alert.text, "LEFT", -10, 0)
   if icon then alert.icon:SetTexture("Interface\\Icons\\" .. icon); alert.icon:Show() else alert.icon:Hide() end
@@ -273,173 +270,202 @@ emoteF:SetScript("OnEvent", function()
   Emote(arg1, arg2)
 end)
 
--- ---------- the bar ----------
-function W.Build()
-  bar = CreateFrame("Frame", "AzerlootBossBar", UIParent)
-  bar:SetFrameStrata("MEDIUM")
-  bar:SetWidth(BAR_W + 24); bar:SetHeight(64)
-  bar:SetBackdrop({
-    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 12,
-    insets = { left = 3, right = 3, top = 3, bottom = 3 },
-  })
-  bar:SetBackdropColor(0, 0, 0, 0.6)
-  bar:SetBackdropBorderColor(0.8, 0.62, 0.28, 1)
-  bar:SetClampedToScreen(true)
-  bar:SetMovable(true); bar:EnableMouse(true)
-  bar:RegisterForDrag("LeftButton")
-  bar:SetScript("OnDragStart", function() if not DB().bossLocked then this:StartMoving() end end)
-  bar:SetScript("OnDragStop", function()
-    this:StopMovingOrSizing()
-    local l, t = this:GetLeft(), this:GetTop()
-    if l and t then DB().bossPos = { l, t - (UIParent:GetTop() or t) } end
-    W.Anchor()
-  end)
+-- ---------- the strip in the wishlist window ----------
+-- One line under the window's head: the next boss and its time, or, with one alive, its name,
+-- its health in percent and a thin bar of the book's own kind (red), with a gold mark at each
+-- health where it turns. The full tale is in its tooltip; a click opens its page in the book.
+-- It keeps to the wishlist window, so it never stands in the way of another addon's frames.
+local hpb, stripBoss   -- the health bar, the boss the strip tells of
+function W.Health() return hpb end
+local function StripFrame()
+  if bar then return bar end
+  if not AzerlootTracker then return nil end
+  bar = CreateFrame("Button", "AzerlootBossBar", AzerlootTracker)
+  bar:SetHeight(18)
   local ic = bar:CreateTexture(nil, "ARTWORK")
-  ic:SetWidth(30); ic:SetHeight(30)
-  ic:SetPoint("TOPLEFT", bar, "TOPLEFT", 10, -9)
+  ic:SetWidth(16); ic:SetHeight(16)
+  ic:SetPoint("TOPLEFT", bar, "TOPLEFT", 2, -1)
   ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   bar.icon = ic
-  local nm = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  nm:SetPoint("TOPLEFT", ic, "TOPRIGHT", 8, 1)
+  local nm = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+  nm:SetPoint("LEFT", ic, "RIGHT", 5, 0); nm:SetJustifyH("LEFT")
   nm:SetTextColor(1, 0.82, 0)
-  Face(nm, "head")
+  Face(nm)
   bar.name = nm
   local info = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  info:SetPoint("TOPLEFT", nm, "BOTTOMLEFT", 0, -2)
-  info:SetTextColor(0.85, 0.8, 0.7)
+  info:SetPoint("RIGHT", bar, "TOPRIGHT", -3, -9)
+  info:SetTextColor(1, 0.9, 0.75)
   Face(info)
   bar.info = info
-  -- the health bar: the book's own bar (the builds' battle traits) in red, easing to each
-  -- new value; the marks where the boss turns lie over it
+  bar.marks = {}
+  bar:RegisterForClicks("LeftButtonUp")
+  bar:SetScript("OnClick", function() W.OpenPage(stripBoss) end)
+  bar:SetScript("OnEnter", function() W.Tip(this) end)
+  bar:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  bar:Hide()
+  return bar
+end
+W.Build = StripFrame
+
+-- the thin health bar, made anew when the window's width changes (its marks are drawn
+-- for one width)
+local function HealthBar(w)
+  if hpb and hpb.w == w then return hpb end
+  if hpb then hpb:Hide() end
   local tr
   if AzlB and AzlB.XPBar then
-    tr = AzlB.XPBar(bar, BAR_W, 12, { 0.82, 0.13, 0.08 })
+    tr = AzlB.XPBar(bar, w, 6, { 0.82, 0.13, 0.08 })
   else
     tr = CreateFrame("Frame", nil, bar)
-    tr:SetWidth(BAR_W); tr:SetHeight(12)
+    tr:SetWidth(w); tr:SetHeight(6)
     local bg = tr:CreateTexture(nil, "BORDER"); bg:SetTexture(WHITE); bg:SetVertexColor(0.12, 0.08, 0.05); bg:SetAllPoints(tr)
     local fl = tr:CreateTexture(nil, "ARTWORK"); fl:SetTexture(WHITE); fl:SetVertexColor(0.72, 0.2, 0.14)
-    fl:SetPoint("TOPLEFT", tr, "TOPLEFT", 0, 0); fl:SetHeight(12)
-    tr.SetValue = function(self, v) fl:SetWidth(math.max(1, BAR_W * v)) end
+    fl:SetPoint("TOPLEFT", tr, "TOPLEFT", 0, 0); fl:SetHeight(6)
+    tr.SetValue = function(self, v) fl:SetWidth(math.max(1, w * v)) end
   end
-  tr:SetPoint("TOPLEFT", bar, "TOPLEFT", 12, -47)
-  bar.trough = tr
+  tr.w = w
+  tr:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 3, 4)
   local mk = CreateFrame("Frame", nil, bar)
   mk:SetAllPoints(bar)
   mk:SetFrameLevel(tr:GetFrameLevel() + 3)
-  bar.marks, bar.markText = {}, {}
+  tr.mk = mk
+  for k = 1, table.getn(bar.marks) do bar.marks[k]:Hide() end
+  bar.marks = {}
   for k = 1, 4 do
     local m = mk:CreateTexture(nil, "OVERLAY")
-    m:SetTexture(WHITE); m:SetVertexColor(1, 0.84, 0.35); m:SetWidth(2); m:SetHeight(20)
+    m:SetTexture(WHITE); m:SetVertexColor(1, 0.84, 0.35); m:SetWidth(2); m:SetHeight(10)
     m:Hide(); bar.marks[k] = m
-    local mt = mk:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    mt:SetTextColor(1, 0.84, 0.35); mt:Hide(); bar.markText[k] = mt
-    Face(mt)
   end
-  local nx = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  nx:SetPoint("TOPLEFT", tr, "BOTTOMLEFT", 0, -14)
-  nx:SetWidth(BAR_W); nx:SetJustifyH("LEFT")
-  nx:SetTextColor(1, 0.78, 0.47)
-  Face(nx)
-  bar.next = nx
-  bar:SetScript("OnEnter", function()
-    if not this.boss then return end
-    GameTooltip:SetOwner(this, "ANCHOR_LEFT")
-    GameTooltip:AddLine(AzG(this.boss.name), 1, 0.82, 0)
-    local list = AzlDangerList and AzlDangerList(this.boss) or {}
+  hpb = tr
+  return tr
+end
+
+-- what the strip shows now: "boss", "next" or nothing (out of a run, or switched off)
+W.mode = nil
+function W.StripMode() return W.mode end
+-- placed by the wishlist window under its head (core\Azerloot.lua): its height, 0 for none
+function W.StripPlace(tracker, w, y, hidden)
+  local s = StripFrame()
+  if not s then return 0 end
+  W.placed = W.mode
+  if hidden or not W.mode then s:Hide(); return 0 end
+  s:ClearAllPoints()
+  s:SetPoint("TOPLEFT", tracker, "TOPLEFT", 8, y)
+  s:SetWidth(w - 16)
+  local h = W.mode == "boss" and 30 or 18
+  s:SetHeight(h)
+  if W.mode == "boss" then HealthBar(w - 22); hpb:Show() elseif hpb then hpb:Hide() end
+  s:Show()
+  W.Fill()
+  return h
+end
+
+-- the strip's words and bar from what the last look found
+function W.Fill()
+  if not bar or not bar:IsShown() then return end
+  local c = W.cur or {}
+  if c.mode == "boss" then
+    local u, b = c.u, c.b
+    local hp, hpm = tonumber(u.hp) or 0, tonumber(u.hpm) or 0
+    local pct = hpm > 0 and hp / hpm or 0
+    stripBoss = b
+    bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
+    bar.name:SetText(b and AzG(b.name) or tostring(u.name))
+    local info = string.format("%d%%", math.floor(pct * 100 + 0.5))
+    if u.enraged then info = "|cffff4020" .. AzT("Enraged") .. "|r  " .. info end
+    bar.info:SetText(info)
+    local tr = hpb
+    if tr then
+      tr:SetValue(math.min(1, pct))
+      local phases = (b and b.phases) or {}
+      for k = 1, 4 do
+        local ph = phases[k]
+        if ph and bar.marks[k] then
+          bar.marks[k]:ClearAllPoints()
+          bar.marks[k]:SetPoint("CENTER", tr, "LEFT", math.floor(tr.w * ph.pct / 100), 0)
+          bar.marks[k]:Show()
+        elseif bar.marks[k] then bar.marks[k]:Hide() end
+      end
+    end
+  elseif c.mode == "next" then
+    local nb = c.nb
+    local b = Lookup(nb.name)
+    stripBoss = b
+    bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
+    bar.name:SetText(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)))
+    bar.info:SetText(Clock(nb.left))
+  end
+  -- a long name gives way to the number at the right
+  bar.name:SetWidth(math.max(40, (bar:GetWidth() or 200) - 30 - (bar.info:GetStringWidth() or 30)))
+end
+
+-- its tooltip: the boss, its health and next turn, every danger it has
+function W.Tip(s)
+  local c, b = W.cur or {}, stripBoss
+  GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
+  GameTooltip:AddLine(b and AzG(b.name) or (s.name:GetText() or ""), 1, 0.82, 0)
+  if c.mode == "boss" then
+    local u = c.u
+    if (tonumber(u.hpm) or 0) > 0 then GameTooltip:AddLine(Big(u.hp) .. " / " .. Big(u.hpm), 1, 1, 1) end
+    local pct = (tonumber(u.hpm) or 0) > 0 and (u.hp / u.hpm * 100) or 100
+    local phases = (b and b.phases) or {}
+    for k = 1, table.getn(phases) do
+      if pct > phases[k].pct then
+        GameTooltip:AddLine(AzT("At %d%%: %s", phases[k].pct, TurnText(phases[k])), 1, 0.78, 0.47, 1)
+        break
+      end
+    end
+  elseif c.mode == "next" then
+    GameTooltip:AddLine(AzT("comes in %s", Clock(c.nb.left)), 1, 1, 1)
+  end
+  if b then
+    local list = AzlDangerList and AzlDangerList(b) or {}
     for i = 1, table.getn(list) do
-      local a = list[i]
       GameTooltip:AddLine(" ")
-      GameTooltip:AddLine(AzlDangerName(a), 1, 0.82, 0)
-      GameTooltip:AddLine(AzlDangerText(a), 1, 1, 1, 1)
+      GameTooltip:AddLine(AzlDangerName(list[i]), 1, 0.82, 0)
+      GameTooltip:AddLine(AzlDangerText(list[i]), 1, 1, 1, 1)
     end
-    if not DB().bossLocked then GameTooltip:AddLine(" "); GameTooltip:AddLine(AzT("Drag to move it."), 0.6, 0.6, 0.6) end
-    GameTooltip:Show()
-  end)
-  bar:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  W.Anchor()
-  bar:Hide()
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine(AzT("Click to open its page in the book."), 0.6, 0.6, 0.6)
+  end
+  GameTooltip:Show()
 end
 
-function W.Anchor()
-  if not bar then return end
-  local p = DB().bossPos
-  bar:ClearAllPoints()
-  if type(p) == "table" and type(p[1]) == "number" and type(p[2]) == "number" then
-    bar:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1], p[2])
-  else
-    bar:SetPoint("TOP", UIParent, "TOP", 0, -110)
-  end
-end
-
--- the bar with a boss alive: name, health, the marks where it turns, the next turn
-local function ShowBoss(u, b)
-  local hp, hpm = tonumber(u.hp) or 0, tonumber(u.hpm) or 0
-  local pct = hpm > 0 and hp / hpm or 0
-  bar.boss = b
-  bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
-  bar.name:SetText(b and AzG(b.name) or tostring(u.name))
-  local info = string.format("%d%%", math.floor(pct * 100 + 0.5))
-  if hpm > 0 then info = info .. "  -  " .. Big(hp) .. " / " .. Big(hpm) end
-  if u.enraged then info = info .. "  |cffff4020" .. AzT("Enraged") .. "|r" end
-  bar.info:SetText(info)
-  bar.trough:SetValue(math.min(1, pct))
-  local phases = (b and b.phases) or {}
-  local nextTurn
-  for k = 1, 4 do
-    local ph = phases[k]
-    if ph then
-      local x = math.floor(BAR_W * ph.pct / 100)
-      bar.marks[k]:ClearAllPoints(); bar.marks[k]:SetPoint("CENTER", bar.trough, "LEFT", x, 0); bar.marks[k]:Show()
-      bar.markText[k]:ClearAllPoints(); bar.markText[k]:SetPoint("TOP", bar.trough, "BOTTOMLEFT", x, -1)
-      bar.markText[k]:SetText(ph.pct .. "%"); bar.markText[k]:Show()
-      if pct * 100 > ph.pct and not nextTurn then nextTurn = ph end
-    else
-      bar.marks[k]:Hide(); bar.markText[k]:Hide()
-    end
-  end
-  if nextTurn then
-    bar.next:SetText(AzT("At %d%%: %s", nextTurn.pct, TurnText(nextTurn)))
-    bar.next:Show()
-    bar:SetHeight(table.getn(phases) > 0 and 92 or 70)
-  else
-    bar.next:Hide()
-    bar:SetHeight(table.getn(phases) > 0 and 76 or 64)
-  end
-  bar.trough:Show()
-end
-
--- the bar with none alive: the next boss and its time
-local function ShowNext(nb)
-  local b = Lookup(nb.name)
-  bar.boss = b
-  bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
-  bar.name:SetText(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)))
-  bar.info:SetText(AzT("comes in %s", Clock(nb.left)))
-  bar.trough:Hide(); bar.next:Hide()
-  for k = 1, 4 do bar.marks[k]:Hide(); bar.markText[k]:Hide() end
-  bar:SetHeight(48)
+-- the boss's page in the book
+function W.OpenPage(b)
+  if not b or not b.zi or not AZL or not AZL.OpenSearchHit then return end
+  if AzerlootFrame and not AzerlootFrame:IsShown() and Azerloot_Toggle then Azerloot_Toggle() end
+  AZL.OpenSearchHit({ kind = "BossHit", zoneIndex = b.zi, bossIndex = b.bi })
 end
 
 -- ---------- every 0.2 sec ----------
 -- each part only while it is switched on
 local function Say(text, sub, icon, sound) if W.AlertsOn() then Alert(text, sub, icon, sound) end end
-local function ShowBar() if W.BarOn() then bar:Show() else bar:Hide() end end
+-- the strip shows "boss", "next" or nothing; a change of kind redraws the wishlist window,
+-- which gives it its room
+local function SetMode(mode, data)
+  if not W.BarOn() then mode = nil end
+  data.mode = mode
+  W.cur = data
+  W.mode = mode
+  if W.placed ~= mode then
+    if AZL and AZL.RefreshTracker then AZL.RefreshTracker() end
+  else
+    W.Fill()
+  end
+end
 local seen = {}       -- per boss id: the turns already announced
 local warned = {}     -- per schedule index: the 10-second warning given
 local alive = {}      -- the boss ids seen alive, to announce one once
 function W.Update()
-  if not bar then W.Build() end
   local ph = Phase()
   local running = ph == "playing" or ph == "ready" or ph == "paused" or ph == "choosing"
   if not running then
-    bar:Hide()
+    SetMode(nil, {})
     seen, warned, alive = {}, {}, {}
     return
   end
-  if not W.On() then bar:Hide(); return end
+  if not W.On() then SetMode(nil, {}); return end
   local okB, bosses = pcall(function() return AZS_GetBosses and AZS_GetBosses() end)
   bosses = okB and type(bosses) == "table" and bosses or {}
   if table.getn(bosses) > 0 then
@@ -477,8 +503,7 @@ function W.Update()
         Say(AzT("%d%% health!", p.pct), TurnText(p) .. ((p.a and p.a.kind ~= "stance") and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
       end
     end
-    ShowBoss(u, b)
-    ShowBar()
+    SetMode("boss", { u = u, b = b })
     return
   end
   local okU, up = pcall(function() return AZS_GetUpcomingBosses and AZS_GetUpcomingBosses() end)
@@ -515,10 +540,9 @@ function W.Update()
       local b = Lookup(nb.name)
       Say(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon, true)
     end
-    ShowNext(nb)
-    ShowBar()
+    SetMode("next", { nb = nb })
   else
-    bar:Hide()
+    SetMode(nil, {})
   end
 end
 

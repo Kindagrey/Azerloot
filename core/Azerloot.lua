@@ -2887,8 +2887,8 @@ end
 AZL_WARN_PARTS = {
   { key = "bossAlerts", label = "Warnings",
     tip = "Big words when a boss comes, when it turns and when the game calls a stampede, a pack or a guardian. The game's own banners make room for them." },
-  { key = "bossBar", label = "Boss bar",
-    tip = "The boss alive with its health and the marks where it turns, or the time until the next one." },
+  { key = "bossBar", label = "Boss in the wishlist",
+    tip = "A line in the wishlist window: the next boss and its time, or the boss alive with its health and the marks where it turns." },
 }
 function AzlWarnMenu(sp, Panel, Row, SetCheck)
   local wr = Row(sp, 152)
@@ -5935,6 +5935,15 @@ RefreshTracker = function()
   end
   -- the head card on its own panel, like the sections below it
   table.insert(pan, { t = -4, b = cardBottom, card = true })
+  -- the boss warner's strip (modules\BossWarn.lua) under the head: the next boss, or the one
+  -- alive with its health; on its own panel, like a section (not while a run's build is chosen)
+  if AzlW and AzlW.StripPlace then
+    local sh = AzlW.StripPlace(tracker, W, y - 3, runPick)
+    if sh > 0 then
+      table.insert(pan, { t = y, b = y - 3 - sh - 3 })
+      y = y - 3 - sh - 3 - 6
+    end
+  end
   tracker:SetWidth(W)
   local alpha = TrackerDB().trackerAlpha or 0.35
   tracker:SetBackdropColor(0, 0, 0, alpha)
@@ -6535,6 +6544,7 @@ AZL = {
   Frame = function() return frame end, OnPage = function(f) OnPage(f) end,
   Font = Font, Tex = Tex, Heading = Heading, Engraved = Engraved, Carved = Carved, Highlight = Highlight,
   DropShadow = DropShadow, SetIcon = SetIcon, SetFace = SetFace, FadeIn = FadeIn, Go = Go, Print = Print, Hex = Hex,
+  OpenSearchHit = OpenSearchHit,
   Wish = Wish, WishKey = WishKey, ClassInfo = ClassInfo, PlayerClass = PlayerClass, ItemEntries = ItemEntries,
   ClassEntries = ClassEntries, SpellEntries = SpellEntries, IsFound = IsFound, KnowsSpell = KnowsSpell,
   SpellDesc = SpellDesc, EntryTitle = EntryTitle, EntrySections = EntrySections, AutoSpells = AutoSpells,
