@@ -103,6 +103,7 @@ local function Alert(text, sub, icon, sound)
     s:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
     s:SetTextColor(1, 0.9, 0.65)
     s:SetPoint("TOP", t, "BOTTOM", 0, -6)
+    s:SetWidth(520)   -- a long line wraps under the big words
     alert.sub = s
     alert.queue = {}
     alert:SetScript("OnUpdate", function()
@@ -208,19 +209,27 @@ local function Emote(text, who)
   if type(who) == "string" and who ~= "" then
     text = string.gsub(text, "%%s", (string.gsub(who, "%%", "%%%%")))
   end
-  -- other long words (a text the game may add later): the first sentence only
-  if string.len(text) > 70 then text = First(text) end
+  -- other long words (a text the game may add later): the first sentence large, the rest
+  -- of it whole in the small line under it
+  local rest
+  if string.len(text) > 70 then
+    local first = First(text)
+    if first ~= text then
+      rest = string.gsub(string.sub(text, string.len(first) + 1), "^%s+", "")
+      text = first
+    end
+  end
   local b = Lookup(who)
   if b then
     -- a boss coming: its own call (from the bar, a moment before) is not said twice
     local k = string.lower(who)
     if arrived[k] and GetTime() - arrived[k] < 4 then return end
     arrived[k] = GetTime()
-    Alert(text, nil, b.icon)
+    Alert(text, rest, b.icon)
   else
     -- who sent it (a guardian, a pack), under the words when they do not name it
-    local sub
-    if type(who) == "string" and who ~= "" and not string.find(text, who, 1, true) then sub = who end
+    local sub = rest
+    if not sub and type(who) == "string" and who ~= "" and not string.find(text, who, 1, true) then sub = who end
     Alert(text, sub)
   end
 end
