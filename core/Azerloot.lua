@@ -5919,7 +5919,8 @@ RefreshTracker = function()
   if AzlB then y, cardBuild = AzlB.TrackerHead(tracker, W, y) end
   -- a new run's choice of a build stands alone: the lists come once a build is chosen (or
   -- the choice is closed, or two minutes have passed)
-  if AzlB and AzlB.RunPick and AzlB.RunPick() then lines = {} end
+  local runPick = AzlB and AzlB.RunPick and AzlB.RunPick() and true or false
+  if runPick then lines = {} end
   local cardBottom, below, hinted = AzlTrackerCard(cardBuild, ci, waiting)
   if cardBuild or hinted then y = below end
   -- the head card itself takes a click: the choice of a build opens under it
@@ -6110,7 +6111,10 @@ RefreshTracker = function()
   if pan.cur then y = y - 6; pan.cur.b = y end   -- room under the last entry too
   AzlTrackerPanels(pan, W)
   -- as long as you pulled it, but never shorter than its entries
-  tracker:SetHeight(math.max(-y + 14, TrackerDB().trackerH or 0))  -- room for the corner grip
+  -- room for the corner grip; the size the player drew it to once the lists show (the choice
+  -- of a build at a run's start stands alone, as tall as it needs)
+  if runPick then tracker:SetHeight(-y + 14)
+  else tracker:SetHeight(math.max(-y + 14, TrackerDB().trackerH or 0)) end
   AzlFitTracker()
   if (n > 0 or (AzlB and AzlB.TrackerWanted())) and TrackerDB().tracker then tracker:Show() else tracker:Hide() end
 end
