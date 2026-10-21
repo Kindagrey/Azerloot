@@ -29,8 +29,8 @@ function W.On() return W.AlertsOn() or W.BarOn() end
 
 -- ---------- the bosses of the book, found by the name the game gives them ----------
 local byName
+local nameLangs = {}   -- a boss's name, as one language writes it -> the languages that do
 local function Lookup(name)
-  if type(name) ~= "string" then return nil end
   if not byName then
     byName = {}
     local zones = Azerloot_Loot and Azerloot_Loot.zones or {}
@@ -40,19 +40,45 @@ local function Lookup(name)
         local b = bosses[bi]
         b.zi, b.bi = zi, bi   -- (where its page is, for a click on the strip)
         byName[string.lower(b.name)] = b
+        local ke = string.lower(b.name)
+        nameLangs[ke] = nameLangs[ke] or {}; nameLangs[ke].en = true
         -- the same boss in each of the game's languages
         if type(Azerloot_GT) == "table" then
-          for _, lg in pairs(Azerloot_GT) do
+          for code, lg in pairs(Azerloot_GT) do
             local ex = type(lg) == "table" and lg.exact
-            if type(ex) == "table" and type(ex[b.name]) == "string" then byName[string.lower(ex[b.name])] = b end
+            if type(ex) == "table" and type(ex[b.name]) == "string" and ex[b.name] ~= b.name then
+              local kl = string.lower(ex[b.name])
+              byName[kl] = b
+              nameLangs[kl] = nameLangs[kl] or {}; nameLangs[kl][code] = true
+            end
           end
         end
       end
     end
   end
+  if type(name) ~= "string" then return nil end
   return byName[string.lower(name)]
 end
 W.Lookup = Lookup
+-- the game's language, read off the names it gives its bosses (the schedule, a boss's
+-- emote, a banner): a name only one language writes so tells which one the game speaks
+function W.NoteLang(name)
+  if type(name) ~= "string" or name == "" then return end
+  Lookup(nil)
+  local set = nameLangs[string.lower(name)]
+  if not set then return end
+  local only, n = nil, 0
+  for lg in pairs(set) do only = lg; n = n + 1 end
+  -- (an English name tells English only when every other language writes it otherwise)
+  if n == 1 and only == "en" then
+    local b = Lookup(name)
+    for _, lg in ipairs({ "de", "fr", "es", "pt" }) do
+      local ex = type(Azerloot_GT) == "table" and type(Azerloot_GT[lg]) == "table" and Azerloot_GT[lg].exact
+      if not (b and type(ex) == "table" and type(ex[b.name]) == "string" and ex[b.name] ~= b.name) then return end
+    end
+  end
+  if n == 1 and DB().gameLang ~= only then DB().gameLang = only end
+end
 
 -- a text of the warner follows the book's reading face (Settings - Font), like the book's own
 local function Face(fs, role)
@@ -129,7 +155,7 @@ end
 
 -- ---------- the big words in the middle of the screen ----------
 local alert
-local function Alert(text, sub, icon, sound)
+local function Alert(text, sub, icon, sound, low)
   if not alert then
     alert = CreateFrame("Button", "AzerlootBossAlert", UIParent)
     alert:SetFrameStrata("HIGH")
@@ -176,7 +202,7 @@ local function Alert(text, sub, icon, sound)
       -- words waiting behind these: they follow once these were read for 1.5 sec
       if table.getn(this.queue) > 0 and this.left <= 2.5 then
         local q = table.remove(this.queue, 1)
-        W.ShowAlert(q[1], q[2], q[3], q[4])
+        W.ShowAlert(q[1], q[2], q[3], q[4], q[5])
         return
       end
       if this.left <= 0 then this:Hide(); return end
@@ -184,12 +210,18 @@ local function Alert(text, sub, icon, sound)
     end)
   end
   if W.moving then return end   -- (being moved: the example stays)
-  -- something said a moment ago is not covered at once: the new words wait their turn
+  -- the small things (a rune, a magnet, a cache, an achievement) never keep the important
+  -- ones (a boss, a guardian, a wave) waiting: they give way, and are left out when busy
   if alert:IsShown() and (alert.left or 0) > 2.5 then
-    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon, sound }) end
+    if low then return end
+    if W.lowShown then W.ShowAlert(text, sub, icon, sound, low); return end
+    for i = table.getn(alert.queue), 1, -1 do
+      if alert.queue[i][5] then table.remove(alert.queue, i) end
+    end
+    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon, sound, low }) end
     return
   end
-  W.ShowAlert(text, sub, icon, sound)
+  W.ShowAlert(text, sub, icon, sound, low)
 end
 -- where the words stand: where the player put them, else high in the middle of the screen
 function W.Place()
@@ -226,14 +258,15 @@ function W.MoveMode(on)
   end
 end
 -- (a sound only with a boss coming: the other words come quietly)
-function W.ShowAlert(text, sub, icon, sound)
+function W.ShowAlert(text, sub, icon, sound, low)
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
   W.Place()
   alert.icon:ClearAllPoints()
   alert.icon:SetPoint("RIGHT", alert.text, "LEFT", -10, 0)
   if icon then alert.icon:SetTexture("Interface\\Icons\\" .. icon); alert.icon:Show() else alert.icon:Hide() end
-  alert.left = 4
+  alert.left = low and 2.5 or 4
+  W.lowShown = low and true or false
   alert:SetAlpha(1)
   alert:Show()
   -- the raid warning's sound, played from its file: as a named interface sound the game cut
@@ -317,6 +350,7 @@ end
 -- player's language, even while its own banners are hidden
 function W.OnBanner(b)
   if type(b) ~= "table" or type(b.text) ~= "string" or b.text == "" then return end
+  W.NoteLang(b.name)
   if not W.AlertsOn() or not DB().bannersTaken then return end
   if b.name and b.name ~= "" and Said(b.name) then return end
   local text, rest = b.text, nil
@@ -333,7 +367,8 @@ function W.OnBanner(b)
   end
   local boss = b.boss and Lookup(b.name) or nil
   if boss then arrived[string.lower(b.name)] = GetTime() end
-  Alert(text, rest, boss and boss.icon or nil)
+  local low = b.kind == "rune" or b.kind == "magnet" or b.kind == "cache" or b.kind == "achievement"
+  Alert(text, rest, boss and boss.icon or nil, nil, low)
 end
 W.banners = false
 if AZS_RegisterBannerHandler then
@@ -341,6 +376,7 @@ if AZS_RegisterBannerHandler then
 end
 
 local function Emote(text, who)
+  W.NoteLang(who)
   if not W.AlertsOn() or not DB().bannersTaken or type(text) ~= "string" then return end
   -- (the same thing told by a banner a moment before, or after: once)
   if W.banners and Said(who) then return end
@@ -742,6 +778,7 @@ function W.Update()
   local nb
   for i = 1, table.getn(up) do
     local x = up[i]
+    W.NoteLang(x.name)
     if tonumber(x.left) and (not nb or x.left < nb.left) then nb = x end
   end
   if nb then

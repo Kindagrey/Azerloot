@@ -75,6 +75,9 @@ end
 -- speak it, beside the game's own banners)
 local gameCur
 function AzGameLang()
+  -- read off the names the game gives its bosses (modules\BossWarn.lua): the surest sign,
+  -- as the game's spell tooltips may stay English while its own words are another language
+  if type(AzerlootDB) == "table" and AzerlootDB.gameLang and OK[AzerlootDB.gameLang] then return AzerlootDB.gameLang end
   if gameCur then return gameCur end
   local p = Probe()
   if p then gameCur = OK[p] and p or "en"; return gameCur end
