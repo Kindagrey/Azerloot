@@ -111,6 +111,14 @@ local function First(t)
   return t
 end
 
+-- the warner's own words on the screen in the game's language, as the game's banners beside
+-- them (the book itself may be set to another)
+local function G(fn)
+  if AzInLang and AzGameLang then return AzInLang(AzGameLang(), fn) end
+  return fn()
+end
+W.G = G
+
 -- a wounded boss's turn, as one short line
 local function TurnText(ph)
   if ph.adds then return AzT("Calls in %s helpers.", ph.adds) end
@@ -280,7 +288,7 @@ local function Emote(text, who)
   -- (the same thing told by a banner a moment before, or after: once)
   if W.banners and Said(who) then return end
   if GUARD_SLAIN[text] then
-    Alert(AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger."))
+    Alert(G(function() return AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger.") end))
     return
   end
   if type(who) == "string" and who ~= "" then
@@ -328,7 +336,7 @@ emoteF:SetScript("OnEvent", function()
     if W.banners or not W.AlertsOn() or not DB().bannersTaken or type(arg1) ~= "string" then return end
     local who = string.gsub(arg1, " dies%.$", "")
     local b = Lookup(who)
-    if b then Alert(AzT("%s is defeated!", AzG(b.name)), nil, b.icon) end
+    if b then Alert(G(function() return AzT("%s is defeated!", AzG(b.name)) end), nil, b.icon) end
     return
   end
   Emote(arg1, arg2)
@@ -626,7 +634,7 @@ function W.Update()
       -- (with the game's banners it tells a boss's coming itself)
       if not W.banners and not (arrived[k] and GetTime() - arrived[k] < 4) then
         arrived[k] = GetTime()
-        Say(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), nil, b and b.icon)
+        Say(G(function() return AzT("%s is here!", b and AzG(b.name) or tostring(u.name)) end), nil, b and b.icon)
       end
     end
     -- its turns: a word as it comes close (5% before), the big words when it happens
@@ -640,7 +648,8 @@ function W.Update()
         s[k] = true
         local icon = p.a and p.a.icon or (p.adds and "Ability_Warrior_BattleShout") or nil
         -- a short hint with a sound (what it does is in the line's tooltip and the book)
-        Say(AzT("%d%% health!", p.pct), TurnText(p), icon, true)
+        local t1, t2 = G(function() return AzT("%d%% health!", p.pct), TurnText(p) end)
+        Say(t1, t2, icon, true)
       end
     end
     SetMode("boss", { u = u, b = b })
@@ -682,7 +691,7 @@ function W.Update()
     if nb.left <= 10 and nb.left > 0 and not warned[nb.index or nb.name] then
       warned[nb.index or nb.name] = true
       local b = Lookup(nb.name)
-      Say(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon, true)
+      Say(G(function() return AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)) end), nil, b and b.icon, true)
     end
     SetMode("next", { nb = nb })
   else

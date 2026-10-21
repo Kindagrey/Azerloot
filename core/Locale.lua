@@ -71,6 +71,26 @@ if starter then
   starter:SetScript("OnEvent", function() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end; AzLang() end)
 end
 
+-- the game's own language, whatever the book is set to (the warner's words on the screen
+-- speak it, beside the game's own banners)
+local gameCur
+function AzGameLang()
+  if gameCur then return gameCur end
+  local p = Probe()
+  if p then gameCur = OK[p] and p or "en"; return gameCur end
+  if type(AzerlootDB) == "table" and AzerlootDB.autoLang and OK[AzerlootDB.autoLang] then return AzerlootDB.autoLang end
+  return (GetLocale and CLIENT[GetLocale()]) or "en"
+end
+-- fn's words in another language than the book's (AzT, AzG and AzName follow it meanwhile)
+function AzInLang(lg, fn)
+  local keep = cur
+  cur = lg
+  local ok, a, b = pcall(fn)
+  cur = keep
+  if ok then return a, b end
+  return nil
+end
+
 -- the game's language as the tooltips show it: remembered for "Auto" from the next session on
 function AzNoteGameLang(lg)
   if type(AzerlootDB) ~= "table" or not lg then return end
