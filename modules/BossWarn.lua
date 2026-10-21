@@ -565,7 +565,8 @@ function W.Update()
       if pct <= p.pct and not s[k] then
         s[k] = true
         local icon = p.a and p.a.icon or (p.adds and "Ability_Warrior_BattleShout") or nil
-        Say(AzT("%d%% health!", p.pct), TurnText(p) .. ((p.a and p.a.kind ~= "stance") and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
+        -- a short hint with a sound (what it does is in the line's tooltip and the book)
+        Say(AzT("%d%% health!", p.pct), TurnText(p), icon, true)
       end
     end
     SetMode("boss", { u = u, b = b })
