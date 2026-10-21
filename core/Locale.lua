@@ -134,6 +134,12 @@ function AzG(s)
       out = table.concat(parts, ", ")
     end
   end
+  -- a line that begins with "the hits of ...": the game's words for the middle of a
+  -- sentence, so its first letter is raised at the start of one
+  if string.find(out, "^die Treffer ") or string.find(out, "^die kritischen ") or string.find(out, "^les coups ")
+    or string.find(out, "^los golpes ") or string.find(out, "^os acertos ") then
+    out = string.upper(string.sub(out, 1, 1)) .. string.sub(out, 2)
+  end
   memo[lg][s] = out
   return out
 end

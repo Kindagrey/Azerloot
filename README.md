@@ -4,19 +4,42 @@
 
 ## ✨ What's inside
 * 💍 **Jewelry** – every ring, trinket, basic amulet and class amulet, with its value at every rarity.
-* 🗺️ **Loot** – every zone and boss: how they fight and what each class can take from them, plus a Collection Book.
+* 🗺️ **Loot** – every zone and boss: what each class can take from them, plus a Collection Book.
+* ⚔️ **Boss attacks** – every attack of every boss, read from the game's own code: shape, size, warning time, cooldown and what it does once wounded.
 * 🔮 **Spells** – every class's spells; picked-up spells join the wishlist window and show their upgrades.
-* 🛠️ **Builds** – up to five builds per class, shareable as a short code, loadable at the start of a run.
+* 🛠️ **Builds** – up to five builds per class, shareable as a short code, loadable at any time.
 * ⏳ **Chronicle** – your last 50 runs per class, your best run and personal bests kept for good.
-* 📋 **Wishlist window** – what you still need in this run, ticked off as it comes.
+* 📋 **Wishlist window** – what you still need in this run, ticked off as it comes; sized to your liking and click-through when locked.
 * 🌍 English, Deutsch, Français, Español, Português.
 
 ## 📦 Installation
-1. Download the latest zip from [Releases](../../releases/latest) (or clone this repository).
-2. Put the folder into your AddOns folder, e.g. `C:\Git\wenilla\benilla-config\AddOns`. It must be named exactly **`Azerloot`**, with `Azerloot.toc` directly inside it.
+**With an addon manager (e.g. LazyAddons):** add this repository's address, `https://github.com/Kindagrey/azerloot`, and install. Updates come with every new release.
+
+**By hand:**
+1. Download the latest zip from [Releases](../../releases/latest).
+2. Unpack the folder into your AddOns folder, e.g. `C:\Git\wenilla\benilla-config\AddOns`. It must be named **`Azerloot`**, with `Azerloot.toc` directly inside it.
 3. Start the game. Open the book with the minimap button, `/azl` or a key binding.
 
-**Updating:** replace the `Azerloot` folder. Your builds, wishlist, collection and settings are kept. Addon managers that track GitHub (cloning the repository or downloading the latest release) keep it up to date on their own.
+**Updating by hand:** delete the old `Azerloot` folder, then unpack the new one. Your builds, wishlist, collection, chronicle and settings are kept.
+
+## ⌨️ Commands
+| Command | |
+|---|---|
+| `/azl` | open or close the book |
+| `/azl tracker` | wishlist window on/off |
+| `/azl minimap` | minimap button on/off |
+| `/azl collection` | your collected boss pieces |
+| `/azl reset` | wishlist window back to its first place |
+
+## 📋 Wishlist window
+| | |
+|---|---|
+| Click an entry | open it in the book |
+| Right-click an entry | mark it found (or collected) |
+| Shift-right-click | take it off your wishlist |
+| Click a section heading | fold it away or open it again |
+| Right-click a heading twice | take the whole section off |
+| Click the window's head | pick one of your builds |
 
 ## 💬 Feedback
 Azeroth Survivors Discord: https://discord.gg/CXAvQ6ZTXe

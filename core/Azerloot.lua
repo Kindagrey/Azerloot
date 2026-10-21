@@ -1,4 +1,4 @@
--- Azerloot 2.1.0 - Azeroth Survivors (benilla client, Lua 5.0) by Kindagrey
+-- Azerloot 2.2.0 - Azeroth Survivors (benilla client, Lua 5.0) by Kindagrey
 -- A book-style compendium: every ring, trinket and amulet a run can offer with its value
 -- at every rarity, each class's spells and their legendary amulets, a search, and a
 -- wishlist that also lives in a small see-through window on your screen. The Loot chapter
@@ -191,6 +191,20 @@ local function Collected(cls)
   if type(AzerlootDB.collected) ~= "table" then AzerlootDB.collected = {} end
   if type(AzerlootDB.collected[cls]) ~= "table" then AzerlootDB.collected[cls] = {} end
   return AzerlootDB.collected[cls]
+end
+
+-- at a new run: boss loot wished for that is now in the collection leaves the wishlist
+-- (it was ticked in the run that brought it; the next run has no use for it)
+function AzlDropCollectedLoot()
+  local cls = PlayerClass()
+  local w, got = Wish(cls), Collected(cls)
+  local gone = {}
+  for k in pairs(w) do
+    local _, _, nm = string.find(k, "^loot:(.+)$")
+    if nm and got[nm] then table.insert(gone, k) end
+  end
+  for i = 1, table.getn(gone) do w[gone[i]] = nil end
+  return table.getn(gone)
 end
 
 -- After a /reload (changing the book's language is one) the game lists the run's spells
@@ -911,6 +925,70 @@ local function WornLine(entry)
   return text
 end
 
+-- A worn piece's lines, short: the game's whole sentences ("Increases all damage you deal by
+-- 146%.") become the book's own words with the numbers the game shows now ("+146% damage").
+-- Rings and trinkets take the form of their value, amulets that of each effect, line by line.
+-- Where the numbers do not fit the form, the game's sentence stays.
+function AzlShortWorn(entry, text)
+  if type(text) ~= "string" or text == "" then return text end
+  local it = entry.item
+  if it.noShort then return text end   -- (its forms name no numbers to fill)
+  local forms
+  if entry.kind == "Rings" or entry.kind == "Trinkets" then forms = it.values and { it.values[1] }
+  elseif entry.kind == "Amulets" or entry.kind == "Legendary" then forms = it.effects end
+  if type(forms) ~= "table" or table.getn(forms) == 0 then return text end
+  local NUM = "%d+%.?%d*"
+  local function Nums(t)
+    local out = {}
+    for n in sfind_all(t, NUM) do table.insert(out, n) end
+    return out
+  end
+  -- the book's own words for a form, in the book's language, with the game's numbers in
+  -- place of the book's: each number found again by its value, wherever the language
+  -- puts it ("for 80% more over 4 sec" / "lassen über 4 Sek. für 80% mehr")
+  local function Say(form, have)
+    local orig = Nums(form)
+    local said = AzG(form)
+    if said == form and AzLang() ~= "en" then return nil end   -- not in the book's language
+    local used = {}
+    local out = string.gsub(said, "%d+[%.,]?%d*", function(n)
+      local key = string.gsub(n, ",", ".")
+      for i = 1, table.getn(orig) do
+        if orig[i] == key and not used[i] then
+          used[i] = true
+          local v = have[i]
+          if string.find(n, ",") then v = string.gsub(v, "%.", ",") end
+          return v
+        end
+      end
+      return n
+    end)
+    return out
+  end
+  local lines = {}
+  for seg in sfind_all(text .. "\n", "(.-)\n") do if seg ~= "" then table.insert(lines, seg) end end
+  local out = {}
+  if table.getn(forms) == 1 or table.getn(lines) ~= table.getn(forms) then
+    -- one form for all the numbers of the text, in their order
+    if table.getn(forms) ~= 1 then return text end
+    local need, have = table.getn(Nums(forms[1])), Nums(text)
+    -- one number: the first the game names; several: only when the game names as many
+    if need == 0 or table.getn(have) < need or (need > 1 and table.getn(have) ~= need) then return text end
+    local said = Say(forms[1], have)
+    if not said then return text end
+    table.insert(out, said)
+  else
+    for i = 1, table.getn(forms) do
+      local need, have = table.getn(Nums(forms[i])), Nums(lines[i])
+      if table.getn(have) < need or (need > 1 and table.getn(have) ~= need) then return text end
+      local said = Say(forms[i], have)
+      if not said then return text end
+      table.insert(out, said)
+    end
+  end
+  return table.concat(out, "\n")
+end
+
 -- Several spells share a class amulet's name (Eye of the Splitting Sky for Wrath and for
 -- Starfire, Pendant of the Plague for Moonfire and Insect Swarm): the worn one's own lines
 -- name its spell. Every line of its tooltip is read, whatever its colour, as the game gives
@@ -1046,6 +1124,20 @@ local function ForgetLearnedSpells()
     for k, how in pairs(t) do if how == "auto" then w["spell:" .. k] = nil end end
   end
   AzerlootDB.autoSpells = {}
+end
+
+-- entries off the wishlist; a spell taken off by hand is not added again by itself
+-- in this run
+function AzlUnwish(entries)
+  local w, auto, keys = Wish(), AutoSpells(), {}
+  for i = 1, table.getn(entries) do
+    local e = entries[i]
+    local k = WishKey(e)
+    w[k] = nil
+    table.insert(keys, k)
+    if e.kind == "Spell" and e.item and e.item.key then auto[e.item.key] = "off" end
+  end
+  if AzlB and AzlB.Unwished then AzlB.Unwished(PlayerClass(), keys) end
 end
 
 local function WishEntries()
@@ -1833,6 +1925,118 @@ local BOSS_BIO = {
   ["Sapphiron"] = "Kel'Thuzad's frost wyrm, risen from the bones of a blue dragon.",
 }
 
+-- ---------- a boss's attacks, as the game's code has them (data\BossLoot.lua) ----------
+-- a number as the book's language writes it: 1.5 / 1,5
+function AzlNum(v)
+  v = tonumber(v) or 0
+  local s
+  if math.abs(v - math.floor(v + 0.5)) < 0.001 then s = tostring(math.floor(v + 0.5))
+  else s = string.format("%.2f", v); s = string.gsub(s, "0+$", "") end
+  if AzLang() ~= "en" then s = string.gsub(s, "%.", ",") end
+  return s
+end
+
+-- the boss's attacks in the game's order, then what it does once wounded
+function AzlDangerList(boss)
+  local out = {}
+  for k = 1, table.getn(boss.abilities or {}) do table.insert(out, boss.abilities[k]) end
+  if type(boss.phases) == "table" and table.getn(boss.phases) > 0 then
+    table.insert(out, { phases = boss.phases, icon = "Spell_Shadow_UnholyFrenzy" })
+  end
+  return out
+end
+
+-- the one told at first: the attack that hits hardest
+function AzlDangerDefault(list)
+  local best, bv = 1, -1
+  for k = 1, table.getn(list) do
+    local d = list[k].dm or 0
+    if d > bv then best, bv = k, d end
+  end
+  return best
+end
+
+function AzlDangerName(a)
+  if a.phases then return AzT("When it is wounded") end
+  if a.kind == "adds" then return AzT("Calls for help") end
+  return AzName(a.name)
+end
+
+-- what an attack does, from its shape in the game: sizes in yards, times in seconds
+-- (short: the wounded boss's turns one line each, its new attacks by name only; the
+-- tooltip tells them in full)
+function AzlDangerText(a, short)
+  if a.phases then
+    local lines = {}
+    for k = 1, table.getn(a.phases) do
+      local ph, what = a.phases[k], nil
+      if ph.adds then what = AzT("Calls in %s helpers.", ph.adds)
+      elseif ph.a and short then what = AzT("New attack, %s.", AzName(ph.a.name))
+      elseif ph.a then what = AzT("New attack, %s: %s", AzName(ph.a.name), AzlDangerText(ph.a)) end
+      table.insert(lines, AzT("%d%% health: %s", ph.pct, what or "?"))
+    end
+    return table.concat(lines, "\n")
+  end
+  local p, N = a.p or {}, AzlNum
+  local k = a.kind
+  if k == "adds" then return AzT("Calls in %s helpers.", p[1])
+  elseif k == "circle" then return AzT("A %s yd circle where you stand strikes %s sec later.", N(p[1]), N(p[2]))
+  elseif k == "bolts" then return AzT("%s bolts land on and around you, each marked by a small circle first.", p[1])
+  elseif k == "nova" then return AzT("Stops, then strikes everything within %s yd 1.3 sec later.", N(p[1]))
+  elseif k == "charge" then return AzT("Charges along a marked line, 6 yd past your spot. 1 sec to step aside.")
+  elseif k == "cone" then return AzT("Stops, then strikes a %s yd cone of %s degrees toward you %s sec later.", N(p[1]), N(p[2]), N(p[3]))
+  elseif k == "line" then return AzT("Stops, then strikes a line of %s by %s yd toward you %s sec later.", N(p[1]), N(p[2]), N(p[3]))
+  elseif k == "circles" then return AzT("%s circles of %s yd, on and around you, strike %s sec later.", p[1], N(p[2]), N(p[3]))
+  elseif k == "follow" then
+    local s
+    if (p[2] or 0) > 0 then s = AzT("A %s yd circle follows you for %s sec and strikes %s sec after it appeared.", N(p[1]), N(p[2]), N(p[3]))
+    else s = AzT("A %s yd circle where you stand strikes %s sec later.", N(p[1]), N(p[3])) end
+    if (p[4] or 0) > 0 then s = s .. " " .. AzT("The ground stays harmful for %s sec.", N(p[4])) end
+    return s
+  elseif k == "towers" then
+    if p[1] == 1 and (p[3] or 0) == 0 then return AzT("A %s yd circle around you: stay inside until it fills, %s sec later.", N(p[2]), N(p[4])) end
+    return AzT("%s safe circles of %s yd appear near you: be inside one when they fill, %s sec later.", p[1], N(p[2]), N(p[4]))
+  elseif k == "ring" then
+    if (p[1] or 0) > 0 then return AzT("Strikes %s to %s yd around it %s sec later: stay right by it or far away.", N(p[1]), N(p[2]), N(p[3])) end
+    return AzT("Strikes everything within %s yd %s sec later.", N(p[2]), N(p[3]))
+  elseif k == "spin" then return AzT("Spins %s sec after 1 sec, striking everything within %s yd as it moves.", N(p[2]), N(p[1]))
+  elseif k == "beam" then return AzT("A %s yd beam aimed at you; after %s sec it sweeps half a circle in %s sec.", N(p[1]), N(p[2]), N(p[3]))
+  elseif k == "cross" then return AzT("Four %s yd lines in a cross, one at you, strike %s sec later.", N(p[1]), N(p[2]))
+  elseif k == "rows" then return AzT("%s rows of %s yd circles roll near you, one every %s sec, from %s sec on.", p[1], N(p[2]), N(p[3]), N(p[4]))
+  elseif k == "combo_out" then return AzT("Strikes within %s yd, %s sec later %s to %s yd around it: move away, then back in.", N(p[1]), N(p[2]), N(p[3]), N(p[4]))
+  elseif k == "combo_in" then return AzT("Strikes %s to %s yd around it, %s sec later within %s yd: stay close, then move away.", N(p[1]), N(p[2]), N(p[3]), N(p[4]))
+  end
+  return ""
+end
+
+-- a danger's words cut to the room left: whole sentences from the end first
+function AzlFitDanger(fs, text, room)
+  fs:SetText(text)
+  if (fs:GetHeight() or 0) <= room then return text end
+  -- lines go whole, from the last (a wounded boss's turns); else sentences, and a
+  -- sentence ends at a mark before a capital ("Sek. später" goes on)
+  local parts, from, sep = {}, 1, " "
+  if string.find(text, "\n") then
+    sep = "\n"
+    for s in string.gfind(text .. "\n", "(.-)\n") do table.insert(parts, s) end
+  else
+    while true do
+      local s, e = string.find(text, "[%.:;!?]%s+%u", from)
+      if not s then break end
+      table.insert(parts, string.sub(text, from, s))
+      from = e
+    end
+    table.insert(parts, string.sub(text, from))
+  end
+  for n = table.getn(parts) - 1, 1, -1 do
+    local t = table.concat(parts, sep, 1, n)
+    if string.find(t, "[:;]$") then t = string.sub(t, 1, -2) .. "." end
+    fs:SetText(t)
+    if (fs:GetHeight() or 0) <= room or n == 1 then return t end
+  end
+  return text
+end
+
 local FitHeading -- set once Heading exists, below
 
 -- one boss: portrait, what it says, its numbers, what it does, and what it drops
@@ -1864,20 +2068,44 @@ local function DrawBoss(z, zi, bi, cls, list)
   y = y - 42
   B.dangers:ClearAllPoints(); B.dangers:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 21, y)
   y = y - 31
-  local abl = boss.abilities or {}
-  for a = 1, table.getn(B.abilities) do
-    local r, ab = B.abilities[a], abl[a]
+  -- every attack as an icon in one row; the one picked (at first the hardest-hitting) is
+  -- told in full below it, any other on a mouse-over or a click
+  local abl = AzlDangerList(boss)
+  local pick = B.pickFor == boss.name and B.pick or nil
+  if not (pick and abl[pick]) then pick = AzlDangerDefault(abl) end
+  B.pickFor, B.pick, B.redraw = boss.name, pick, function() DrawBoss(z, zi, bi, cls, list) end
+  for a = 1, table.getn(B.dicons) do
+    local r, ab = B.dicons[a], abl[a]
     if ab then
+      r.ab = ab
       r.icon:SetTexture("Interface\\Icons\\" .. ab.icon)
-      r.name:SetText(AzName(ab.name))
-      r.text:SetText(AzAbility(ab.text))
-      r:ClearAllPoints(); r:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y)
-      local h = math.max(26, 17 + (r.text:GetHeight() or 14))
-      r:SetHeight(h); r:Show()
-      y = y - h - 5
+      r:ClearAllPoints(); r:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34 + (a - 1) * 36, y - 2)
+      r:Pick(a == pick)
+      r.index = a
+      r:Show()
     else
       r:Hide()
     end
+  end
+  y = y - 34
+  local ab = abl[pick]
+  if ab then
+    B.dname:SetText(AzlDangerName(ab))
+    B.dname:ClearAllPoints(); B.dname:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y)
+    B.dline:ClearAllPoints(); B.dline:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y - 17)
+    -- what the page still has room for once the loot below is counted: a text too long
+    -- for it keeps its first sentences (the tooltip tells it all)
+    local lootH = 31
+    for k = 1, table.getn(list or {}) do
+      lootH = lootH + ((string.len(AzG(list[k].name or "")) > 26) and 54 or 40)
+    end
+    local room = y - 20 - 5 - lootH + 458
+    B.dtext:SetText(AzlFitDanger(B.dtext, AzlDangerText(ab, true), room))
+    B.dtext:ClearAllPoints(); B.dtext:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y - 20)
+    B.dname:Show(); B.dline:Show(); B.dtext:Show()
+    y = y - 20 - (B.dtext:GetHeight() or 14) - 4
+  else
+    B.dname:Hide(); B.dline:Hide(); B.dtext:Hide()
   end
   y = y - 1
   B.loot:ClearAllPoints(); B.loot:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 21, y)
@@ -2635,7 +2863,7 @@ local function BuildSettings(search)
     return o
   end
   local sp = Panel(gear)
-  sp:SetWidth(170); sp:SetHeight(244)
+  sp:SetWidth(170); sp:SetHeight(298)
   -- sits right on the bar, its right edge in line with the book's corner
   sp:SetPoint("BOTTOMRIGHT", gear, "TOPRIGHT", 46, 8)
   sp:SetHead(AzT("Settings"))
@@ -2794,16 +3022,25 @@ local function BuildSettings(search)
       function(on) Azerloot_MinimapButton(on) end,
       "The button at the minimap. Click it to open the book."),
   }
+  -- in two groups: the book (font, language, minimap button, size), then under a gold line
+  -- the wishlist window (shown, spells, size, see-through, back to its place)
+  local SW = sp.switches
+  SW[3]:ClearAllPoints(); SW[3]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 2 * 19)
+  SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
+  SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 6 * 19 - 16)
+  local dv2 = sp:CreateTexture(nil, "ARTWORK"); dv2:SetTexture(MEDIA .. "divider_gold.tga")
+  dv2:SetHeight(12); dv2:SetPoint("TOP", sp, "TOP", 0, -38 - 5 * 19 - 1)
+  sp.div2 = dv2
   -- the wishlist window's see-through background: a slider from clear to dark
   local ol = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ol:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 5 * 19 - 3)
+  ol:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 9 * 19 - 3 - 16)
   ol:SetText(AzT("Wishlist opacity"))
   local ov = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ov:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 5 * 19 - 3)
+  ov:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 9 * 19 - 3 - 16)
   local sl = CreateFrame("Slider", nil, sp)
   sl:SetOrientation("HORIZONTAL")
   sl:SetWidth(144); sl:SetHeight(16)
-  sl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 6 * 19 - 2)
+  sl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 10 * 19 - 2 - 16)
   sl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
     tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
   sl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -2829,14 +3066,14 @@ local function BuildSettings(search)
   -- the book's size: from 15% smaller to 25% larger than its own; it takes effect when the
   -- slider is let go, so the panel does not shift under the mouse while dragging
   local bl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 7 * 19 - 3)
+  bl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 3 * 19 - 3)
   bl:SetText(AzT("Book size"))
   local bv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 7 * 19 - 3)
+  bv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 3 * 19 - 3)
   local bsl = CreateFrame("Slider", nil, sp)
   bsl:SetOrientation("HORIZONTAL")
   bsl:SetWidth(144); bsl:SetHeight(16)
-  bsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 8 * 19 - 2)
+  bsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 4 * 19 - 2)
   bsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
     tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
   bsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -2866,9 +3103,43 @@ local function BuildSettings(search)
   bsl:SetScript("OnLeave", function() GameTooltip:Hide() end)
   bsl.held, bsl.pending = false, false
   sp.bookSize = bsl
+  -- the wishlist window's size, from 60% to 140% of its own: each player sets what reads
+  -- well on his screen (a long wishlist still shrinks to fit below the window's top)
+  local wl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  wl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 7 * 19 - 3 - 16)
+  wl:SetText(AzT("Wishlist size"))
+  local wv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  wv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 7 * 19 - 3 - 16)
+  local wsl = CreateFrame("Slider", nil, sp)
+  wsl:SetOrientation("HORIZONTAL")
+  wsl:SetWidth(144); wsl:SetHeight(16)
+  wsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 8 * 19 - 2 - 16)
+  wsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
+    tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
+  wsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+  wsl:SetMinMaxValues(0.6, 1.4)
+  wsl:SetValueStep(0.05)
+  wsl.label = wv
+  wsl.Show_ = function(self, v) self.label:SetText(math.floor(v * 100 + 0.5) .. "%") end
+  wsl:SetScript("OnValueChanged", function()
+    local v = this:GetValue() or arg1 or 1
+    v = math.floor(v * 20 + 0.5) / 20
+    DB().trackerScale = v
+    this:Show_(v)
+    if AzlFitTracker then AzlFitTracker() end
+  end)
+  wsl:SetScript("OnEnter", function()
+    sub:Hide(); lsub:Hide()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    GameTooltip:AddLine(AzT("Wishlist size"), 1, 0.82, 0)
+    GameTooltip:AddLine(AzT("Makes the wishlist window smaller or larger: from 60% to 140%."), 0.85, 0.85, 0.85, 1)
+    GameTooltip:Show()
+  end)
+  wsl:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  sp.trackSize = wsl
   -- a window dragged off the screen (or lost after a change of resolution) comes back here
   local rs = Row(sp, 152)
-  rs:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 9 * 19 - 6)
+  rs:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 11 * 19 - 6 - 16)
   local rst = rs:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   rst:SetPoint("LEFT", rs, "LEFT", 4, 0); rst:SetText(AzT("Reset Wishlist position"))
   rs:SetScript("OnClick", function() Azerloot_ResetTracker() end)
@@ -2897,7 +3168,7 @@ local function BuildSettings(search)
     local o = sp.switches[i]
     table.insert(sp.lines, { o, o.label, o.value })
   end
-  sp.sliders = { { sl, ol, ov }, { bsl, bl, bv } }
+  sp.sliders = { { sl, ol, ov }, { bsl, bl, bv }, { wsl, wl, wv } }
   sp.Fit = function(self)
     local need = 152
     for i = 1, table.getn(self.lines) do
@@ -2915,6 +3186,7 @@ local function BuildSettings(search)
     for i = 1, table.getn(self.lines) do self.lines[i][1]:SetWidth(need) end
     for i = 1, table.getn(self.sliders) do self.sliders[i][1]:SetWidth(need - 8) end
     self.div:SetWidth(need + 2)
+    if self.div2 then self.div2:SetWidth(need + 2) end
   end
   sp:SetScript("OnHide", function() if not (MouseIsOver and MouseIsOver(gear)) then gear:Lit(false) end end)
   sp:Hide()
@@ -2927,6 +3199,8 @@ local function BuildSettings(search)
     sp.opacity:SetValue(a); sp.opacity:Show_(a)
     local bs = (type(AzerlootDB) == "table" and AzerlootDB.bookSize) or 1
     sp.bookSize.held = true; sp.bookSize:SetValue(bs); sp.bookSize.held = false; sp.bookSize:Show_(bs)
+    local ts = (type(AzerlootDB) == "table" and AzerlootDB.trackerScale) or 1
+    sp.trackSize:SetValue(ts); sp.trackSize:Show_(ts)
     sp:Show()
     sp:Fit()
   end)
@@ -3100,22 +3374,91 @@ local function BuildBossView(Strip)
   skull:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
   skull:SetWidth(18); skull:SetHeight(18)
   skull:SetPoint("RIGHT", B.dangers, "RIGHT", -22, 0)
-  for i = 1, 3 do
-    local r = CreateFrame("Frame", nil, ui.bossView)
-    r:SetWidth(310); r:SetHeight(26)
-    local ib = SetIcon(r, 22)
-    ib:SetPoint("TOPLEFT", r, "TOPLEFT", 0, -2)
+  -- one icon for each attack (and one for what it does once wounded)
+  B.dicons = {}
+  for i = 1, 8 do
+    local r = CreateFrame("Button", nil, ui.bossView)
+    r:SetWidth(26); r:SetHeight(26)
+    local ib = SetIcon(r, 26)
+    ib:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
     r.icon = ib.icon
-    local nm = Engraved(Heading(Font(r, "GameFontNormal", INK), 15))
-    nm:SetPoint("TOPLEFT", r, "TOPLEFT", 32, 0)
-    r.name = nm
-    local tx = Engraved(Font(r, "GameFontNormalSmall", INK_SOFT, 12))
-    tx:SetPoint("TOPLEFT", r, "TOPLEFT", 32, -17)
-    tx:SetWidth(278); tx:SetJustifyH("LEFT")
-    r.text = tx
+    -- above the icon, as for the chosen class on the loot page but always in the book's
+    -- gold: the picked one gets a gold frame, a breathing glow and a few sparks; the one
+    -- under the mouse a soft light (the icon's own frame would cover anything on the button)
+    local ov = CreateFrame("Frame", nil, r)
+    ov:SetAllPoints(r); ov:SetFrameLevel(ib:GetFrameLevel() + 2)
+    local GR, GG, GB = 1, 0.78, 0.25
+    local edges = {}
+    for k = 1, 4 do
+      local e = ov:CreateTexture(nil, "ARTWORK"); e:SetTexture(WHITE); e:SetVertexColor(GR, GG, GB)
+      if k <= 2 then e:SetHeight(2) else e:SetWidth(2) end
+      e:Hide(); edges[k] = e
+    end
+    edges[1]:SetPoint("TOPLEFT", r, "TOPLEFT", -2, 2); edges[1]:SetPoint("TOPRIGHT", r, "TOPRIGHT", 2, 2)
+    edges[2]:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", -2, -2); edges[2]:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 2, -2)
+    edges[3]:SetPoint("TOPLEFT", r, "TOPLEFT", -2, 2); edges[3]:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", -2, -2)
+    edges[4]:SetPoint("TOPRIGHT", r, "TOPRIGHT", 2, 2); edges[4]:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 2, -2)
+    r.edges = edges
+    local sel = ov:CreateTexture(nil, "OVERLAY")
+    sel:SetTexture(MEDIA .. "selglow.tga"); sel:SetVertexColor(GR, GG, GB)
+    sel:SetWidth(56); sel:SetHeight(56); sel:SetPoint("CENTER", r, "CENTER", 0, 0)
+    sel:Hide()
+    r.sel = sel
+    local sp = ov:CreateTexture(nil, "OVERLAY")
+    sp:SetTexture(MEDIA .. "selsparks.tga"); sp:SetVertexColor(GR, GG, GB)
+    sp:SetWidth(56); sp:SetHeight(56); sp:SetPoint("CENTER", r, "CENTER", 0, 0)
+    sp:Hide()
+    r.sparks = sp
+    local lit = ov:CreateTexture(nil, "OVERLAY")
+    lit:SetTexture(GLOW); lit:SetBlendMode("ADD"); lit:SetAlpha(0.5)
+    lit:SetPoint("TOPLEFT", r, "TOPLEFT", -6, 6); lit:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 6, -6)
+    lit:Hide()
+    r.lit = lit
+    r.Pick = function(self, on)
+      self.on = on
+      for k = 1, 4 do if on then self.edges[k]:Show() else self.edges[k]:Hide() end end
+      if on then self.sel:Show(); self.sparks:Show() else self.sel:Hide(); self.sparks:Hide() end
+    end
+    r:SetScript("OnEnter", function()
+      local a = this.ab
+      if not a then return end
+      this.lit:Show()
+      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+      GameTooltip:AddLine(AzlDangerName(a), 1, 0.82, 0)
+      GameTooltip:AddLine(AzlDangerText(a), 1, 1, 1, 1)
+      if a.cd then GameTooltip:AddLine(AzT("Every %s sec.", AzlNum(a.cd)), 0.6, 0.6, 0.6) end
+      GameTooltip:Show()
+    end)
+    r:SetScript("OnLeave", function() this.lit:Hide(); GameTooltip:Hide() end)
+    r:SetScript("OnClick", function()
+      B.pick = this.index
+      if B.redraw then B.redraw() end
+    end)
     r:Hide()
-    B.abilities[i] = r
+    B.dicons[i] = r
   end
+  -- the picked attack's glow breathes and its sparks twinkle, as the chosen class's do
+  local pulseF, pulse = CreateFrame("Frame", nil, ui.bossView), 0
+  pulseF:SetScript("OnUpdate", function()
+    pulse = pulse + (arg1 or 0)
+    for k = 1, table.getn(B.dicons) do
+      local d = B.dicons[k]
+      if d.on and d:IsShown() then
+        d.sel:SetAlpha(0.72 + 0.28 * math.sin(pulse * 2.6))
+        local grow = 56 + 3 * math.sin(pulse * 2.6)
+        d.sel:SetWidth(grow); d.sel:SetHeight(grow)
+        d.sparks:SetAlpha(0.35 + 0.45 * (0.5 + 0.5 * math.sin(pulse * 1.7 + 1.3)))
+      end
+    end
+  end)
+  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", INK), 15))
+  -- a fine ink line under the name, as under a build's name on the builds page
+  B.dline = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dline:SetTexture(WHITE)
+  B.dline:SetVertexColor(INK[1], INK[2], INK[3]); B.dline:SetAlpha(0.45); B.dline:SetHeight(1)
+  B.dline:SetWidth(310)
+  B.dtext = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK_SOFT, 12))
+  B.dtext:SetWidth(310); B.dtext:SetJustifyH("LEFT")
+  B.dname:Hide(); B.dline:Hide(); B.dtext:Hide()
 
   -- LOOT: each piece with a round brass button for the wishlist
   B.loot = Strip(ui.bossView, "Loot")
@@ -3765,6 +4108,8 @@ local function Build()
     end
     local w = Wish()
     for k in pairs(w) do w[k] = nil end
+    -- an empty wishlist is no build any more
+    if AzlB and AzlB.All then AzlB.All(PlayerClass()).active = nil end
     this:Reset()
     state.selected = nil
     Refresh()
@@ -4230,6 +4575,7 @@ local function Build()
   K.hint:SetPoint("TOP", ui.right, "TOP", 0, -42)
   K.hint:SetWidth(330)
   K.hint:SetText(AzT("Click every piece the game's Collection shows you own."))
+  K.hint:Show(); AzlFitText(K.hint, 326, 12, 10)   -- one line in every language, clear of the boxes
   -- six ranks as six cards in two columns, read like a book: common to uncommon, rare to
   -- epic, the PvP set to legendary. Each card: the rank's name in its colour over a fine
   -- line of that colour, its count at the right, and its pieces in two lines of five
@@ -4438,6 +4784,13 @@ local function TrackerDB()
   return AzerlootDB
 end
 
+-- true while the window is locked and a run is on: it lets the clicks through
+function AzlTrackerThrough()
+  if not (type(AzerlootDB) == "table" and AzerlootDB.trackerLocked) then return false end
+  local ph = AzlPhase and AzlPhase()
+  return ph == "playing" or ph == "ready"
+end
+
 -- closed: the lock lights up gold and the corner grip goes; open: a dim lock and the grip
 local function TrackerLockLook()
   if not tracker or not tracker.lock then return end
@@ -4457,6 +4810,60 @@ Azerloot_ClassCoords = {
   priest = { 0.49609375, 0.7421875, 0.25, 0.5 }, warlock = { 0.7421875, 0.98828125, 0.25, 0.5 }, paladin = { 0, 0.25, 0.5, 0.75 },
 }
 
+-- the window at its place: offsets are given in the window's own units, so a window scaled
+-- down is placed with them divided by its scale
+function AzlAnchorTracker()
+  if not tracker then return end
+  local sc = tracker:GetScale()
+  if type(sc) ~= "number" or sc <= 0 then sc = 1 end
+  local p = TrackerDB().trackerPos
+  tracker:ClearAllPoints()
+  if type(p) == "table" and type(p[3]) == "number" then
+    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1] / sc, p[3] / sc)
+  elseif type(p) == "table" and type(p[1]) == "number" and type(p[2]) == "number" then
+    tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", p[1] / sc, p[2] / sc)
+  else
+    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20 / sc, -220 / sc)
+  end
+end
+-- The window at the size the player set in the settings (60% to 140%); one longer than
+-- the room below its top (a smaller screen, a long run) is scaled down until it fits,
+-- never below 45%; with room again it grows back.
+function AzlFitTracker()
+  if not tracker or (tracker.grip and tracker.grip.sizing) then return end
+  local sh, h = UIParent:GetHeight(), tracker:GetHeight()
+  if type(sh) ~= "number" or type(h) ~= "number" then return end
+  if sh <= 0 or h <= 0 then return end
+  local p = TrackerDB().trackerPos
+  local fromTop = (type(p) == "table" and type(p[3]) == "number") and p[3] or -220
+  if type(p) == "table" and type(p[3]) ~= "number" and type(p[2]) == "number" then fromTop = p[2] - sh end
+  local room = sh + fromTop - 8          -- from the window's top to the screen's bottom
+  local base = tonumber(TrackerDB().trackerScale) or 1
+  local want = math.max(0.45, math.min(base, room / h))
+  local cur = tracker:GetScale()
+  if type(cur) ~= "number" or cur <= 0 then cur = 1 end
+  if math.abs(want - cur) > 0.02 then
+    tracker:SetScale(want)
+    AzlAnchorTracker()
+  end
+end
+-- the window kept by its upper left corner: dragged or sized, it is pinned there again, so
+-- it grows and shrinks downwards and opens at the same place in every run
+function AzlPinTracker()
+  if not tracker then return end
+  local l, t = tracker:GetLeft(), tracker:GetTop()
+  if not (l and t) then return end
+  local sc = tracker:GetScale()
+  if type(sc) ~= "number" or sc <= 0 then sc = 1 end
+  l, t = l * sc, t * sc   -- (the window's own units, when it is scaled down, into the screen's)
+  -- kept from the screen's top, not its bottom: the game may change the screen's height in
+  -- the interface's units at a run's start, and a window measured from the bottom then
+  -- slides down from the top
+  local top = UIParent:GetTop() or UIParent:GetHeight() or t
+  TrackerDB().trackerPos = { l, t, t - top }
+  if tracker.SetUserPlaced then tracker:SetUserPlaced(false) end
+  AzlAnchorTracker()
+end
 local function BuildTracker()
   tracker = CreateFrame("Frame", "AzerlootTracker", UIParent)
   tracker:SetWidth(TRACK_W); tracker:SetHeight(40)
@@ -4484,23 +4891,45 @@ local function BuildTracker()
     if not tracker.moving then return end
     tracker.moving = nil
     tracker:StopMovingOrSizing()
-    TrackerDB().trackerPos = { tracker:GetLeft(), tracker:GetTop() }
+    AzlPinTracker()
   end)
   -- an older version scaled the window; it is now sized by width and height instead
   if TrackerDB().trackerScale then TrackerDB().trackerScale = nil; tracker:SetScale(1) end
   -- a place saved under another resolution or UI scale may lie off the screen now: then
   -- the window starts again at its first place (so does a size taller than the screen)
+  -- (checked a few seconds later: right at login the screen's size is not settled yet, and a
+  -- place near its edge looked "off the screen", so the window jumped back to its first place)
   local pos = TrackerDB().trackerPos
-  local sw, sh = UIParent:GetWidth() or 0, UIParent:GetHeight() or 0
-  if pos and (type(pos[1]) ~= "number" or type(pos[2]) ~= "number" or (sw > 0 and (pos[1] < -40 or pos[1] > sw - 40 or pos[2] < 40 or pos[2] > sh + 10))) then
+  if pos and (type(pos[1]) ~= "number" or type(pos[2]) ~= "number") then
     TrackerDB().trackerPos = nil; pos = nil
   end
-  if sh > 0 and (TrackerDB().trackerH or 0) > sh - 40 then TrackerDB().trackerH = nil end
-  if pos then
-    tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", pos[1], pos[2])
+  -- the game itself keeps no place of its own for it: only the book's counts
+  if tracker.SetUserPlaced then tracker:SetUserPlaced(false) end
+  tracker:ClearAllPoints()
+  if pos and type(pos[3]) == "number" then
+    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos[1], pos[3])
+  elseif pos then
+    tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", pos[1], pos[2])   -- (kept so by 2.1.0)
   else
     tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, -220)
   end
+  local chk = CreateFrame("Frame")
+  chk:SetScript("OnUpdate", function()
+    this.t = (this.t or 0) + (arg1 or 0)
+    if this.t < 3 then return end
+    this:SetScript("OnUpdate", nil)
+    local sw, sh = UIParent:GetWidth() or 0, UIParent:GetHeight() or 0
+    local p = TrackerDB().trackerPos
+    if type(p) == "table" and type(p[3]) ~= "number" then
+      -- a place kept from the bottom (2.1.0): kept from the top from now on, where it is
+      AzlPinTracker(); p = TrackerDB().trackerPos
+    end
+    if sw > 0 and type(p) == "table" and type(p[3]) == "number" and (p[1] < -40 or p[1] > sw - 40 or p[3] > 40 or p[3] < -(sh - 40)) then
+      TrackerDB().trackerPos = nil
+      tracker:ClearAllPoints(); tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, -220)
+    end
+    if sh > 0 and (TrackerDB().trackerH or 0) > sh - 40 then TrackerDB().trackerH = nil; RefreshTracker() end
+  end)
   -- the head's words and emblem on a layer of their own, above the panels behind them
   local hf = CreateFrame("Frame", nil, tracker)
   hf:SetAllPoints(tracker); hf:SetFrameLevel(tracker:GetFrameLevel() + 2)
@@ -4518,6 +4947,21 @@ local function BuildTracker()
   emb:SetWidth(15); emb:SetHeight(15)
   emb:SetPoint("LEFT", title, "RIGHT", 4, -1)
   tracker.emblem = emb
+  -- a click on the head card: the builds to choose from, under it
+  local pb = CreateFrame("Button", nil, hf)
+  pb:SetFrameLevel(hf:GetFrameLevel() + 1)
+  pb:SetScript("OnClick", function()
+    if AzlB and AzlB.OpenPick then AzlB.OpenPick() end
+  end)
+  pb:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    GameTooltip:AddLine(AzT("Pick a build"), 1, 0.82, 0)
+    GameTooltip:AddLine(AzT("Click to choose one of your builds for the wishlist."), 0.85, 0.85, 0.85, 1)
+    GameTooltip:Show()
+  end)
+  pb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  pb:Hide()
+  tracker.pickBtn = pb
   -- with a build loaded, the head card: the build's name large, the window's name under it
   local sub = Font(hf, "GameFontHighlightSmall")
   sub:SetTextColor(0.8, 0.76, 0.68); sub:Hide()
@@ -4564,6 +5008,7 @@ local function BuildTracker()
     local db = TrackerDB()
     db.trackerLocked = not db.trackerLocked
     TrackerLockLook()
+    RefreshTracker()
     this:GetScript("OnEnter")()
   end)
   lock:SetScript("OnEnter", function()
@@ -4589,7 +5034,8 @@ local function BuildTracker()
   grip:SetScript("OnMouseDown", function()
     if TrackerDB().trackerLocked then return end
     local x, y = GetCursorPosition()
-    local s = UIParent:GetEffectiveScale()
+    local es = tracker.GetEffectiveScale and tracker:GetEffectiveScale()
+    local s = (type(es) == "number" and es > 0) and es or UIParent:GetEffectiveScale()
     this.startX, this.startY = x / s, y / s
     this.startW, this.startH = tracker:GetWidth(), tracker:GetHeight()
     this.sizing = true
@@ -4597,12 +5043,13 @@ local function BuildTracker()
   grip:SetScript("OnMouseUp", function()
     if not this.sizing then return end
     this.sizing = nil
-    TrackerDB().trackerPos = { tracker:GetLeft(), tracker:GetTop() }
+    AzlPinTracker()
   end)
   grip:SetScript("OnUpdate", function()
     if not this.sizing then return end
     local x, y = GetCursorPosition()
-    local s = UIParent:GetEffectiveScale()
+    local es = tracker.GetEffectiveScale and tracker:GetEffectiveScale()
+    local s = (type(es) == "number" and es > 0) and es or UIParent:GetEffectiveScale()
     x, y = x / s, y / s
     local w = this.startW + (x - this.startX)
     local h = this.startH - (y - this.startY)   -- the screen counts upwards
@@ -4624,8 +5071,8 @@ function Azerloot_ResetTracker()
   db.trackerPos, db.trackerW, db.trackerH, db.trackerLocked = nil, nil, nil, nil
   db.tracker = true
   if tracker then
-    tracker:ClearAllPoints()
-    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, -220)
+    tracker:SetScale(1)
+    AzlAnchorTracker()
     TrackerLockLook()
   end
   RefreshTracker()
@@ -4775,7 +5222,16 @@ local function TrackerRow(i)
   r:SetScript("OnDragStart", function() tracker:GetScript("OnDragStart")() end)
   r:SetScript("OnDragStop", function() tracker:GetScript("OnDragStop")() end)
   r:SetScript("OnEnter", function()
-    if not this.entry then return end
+    if not this.entry then
+      if this.foldKey then
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(this.head:GetText() or "", 1, 0.82, 0)
+        GameTooltip:AddLine(AzT(this.folded and "Folded away: click to show it again." or "Click to fold it away."), 0.85, 0.85, 0.85, 1)
+        GameTooltip:AddLine(AzT("Right-click twice to take the whole section off your wishlist."), 0.6, 0.6, 0.6, 1)
+        GameTooltip:Show()
+      end
+      return
+    end
     GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
     local title, col, sub = EntryTitle(this.entry)
     GameTooltip:AddLine(title, col[1], col[2], col[3])
@@ -4783,6 +5239,8 @@ local function TrackerRow(i)
     local f, byHand = IsFound(this.entry)
     local loot = (this.entry.kind == "LootItem")
     if f then GameTooltip:AddLine(AzT((loot and "In your collection") or (byHand and "Found in this run") or "Worn in this run"), 0.3, 1, 0.45) end
+    -- the game's own words for a worn piece, shown short in the window
+    if this.longText then GameTooltip:AddLine(this.longText, 0.3, 1, 0.3, 1) end
     if this.missed then GameTooltip:AddLine(AzT(this.missed), 1, 0.3, 0.25, 1) end
     if this.needed then GameTooltip:AddLine(AzT("Still needed in this run."), 1, 0.82, 0, 1) end
     local secs = EntrySections(this.entry, true)
@@ -4797,11 +5255,46 @@ local function TrackerRow(i)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine(AzT(loot and "Click to open its boss in the book. Right-click to mark it collected."
       or "Click to open it in the book. Right-click to mark it found."), 0.6, 0.6, 0.6, 1)
+    GameTooltip:AddLine(AzT("Shift-right-click takes it off your wishlist."), 0.6, 0.6, 0.6, 1)
     GameTooltip:Show()
   end)
   r:SetScript("OnLeave", function() GameTooltip:Hide() end)
   r:SetScript("OnClick", function()
-    if not this.entry then return end
+    if not this.entry then
+      -- a heading's right-click: the whole section off the wishlist, after a second click
+      if this.foldKey and arg1 == "RightButton" then
+        local armed = AzlTrackClear and AzlTrackClear.key == this.foldKey and GetTime() < AzlTrackClear.till
+        if armed then
+          AzlTrackClear = nil
+          AzlUnwish(this.sectionEntries or {})
+          RefreshTracker(); Refresh()
+        else
+          AzlTrackClear = { key = this.foldKey, till = GetTime() + 3 }
+          -- the heading's own words again once the 3 seconds are over
+          if not AzlTrackClearF then
+            AzlTrackClearF = CreateFrame("Frame")
+            AzlTrackClearF:SetScript("OnUpdate", function()
+              if AzlTrackClear and GetTime() >= AzlTrackClear.till then AzlTrackClear = nil; RefreshTracker() end
+            end)
+          end
+          RefreshTracker()
+        end
+        return
+      end
+      -- a heading: its section folds away, or opens again
+      if this.foldKey then
+        local db = TrackerDB()
+        if type(db.fold) ~= "table" then db.fold = {} end
+        db.fold[this.foldKey] = not db.fold[this.foldKey] or nil
+        RefreshTracker()
+      end
+      return
+    end
+    if arg1 == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() then
+      -- shift and right-click: off the wishlist
+      AzlUnwish({ this.entry }); RefreshTracker(); Refresh()
+      return
+    end
     if arg1 == "RightButton" then
       ToggleMark(this.entry); RefreshTracker(); Refresh()
       return
@@ -5096,10 +5589,20 @@ function AzlTrackerCard(b, ci, waiting)
   t:SetPoint("TOPLEFT", tracker, "TOPLEFT", 8, -9)
   e:SetPoint("LEFT", t, "RIGHT", 4, -1)
   sub:Hide()
+  -- builds made but none loaded (none chosen, or one taken apart): a line under the title
+  -- says a click on it brings the choice back
+  local hint = AzlB and AzlB.Count and AzlB.Count(PlayerClass()) > 0 and not (AzlB.Picking and AzlB.Picking())
+  if hint then
+    sub:ClearAllPoints(); sub:SetPoint("TOPLEFT", t, "BOTTOMLEFT", 0, -2)
+    sub:SetText("|cffffd100" .. AzT("Click here to pick a build") .. "|r")
+    sub:Show()
+  end
   if lv:IsShown() then
-    lv:SetPoint("LEFT", tracker, "TOPLEFT", 10, -36)
+    lv:SetPoint("LEFT", tracker, "TOPLEFT", 10, hint and -50 or -36)
+    if hint then return -62, -68, true end
     return -48, -54
   end
+  if hint then return -44, -49, true end
   return -30, -35
 end
 -- a heading's fine lines, one to each side of its signs, as long as each other; the right
@@ -5167,6 +5670,10 @@ end
 
 RefreshTracker = function()
   if not tracker then BuildTracker() end
+  -- locked during a run: clicks go through the window to the game (the lock itself, the
+  -- level-ups, the choice of a build and a left-click on a section's heading still count)
+  local through = AzlTrackerThrough()
+  tracker:EnableMouse(not through)
   local list = WishEntries()
   local n = table.getn(list)
   local worn = WornNames()
@@ -5212,7 +5719,10 @@ RefreshTracker = function()
   local lines = {}
   local function Section(title, entries, label)
     if table.getn(entries) == 0 then return end
-    table.insert(lines, { header = AzT(label or title), sign = AZL_TRACK_SIGNS[title], count = AzlSectionCount(title, entries) })
+    -- a section folded by a click on its heading keeps its heading and count only
+    local folded = type(TrackerDB().fold) == "table" and TrackerDB().fold[title]
+    table.insert(lines, { header = AzT(label or title), sign = AZL_TRACK_SIGNS[title], count = AzlSectionCount(title, entries), key = title, folded = folded, entries = entries })
+    if folded then return end
     for i = 1, table.getn(entries) do table.insert(lines, { entry = entries[i] }) end
   end
   -- the run's spells first, then its jewelry, last the boss loot for the collection
@@ -5236,8 +5746,18 @@ RefreshTracker = function()
     lvb:Hide()
   end
   if AzlB then y, cardBuild = AzlB.TrackerHead(tracker, W, y) end
-  local cardBottom, below = AzlTrackerCard(cardBuild, ci, waiting)
-  if cardBuild then y = below end
+  local cardBottom, below, hinted = AzlTrackerCard(cardBuild, ci, waiting)
+  if cardBuild or hinted then y = below end
+  -- the head card itself takes a click: the choice of a build opens under it
+  local pb = tracker.pickBtn
+  if pb then
+    pb:ClearAllPoints()
+    pb:SetPoint("TOPLEFT", tracker, "TOPLEFT", 4, -4)
+    -- (the title and the line under it only: the build's gems and the level-ups below keep
+    -- their own clicks)
+    pb:SetPoint("BOTTOMRIGHT", tracker, "TOPRIGHT", -30, (cardBuild and -46) or (hinted and -40) or -26)
+    if AzlB and AzlB.Count and AzlB.Count(PlayerClass()) > 0 then pb:Show() else pb:Hide() end
+  end
   -- the head card on its own panel, like the sections below it
   table.insert(pan, { t = -4, b = cardBottom, card = true })
   tracker:SetWidth(W)
@@ -5246,6 +5766,11 @@ RefreshTracker = function()
   tracker:SetBackdropBorderColor(0.8, 0.62, 0.28, math.min(1, alpha + 0.4))   -- a warm gold frame, as the book's
   for i = 1, math.max(table.getn(lines), table.getn(trackerRows)) do
     local r = TrackerRow(i)
+    -- (headings stay for a left-click that folds them; their right-click waits for the lock)
+    local isHead = (lines[i] and lines[i].header) and true or false
+    r:EnableMouse((not through) or isHead)
+    if through and isHead then r:RegisterForClicks("LeftButtonUp")
+    else r:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
     r:SetWidth(W - 12); r.name:SetWidth(W - 55)
     local l = lines[i]
     r:ClearAllPoints()
@@ -5257,6 +5782,12 @@ RefreshTracker = function()
       r.rank:Hide(); r.rankGlow:Hide(); r.rankLevel = 0
       for k = 1, 8 do r.rankRim[k]:Hide() end
       r.head:SetText(l.header); r.head:Show(); r.line:Hide(); r.band:Show(); r.status:Hide(); r.ask:Hide(); r.needed = false
+      r.foldKey, r.folded, r.sectionEntries = l.key, l.folded, l.entries
+      r.head:SetAlpha(l.folded and 0.6 or 1)
+      -- a right-click on the heading asks first: a second one within 3 seconds clears it
+      if AzlTrackClear and AzlTrackClear.key == l.key and GetTime() < AzlTrackClear.till then
+        r.head:SetText(AzT("Right-click again to clear"))
+      end
       r.count:SetText(l.count or ""); r.count:Show()
       r.sign:SetTexture(l.sign); r.sign:Show(); r.signL:SetTexture(l.sign); r.signL:Show()
       -- the waiting level-ups on the first heading only; none (or the setting off): nothing
@@ -5283,6 +5814,7 @@ RefreshTracker = function()
       r.levels:Hide()
       local e = l.entry
       r.entry = e
+      r.foldKey, r.longText = nil, nil
       r.cross:Hide(); r.missed = false
       local away = AzlOutOfReach(e, worn, wk)
       r.head:Hide(); r.line:Hide(); r.sign:Hide(); r.signL:Hide(); r.icon:Show(); r.name:Show()
@@ -5313,8 +5845,11 @@ RefreshTracker = function()
       end
       r.name:SetText(title); r.name:SetTextColor(col[1], col[2], col[3])
       AzlShowRank(r, rank, W)
+      -- a name over two lines (a long name, a long language) gets the room of both
+      local wrapped = (r.name:GetStringWidth() or 0) > W - 55
       local h = TRACK_ROW
-      if e.kind == "LootItem" and (r.name:GetStringWidth() or 0) > W - 55 then h = math.max(TRACK_ROW, (r.name:GetHeight() or 12) + 6) end
+      if wrapped then h = math.max(TRACK_ROW, (r.name:GetHeight() or 12) + 6) end
+      r.strike:ClearAllPoints(); r.strike:SetPoint("LEFT", r.name, "LEFT", -1, 0)
       if e.kind == "Spell" then
         -- a spell the hero has in this run gets the green check; its bonuses, read from the
         -- action bar, go under it
@@ -5354,7 +5889,9 @@ RefreshTracker = function()
         r.name:SetAlpha(1); r.strike:Hide()
         local text = WornLine(e)
         if text then
-          text = AzlNoEquip(text)
+          local long = AzlNoEquip(text)
+          text = AzlShortWorn(e, long)
+          if text ~= long then r.longText = long end
           r.bonus:SetText("|cff4dff4d" .. string.gsub(text, "\n", "|r\n|cff4dff4d") .. "|r")
           r.bonus:Show()
           r.icon:ClearAllPoints(); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 3, -1)
@@ -5369,10 +5906,14 @@ RefreshTracker = function()
         r.check:Hide(); r.name:SetAlpha(1); r.strike:Hide()
         if e.kind ~= "LootItem" then AzlNeeded(r) end
       end
-      -- a name with its zone over two lines: the icon at the top, and no line through the middle
-      if e.kind == "LootItem" and h > TRACK_ROW then
+      -- a name over two lines: the icon at the top; a loot name with its zone needs no line,
+      -- any other is struck through its first line, not between the two
+      if wrapped then
         r.icon:ClearAllPoints(); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 3, -1)
-        r.strike:Hide()
+        if e.kind == "LootItem" then r.strike:Hide()
+        else
+          r.strike:ClearAllPoints(); r.strike:SetPoint("LEFT", r.name, "TOPLEFT", -1, -7)
+        end
       end
       -- the check sits beside the name, however many lines follow under it
       r.check:ClearAllPoints()
@@ -5396,6 +5937,7 @@ RefreshTracker = function()
   AzlTrackerPanels(pan, W)
   -- as long as you pulled it, but never shorter than its entries
   tracker:SetHeight(math.max(-y + 14, TrackerDB().trackerH or 0))  -- room for the corner grip
+  AzlFitTracker()
   if (n > 0 or (AzlB and AzlB.TrackerWanted())) and TrackerDB().tracker then tracker:Show() else tracker:Hide() end
 end
 
@@ -5773,6 +6315,7 @@ local function WatchRun()
     runOver = false
     if type(AzerlootDB) == "table" then AzerlootDB.found = {}; AzerlootDB.jrank = {} end
     ForgetLearnedSpells()
+    AzlDropCollectedLoot()
     if AzlB then AzlB.NewRun() end
     RefreshTracker()
     if frame and frame:IsVisible() then Refresh() end
@@ -5785,6 +6328,13 @@ watcher:SetScript("OnUpdate", function()
   tick = 0
   WatchRun()
   if AzlC then AzlC.Tick() end
+  -- the screen's height in the interface's units changed (another resolution or scale,
+  -- or the game's own change at a run's start): the wishlist window fits itself again
+  local sh = UIParent:GetHeight()
+  if type(sh) == "number" and sh ~= AzlLastScreenH then
+    AzlLastScreenH = sh
+    if AzlFitTracker then AzlFitTracker() end
+  end
   if WishLearnedSpells() then
     RefreshTracker()
     if frame and frame:IsVisible() then Refresh() end

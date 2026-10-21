@@ -1,4 +1,4 @@
-Azerloot 2.1.0 - the loot book for Azeroth Survivors, by Kindagrey
+Azerloot 2.2.0 - the loot book for Azeroth Survivors, by Kindagrey
 ===================================================================
 
 Every boss drop in every zone, every ring, trinket and amulet at every rarity, each
@@ -32,9 +32,12 @@ Title page   Your class's progress, the chapters and a saying. Click "Azerloot" 
              the top bar to come back to it.
 Jewelry      Every ring, trinket, basic amulet and class amulet, with its value at
              every rarity.
-Loot         Every zone and boss: how they fight and what each class can take from
-             them. Collection Book: click a piece to mark it collected, right-click to
-             put it on your wishlist.
+Loot         Every zone and boss: what each class can take from them and how they
+             fight. Every attack is an icon under "Dangers", read from the game's own
+             code: its shape, size, warning time and cooldown. Hover an icon for all
+             of it, click one to show it on the page; the last icon tells what the
+             boss does once wounded. Collection Book: click a piece to mark it
+             collected, right-click to put it on your wishlist.
 Spells       Every class's spells. With the spell tracker on, spells you pick up in a
              run join the wishlist window and show their upgrades as they grow.
 Builds       Up to five builds per class: your class's starting spell, five more
@@ -56,10 +59,26 @@ Chronicle    Every run you finish, per class: the last 50, your best run pinned 
              deleted builds included. Runs you leave with the game's own button are
              not written down.
 
+
+
+THE WISHLIST WINDOW
+-------------------
+What you still need in this run, ticked off as it comes: your spells, your jewelry
+and boss loot for your collection, each in its own section.
+    Click an entry              open it in the book
+    Right-click an entry        mark it found (or collected)
+    Shift-right-click           take it off your wishlist
+    Click a section heading     fold it away or open it again
+    Right-click a heading twice take the whole section off your wishlist
+    Click the window's head     pick one of your builds, at any time
+The lock (top right) keeps the window in place. Locked during a run, clicks go
+through it to the game; its headings still fold. Taking parts of a loaded build off
+the wishlist unloads the build ("Load into wishlist" brings it back whole).
+
 Search (top bar): rings, trinkets, amulets, boss loot, bosses, zones and pages.
-Settings (gear in the top bar): language (English, Deutsch, Français, Español,
-Português or Auto), font (easier-to-read fonts, e.g. for dyslexia), spell tracker,
-wishlist window, minimap button, wishlist opacity and book size.
+Settings (gear in the top bar): font, language (English, Deutsch, Français, Español,
+Português or Auto), minimap button and book size; then the wishlist window: on/off,
+spell tracker, its size, its opacity, and back to its first place.
 
 
 FILES

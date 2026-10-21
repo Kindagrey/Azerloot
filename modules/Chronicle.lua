@@ -272,12 +272,23 @@ local function Score(r)
   return (r.won and 1e12 or 0) + (tonumber(r.t) or 0) * 1e6 + (tonumber(r.kills) or 0)
 end
 C.Score = Score
-C.RECORDS = { "t", "kills", "dealt", "level", "bosses", "gold" }
+-- the records, in their order on the page: four on top, three under them
+C.RECORDS = { "t", "level", "kills", "bosses", "dealt", "dps", "gold" }
+-- a run's damage per second over the whole run (a run of half a minute or less tells nothing)
+function C.Dps(run)
+  local t, d = tonumber(run.t) or 0, tonumber(run.dealt)
+  if d and t >= 30 then return d / t end
+  return nil
+end
+function C.RecValue(run, f)
+  if f == "dps" then return C.Dps(run) end
+  return tonumber(run[f])
+end
 function C.Note(bk, run)
   if not bk.best or Score(run) > Score(bk.best) then bk.best = run end
   for i = 1, table.getn(C.RECORDS) do
     local f = C.RECORDS[i]
-    local v = tonumber(run[f])
+    local v = C.RecValue(run, f)
     if v and v > 0 and (not bk.rec[f] or v > (tonumber(bk.rec[f].v) or 0)) then
       bk.rec[f] = { v = v, id = run.id, at = run.at }
     end
@@ -606,6 +617,8 @@ function C.Icon(P, size)
   local Z = AZL
   local f = CreateFrame("Frame", nil, P)
   f:SetWidth(size); f:SetHeight(size)
+  -- the same soft shadow as the build page's icons, so it lies on the page
+  Z.DropShadow(f, f, 3, -4, math.floor(size / 2), 0.8, "shadow.tga")
   local rim = f:CreateTexture(nil, "BORDER"); rim:SetTexture(Z.WHITE); rim:SetVertexColor(0.16, 0.09, 0.03)
   rim:SetPoint("TOPLEFT", f, "TOPLEFT", -2, 2); rim:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 2, -2)
   local ic = f:CreateTexture(nil, "ARTWORK"); ic:SetAllPoints(f); ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
@@ -680,12 +693,13 @@ function C.MakeLeft(P)
   C.L = Lf
   Lf.bestHead = C.Head(P, ui.left, -6)
   Lf.bestHead:SetText(AzT("Personal Bests"))
-  -- the records: three side by side, three under them
+  -- the records: four side by side, three centred under them
   Lf.recs = {}
-  for k = 1, 6 do
+  for k = 1, table.getn(C.RECORDS) do
     local f = CreateFrame("Frame", nil, P)
-    f:SetWidth(110); f:SetHeight(30)
-    f:SetPoint("TOP", ui.left, "TOPLEFT", PAGE_MID + (Mod(k - 1, 3) - 1) * 116, -30 - math.floor((k - 1) / 3) * 34)
+    f:SetWidth(86); f:SetHeight(30)
+    local x = (k <= 4) and (k - 2.5) * 88 or (k - 6) * 88
+    f:SetPoint("TOP", ui.left, "TOPLEFT", PAGE_MID + x, -30 - ((k <= 4) and 0 or 34))
     local v = Z.Engraved(Z.Heading(Z.Font(f, "GameFontNormal", Z.INK), 16))
     v:SetPoint("TOP", f, "TOP", 0, 0)
     local l = Z.Engraved(Z.Font(f, "GameFontNormalSmall", Z.INK_SOFT, 10))
@@ -1139,15 +1153,16 @@ end
 
 -- ---------- drawing ----------
 local REC_LABEL = { t = "Longest run", kills = "Most kills", dealt = "Most damage", level = "Highest level",
-  bosses = "Most bosses", gold = "Most gold" }
+  bosses = "Most bosses", gold = "Most gold", dps = "Highest DPS" }
 function C.DrawLeft(cls)
   local Lf = C.L
   local bk = C.Book(cls)
-  for k = 1, 6 do
+  for k = 1, table.getn(C.RECORDS) do
     local f, fld = Lf.recs[k], C.RECORDS[k]
     local rc = bk.rec[fld]
-    local v = rc and ((fld == "t") and C.Time(rc.v) or C.Big(rc.v)) or "-"
+    local v = rc and ((fld == "t") and C.Time(rc.v) or C.Big(math.floor((tonumber(rc.v) or 0) + 0.5))) or "-"
     f.v:SetText(v); f.l:SetText(AzT(REC_LABEL[fld]))
+    if AzlFitText then AzlFitText(f.l, 84, 10, 8) end
     f.tip = rc and { AzT(REC_LABEL[fld]), AzT("Set on %s. Kept for good, until you beat it.", C.Date(rc.at, true)) } or nil
   end
   -- the filter's label: all builds or the build shown
@@ -1419,6 +1434,16 @@ function C.Tidy()
       for k = 1, table.getn(bk.runs) do if bk.runs[k].demo then has = true end end
     end
     if has then C.ClearDemo(cls) end
+  end
+  for cls, bk in pairs(AzerlootDB.chronicle) do
+    if type(bk) == "table" then bk.tally = nil end   -- (counts of a statistics page since taken out)
+  end
+  -- the DPS record, for runs written before it was kept
+  for cls, bk in pairs(AzerlootDB.chronicle) do
+    if type(bk) == "table" and type(bk.runs) == "table" and type(bk.rec) == "table" and not bk.rec.dps then
+      for k = table.getn(bk.runs), 1, -1 do C.Note(bk, bk.runs[k]) end
+      if bk.best then C.Note(bk, bk.best) end
+    end
   end
 end
 local tidy = CreateFrame("Frame")

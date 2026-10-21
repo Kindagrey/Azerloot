@@ -230,6 +230,23 @@ function B.Apply(cls, i, quiet)
   if Z.Frame() and Z.Frame():IsVisible() then Z.Refresh() end
 end
 
+-- parts of the loaded build taken off the wishlist by hand: the wishlist is no longer that
+-- build, so it is no longer loaded (the window's head, the chronicle and the "Loaded" button
+-- go by it); loading it again brings every part back
+function B.Unwished(cls, keys)
+  local t = B.All(cls)
+  local b = t.active and t.list[t.active]
+  if not b then return end
+  local mine = {}
+  for n = 1, table.getn(b.items or {}) do mine[RecKey(b.items[n])] = true end
+  for i = 1, table.getn(keys) do
+    if mine[keys[i]] then
+      t.active = nil
+      return
+    end
+  end
+end
+
 -- how much of a build the run has brought: spells known, jewelry worn or marked found
 function B.Progress(cls, b)
   local Z = AZL
@@ -429,8 +446,8 @@ local function CloseBosses()
       local ab = zones[z].bosses[b].abilities or {}
       local close = false
       for a = 1, table.getn(ab) do
-        local t = ab[a].text or ""
-        if string.find(t, "Keep your distance") or string.find(t, "Stay out of its reach") then close = true end
+        local k = ab[a].kind
+        if k == "nova" or k == "ring" or k == "spin" or k == "combo_out" or k == "combo_in" then close = true end
       end
       if close then n = n + 1 end
     end
@@ -572,6 +589,8 @@ end
 function B.Picking()
   if type(AzerlootDB) ~= "table" or not AzerlootDB.buildPick then return false end
   if B.Count(AZL.PlayerClass()) == 0 then return false end
+  -- opened by a click on the window's head: open until a build is chosen or it is closed
+  if AzerlootDB.buildPick == "manual" then return true end
   local ph = (AzlPhase and AzlPhase()) or (AZS_GetPhase and AZS_GetPhase()) or nil
   if ph ~= "ready" and ph ~= "playing" then return false end
   local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() or 0 end)
@@ -579,6 +598,13 @@ function B.Picking()
   return true
 end
 function B.TrackerWanted() return B.Picking() end
+-- the choice of a build, opened by hand (a click on the wishlist window's head); a second
+-- click closes it again
+function B.OpenPick()
+  if type(AzerlootDB) ~= "table" then return end
+  if B.Picking() then AzerlootDB.buildPick = nil else AzerlootDB.buildPick = "manual" end
+  AZL.RefreshTracker()
+end
 
 -- ---------- small parts of the pages ----------
 -- a small wooden button with a carved label, like the book's other buttons
@@ -1417,6 +1443,7 @@ function B.MakePane()
     if not this.armed then
       this.armed = 3
       this:SetLabel(AzT("Click again"), { 1, 0.45, 0.35 })
+      B.FitButtons()
       return
     end
     this.armed = false
@@ -1429,7 +1456,7 @@ function B.MakePane()
   R.del:SetScript("OnUpdate", function()
     if not this.armed then return end
     this.armed = this.armed - (arg1 or 0)
-    if this.armed <= 0 then this.armed = false; this:SetLabel(AzT("Delete")) end
+    if this.armed <= 0 then this.armed = false; this:SetLabel(AzT("Delete")); B.FitButtons() end
   end)
   -- with no build chosen: a few words instead
   local em = Z.Font(P, "GameFontNormal", Z.INK_SOFT, 14)
@@ -1610,10 +1637,43 @@ function B.Draw()
   end
   if t.active == B.sel then R.load:SetLabel(AzT("Loaded"), { 0.55, 1, 0.45 })
   else R.load:SetLabel(AzT("Load into wishlist")) end
-  -- the four buttons as one row in the middle of the page
-  local total = 18
+  B.FitButtons()
+end
+
+-- the four buttons as one row in the middle of the page; where the words run long
+-- (German, Portuguese) they get a smaller type and less wood round it, so the row
+-- stays on the page
+function B.FitButtons()
+  local R = B.R
+  if not (R and R.load) then return end
+  local ui = AZL.ui
   local row = { R.load, R.share, R.import, R.del }
-  for k = 1, 4 do local w = row[k]:GetWidth(); total = total + (type(w) == "number" and w or 60) end
+  local MAXW = 336
+  local function Total(pad)
+    local total = 18
+    for k = 1, 4 do
+      local tw = row[k].text and row[k].text:GetStringWidth()
+      if type(tw) ~= "number" then tw = 40 end
+      total = total + math.max(54, tw + pad)
+    end
+    return total
+  end
+  local size, pad = 11, 26
+  for k = 1, 4 do AzlFitText(row[k].text, 9999, 11, 11) end
+  if Total(pad) > MAXW then
+    size = 10
+    for k = 1, 4 do AzlFitText(row[k].text, 9999, 10, 10) end
+    pad = 26
+    while pad > 14 and Total(pad) > MAXW do pad = pad - 2 end
+  end
+  local total = 18
+  for k = 1, 4 do
+    local tw = row[k].text:GetStringWidth()
+    if type(tw) ~= "number" then tw = 40 end
+    local w = math.max(54, tw + pad)
+    row[k]:SetWidth(w)
+    total = total + w
+  end
   R.load:ClearAllPoints()
   R.load:SetPoint("BOTTOMLEFT", ui.right, "BOTTOMLEFT", math.floor(PAGE_MID - total / 2), 1)
 end

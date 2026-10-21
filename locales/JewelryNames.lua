@@ -615,6 +615,7 @@ Azerloot_Names = {
 
 -- the icon of each legendary amulet, for telling them apart in the neck slot
 Azerloot_AmuletIcons = {
+  ["The Legionlord's Medallion"] = "INV_Jewelry_Necklace_13",
   ["Eye of the Splitting Sky"] = "INV_Jewelry_Necklace_16",
   ["Stormcaller's Amulet"] = "INV_Jewelry_Necklace_AhnQiraj_02",
   ["Heart of the Earthshaker"] = "INV_Jewelry_Necklace_AhnQiraj_03",
