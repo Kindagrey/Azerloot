@@ -5752,7 +5752,7 @@ Azerloot_GT.fr = {
 }
 Azerloot_GT.es = {
   exact = {
-    ["The Legionlord's Medallion"] = "Medallón del señor de la Legión",
+    ["The Legionlord's Medallion"] = "Medallón del Señor de la Legión",
     ["Demonic Empowerment"] = "Potenciación demoníaca",
     ["Your critical hits"] = "Tus golpes críticos",
     ["Female"] = "Mujer",
@@ -8662,7 +8662,7 @@ Azerloot_GT.es = {
 }
 Azerloot_GT.pt = {
   exact = {
-    ["The Legionlord's Medallion"] = "Medalhão do Senhor da Legião",
+    ["The Legionlord's Medallion"] = "O Medalhão do Senhor da Legião",
     ["Demonic Empowerment"] = "Potencialização Demoníaca",
     ["Your critical hits"] = "Seus acertos críticos",
     ["Female"] = "Feminino",
