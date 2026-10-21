@@ -160,21 +160,36 @@ end
 local alert   -- the big words' place (built on first use)
 local boxes = {}
 local BOX = {
-  main = { name = "AzerlootBossAlert", w = 700, h = 80, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos",
+  main = { name = "AzerlootBossAlert", w = 700, h = 80, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos", size = "alertScale",
     point = { "TOP", "TOP", 0, -150 } },
-  small = { name = "AzerlootSmallAlert", w = 460, h = 46, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos",
+  small = { name = "AzerlootSmallAlert", w = 460, h = 46, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos", size = "smallScale",
     point = { "BOTTOM", "BOTTOM", 0, 190 } },
 }
 local Show
+-- each place's size, as the player made it with the mouse wheel: from half to twice its own
+local function Size(kind)
+  local v = tonumber(DB()[BOX[kind].size]) or 1
+  if v < 0.5 then v = 0.5 elseif v > 2 then v = 2 end
+  return v
+end
+W.Size = Size
+-- (a place is kept in the screen's own measure, its top in the middle: it grows and shrinks
+-- from there; the frame's offsets are in its own, scaled measure)
 local function Place(f)
   local c = BOX[f.kind]
   local p = DB()[c.pos]
+  local sc = Size(f.kind)
+  f:SetScale(sc)
   f:ClearAllPoints()
   if type(p) == "table" and tonumber(p[1]) and tonumber(p[2]) then
-    f:SetPoint("TOP", UIParent, "BOTTOMLEFT", p[1], p[2])
+    f:SetPoint("TOP", UIParent, "BOTTOMLEFT", p[1] / sc, p[2] / sc)
   else
-    f:SetPoint(c.point[1], UIParent, c.point[2], c.point[3], c.point[4])
+    f:SetPoint(c.point[1], UIParent, c.point[2], c.point[3] / sc, c.point[4] / sc)
   end
+end
+-- while being moved: the example names the place's size
+local function MoveText(f)
+  f.text:SetText("Azerwarn  " .. math.floor(Size(f.kind) * 100 + 0.5) .. "%")
 end
 local function Box(kind)
   if boxes[kind] then return boxes[kind] end
@@ -212,12 +227,27 @@ local function Box(kind)
   f:SetScript("OnDragStop", function()
     this:StopMovingOrSizing()
     local l, r, tp = this:GetLeft(), this:GetRight(), this:GetTop()
-    if l and r and tp then DB()[BOX[this.kind].pos] = { (l + r) / 2, tp } end
+    local sc = Size(this.kind)
+    if l and r and tp then DB()[BOX[this.kind].pos] = { (l + r) / 2 * sc, tp * sc } end
     Place(this)
+  end)
+  -- the mouse wheel while moving: larger or smaller, a tenth at a time
+  f:SetScript("OnMouseWheel", function()
+    if not W.moving then return end
+    local v = Size(this.kind) + ((arg1 or 0) > 0 and 0.1 or -0.1)
+    v = math.floor(v * 10 + 0.5) / 10
+    if v < 0.5 then v = 0.5 elseif v > 2 then v = 2 end
+    DB()[BOX[this.kind].size] = (v ~= 1) and v or nil
+    Place(this)
+    MoveText(this)
   end)
   f:SetScript("OnClick", function()
     if W.dragged then W.dragged = false; return end
-    if arg1 == "RightButton" then DB()[BOX[this.kind].pos] = nil; Place(this); return end
+    if arg1 == "RightButton" then
+      DB()[BOX[this.kind].pos] = nil; DB()[BOX[this.kind].size] = nil
+      Place(this); MoveText(this)
+      return
+    end
     W.MoveMode(false)
   end)
   f:SetScript("OnUpdate", function()
@@ -263,10 +293,13 @@ end
 local function Alert(text, sub, icon, sound, low)
   local f = Box(low and "small" or "main")
   if W.moving then return end   -- (being moved: the examples stay)
+  local how = "shown"
   if f:IsShown() and (f.left or 0) > BOX[f.kind].dur - 1.5 then
-    if table.getn(f.queue) < (low and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }) end
-    return
+    if table.getn(f.queue) < (low and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }); how = "queued"
+    else how = "DROPPED" end
   end
+  if W.LogShown then W.LogShown(how, text, sub, low, sound) end
+  if how ~= "shown" then return end
   Show(f, text, sub, icon, sound)
 end
 function W.ShowAlert(text, sub, icon, sound) Show(Box("main"), text, sub, icon, sound) end
@@ -275,8 +308,8 @@ function W.Place()
   for _, f in pairs(boxes) do Place(f) end
 end
 -- each player puts the words where he likes (Settings - Azerwarn - Move warnings, or
--- /azl warnmove): both places show an example in a dark box to drag; a click ends it, a
--- right-click puts that one back in its first place
+-- /azl warnmove): both places show an example in a dark box to drag and to size with the
+-- mouse wheel; a click ends it, a right-click puts that one back in its first place and size
 function W.MoveMode(on)
   if on == nil then on = not W.moving end
   W.dragged = false
@@ -285,12 +318,13 @@ function W.MoveMode(on)
     for _, kind in ipairs({ "main", "small" }) do
       local f = Box(kind)
       f.queue = {}
-      f.text:SetText("Azerwarn")
-      f.sub:SetText(kind == "main" and AzT("Drag to move. Click when done; right-click puts it back in its first place.")
+      MoveText(f)
+      f.sub:SetText(kind == "main" and AzT("Drag to move, mouse wheel to resize. Click when done; right-click puts it back in its first place and size.")
         or AzT("Runes, magnets, caches and achievements"))
       f.icon:Hide()
       f.box:Show()
       f:EnableMouse(true)
+      f:EnableMouseWheel(true)
       f:SetAlpha(1); f:Show()
       Place(f)
     end
@@ -299,6 +333,7 @@ function W.MoveMode(on)
     for _, f in pairs(boxes) do
       f.box:Hide()
       f:EnableMouse(false)
+      f:EnableMouseWheel(false)
       f:Hide()
     end
     -- ended by a click on an example: the wishlist's moving (Shift-click on the minimap
@@ -364,14 +399,15 @@ local GUARD_SLAIN = {
   ["%s被击杀了！它的巢穴交出了财宝和力量，其他守护者变得更强。"] = true,
   ["¡%s ha caído! Su guarida entrega su tesoro y su fuerza, y los demás guardianes se hacen más fuertes."] = true,
 }
--- what was told of whom, a moment ago: the game's banner and its emote of the same thing are
--- told once
-local said = {}
-local function Said(who)
+-- what was told of whom, a moment ago, and by which way: the game's banner and its emote of
+-- the same thing are told once; two emotes of one sender (a guardian's shards and its wards
+-- in the same moment) are both told
+local said, saidBy = {}, {}
+local function Said(who, by)
   if type(who) ~= "string" or who == "" then return false end
   local k = string.lower(who)
-  if said[k] and GetTime() - said[k] < 3 then return true end
-  said[k] = GetTime()
+  if said[k] and GetTime() - said[k] < 3 and saidBy[k] ~= by then return true end
+  said[k], saidBy[k] = GetTime(), by
   return false
 end
 
@@ -382,7 +418,7 @@ function W.OnBanner(b)
   if type(b) ~= "table" or type(b.text) ~= "string" or b.text == "" then return end
   W.NoteLang(b.name)
   if not W.AlertsOn() or not DB().bannersTaken then return end
-  if b.name and b.name ~= "" and Said(b.name) then return end
+  if b.name and b.name ~= "" and Said(b.name, "banner") then return end
   local text, rest = b.text, nil
   -- a rune: "Restoration Rune picked up!" (the game says only its name)
   if b.kind == "rune" and b.name and b.name ~= "" then
@@ -409,7 +445,7 @@ local function Emote(text, who)
   W.NoteLang(who)
   if not W.AlertsOn() or not DB().bannersTaken or type(text) ~= "string" then return end
   -- (the same thing told by a banner a moment before, or after: once)
-  if W.banners and Said(who) then return end
+  if W.banners and Said(who, "emote") then return end
   if GUARD_SLAIN[text] then
     Alert(G(function() return AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger.") end))
     return
@@ -840,7 +876,31 @@ local function Log(line)
   if type(d.bossLog) ~= "table" then d.bossLog = {} end
   local t = AZS_GetRunTime and AZS_GetRunTime() or 0
   table.insert(d.bossLog, string.format("%7.1f  %s", tonumber(t) or 0, line))
-  while table.getn(d.bossLog) > 1500 do table.remove(d.bossLog, 1) end
+  while table.getn(d.bossLog) > 3000 do table.remove(d.bossLog, 1) end
+end
+-- what the warner itself put on the screen (or queued, or had no room for), so a run's log
+-- shows every call beside the game's line it came from
+function W.LogShown(how, text, sub, low, sound)
+  if not DB().bossLogOn then return end
+  Log(">> " .. how .. (low and " small" or " main") .. (sound and " +sound" or "") .. ": "
+    .. tostring(text) .. (sub and sub ~= "" and ("  /  " .. tostring(sub)) or ""))
+end
+-- the fights' every tick and hit filled the log in two minutes: only those naming a boss stay
+local NOISE = { "^CHAT_MSG_SPELL_PERIODIC", "^CHAT_MSG_SPELL_AURA_GONE", "^CHAT_MSG_COMBAT_CREATURE_VS_SELF",
+  "^PLAYER_TARGET_CHANGED" }
+local function Noise(ev, text)
+  for i = 1, table.getn(NOISE) do
+    if string.find(ev, NOISE[i]) then
+      if ev == "PLAYER_TARGET_CHANGED" or type(text) ~= "string" then return true end
+      Lookup("")
+      local low = string.lower(text)
+      for k in pairs(byName) do
+        if string.find(low, k, 1, true) then return false end
+      end
+      return true
+    end
+  end
+  return false
 end
 local lastUnits = ""
 function W.StartLog()
@@ -885,6 +945,7 @@ function W.StartLog()
         end
         return
       end
+      if Noise(event, arg1) then return end
       Log(event .. ": " .. tostring(arg1) .. (arg2 and ("  [" .. tostring(arg2) .. "]") or ""))
     end)
   end
