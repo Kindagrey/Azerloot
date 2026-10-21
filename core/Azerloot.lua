@@ -2170,22 +2170,34 @@ local function DrawBoss(z, zi, bi, cls, list)
   y = y - 34
   local ab = abl[pick]
   if ab then
+    y = y - 3
+    local top = y + 3
     B.dname:SetText(AzlDangerName(ab))
-    B.dname:ClearAllPoints(); B.dname:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y)
-    B.dline:ClearAllPoints(); B.dline:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y - 17)
+    B.dname:ClearAllPoints(); B.dname:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 43, y)
+    B.dline:ClearAllPoints(); B.dline:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 43, y - 18)
+    if ab.cd then B.dcd:SetText(AzT("Every %s sec.", AzlNum(ab.cd))) else B.dcd:SetText("") end
+    B.dcd:ClearAllPoints(); B.dcd:SetPoint("BOTTOMRIGHT", ui.right, "TOPLEFT", 345, y - 15)
+    -- (a long name keeps the line: the time is in the icon's tooltip as well)
+    if (B.dname:GetStringWidth() or 0) + (B.dcd:GetStringWidth() or 0) > 290 then B.dcd:SetText("") end
     -- what the page still has room for once the loot below is counted: a text too long
     -- for it keeps its first sentences (the tooltip tells it all)
     local lootH = 31
     for k = 1, table.getn(list or {}) do
       lootH = lootH + ((string.len(AzG(list[k].name or "")) > 26) and 54 or 40)
     end
-    local room = y - 20 - 5 - lootH + 458
+    local room = y - 22 - 5 - 2 - lootH + 458
     B.dtext:SetText(AzlFitDanger(B.dtext, AzlDangerText(ab, true), room))
-    B.dtext:ClearAllPoints(); B.dtext:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 34, y - 20)
-    B.dname:Show(); B.dline:Show(); B.dtext:Show()
-    y = y - 20 - (B.dtext:GetHeight() or 14) - 4
+    B.dtext:ClearAllPoints(); B.dtext:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 43, y - 22)
+    y = y - 22 - (B.dtext:GetHeight() or 14) - 4
+    -- the band and its edge, from above the name to under the words
+    B.dbg:ClearAllPoints(); B.dbg:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 31, top)
+    B.dbg:SetHeight(top - y)
+    B.dbar:ClearAllPoints(); B.dbar:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 31, top)
+    B.dbar:SetHeight(top - y)
+    B.dname:Show(); B.dline:Show(); B.dtext:Show(); B.dcd:Show(); B.dbg:Show(); B.dbar:Show()
+    y = y - 2
   else
-    B.dname:Hide(); B.dline:Hide(); B.dtext:Hide()
+    B.dname:Hide(); B.dline:Hide(); B.dtext:Hide(); B.dcd:Hide(); B.dbg:Hide(); B.dbar:Hide()
   end
   y = y - 1
   B.loot:ClearAllPoints(); B.loot:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 21, y)
@@ -3637,14 +3649,23 @@ local function BuildBossView(Strip)
       end
     end
   end)
-  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", INK), 15))
-  -- a fine ink line under the name, as under a build's name on the builds page
+  -- the picked attack, set off as a note in the margin: a faint darker band of paper with a
+  -- blood-red edge on its left, the name in red ink over a red line that fades out, how
+  -- often it comes on the right, and what it does below
+  local DRED = { 0.6, 0.07, 0.03 }
+  B.dbg = ui.bossView:CreateTexture(nil, "BACKGROUND"); B.dbg:SetTexture(WHITE)
+  B.dbg:SetVertexColor(0.42, 0.22, 0.05); B.dbg:SetAlpha(0.13); B.dbg:SetWidth(318)
+  B.dbar = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dbar:SetTexture(WHITE)
+  B.dbar:SetVertexColor(DRED[1], DRED[2], DRED[3]); B.dbar:SetAlpha(0.85); B.dbar:SetWidth(3)
+  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", DRED), 16))
   B.dline = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dline:SetTexture(WHITE)
-  B.dline:SetVertexColor(INK[1], INK[2], INK[3]); B.dline:SetAlpha(0.45); B.dline:SetHeight(1)
-  B.dline:SetWidth(310)
-  B.dtext = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK_SOFT, 12))
-  B.dtext:SetWidth(310); B.dtext:SetJustifyH("LEFT")
-  B.dname:Hide(); B.dline:Hide(); B.dtext:Hide()
+  B.dline:SetHeight(1); B.dline:SetWidth(300)
+  B.dline:SetGradientAlpha("HORIZONTAL", DRED[1], DRED[2], DRED[3], 0.8, DRED[1], DRED[2], DRED[3], 0)
+  B.dcd = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK_SOFT, 11))
+  B.dcd:SetJustifyH("RIGHT")
+  B.dtext = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK, 12))
+  B.dtext:SetWidth(300); B.dtext:SetJustifyH("LEFT")
+  B.dname:Hide(); B.dline:Hide(); B.dtext:Hide(); B.dcd:Hide(); B.dbg:Hide(); B.dbar:Hide()
 
   -- LOOT: each piece with a round brass button for the wishlist
   B.loot = Strip(ui.bossView, "Loot")
