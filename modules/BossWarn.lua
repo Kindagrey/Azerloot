@@ -173,8 +173,8 @@ W.SOUNDS = {
   { key = "off", label = "Off" },
   { key = "raid", label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
   { key = "ready", label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
-  { key = "bell", label = "Bell", file = "Sound\\Doodad\\BellTollAlliance.wav" },
-  { key = "flag", label = "Flag taken", file = "Sound\\Spells\\PVPFlagTaken.wav" },
+  { key = "horn", label = "Battleground horn", name = "PVPTHROUGHQUEUE" },
+  { key = "invite", label = "Invitation", name = "igPlayerInvite" },
   { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
 }
 -- which sound each call has: "soon" (a boss in 10 seconds) and "turn" (a boss's phase)
@@ -184,9 +184,10 @@ function W.SoundPick(what)
   for i = 1, table.getn(W.SOUNDS) do if W.SOUNDS[i].key == k then return W.SOUNDS[i], i end end
   return W.SOUNDS[2], 2
 end
+-- (a sound with a file plays from it; one with only a name, by the game's name for it)
 function W.PlaySoundOf(sd)
-  if not sd or not sd.file then return end
-  local ok = PlaySoundFile and pcall(PlaySoundFile, sd.file)
+  if not sd or not (sd.file or sd.name) then return end
+  local ok = sd.file and PlaySoundFile and pcall(PlaySoundFile, sd.file)
   if not ok and sd.name and PlaySound then pcall(PlaySound, sd.name) end
 end
 -- (true: the boss in 10 seconds, as before)

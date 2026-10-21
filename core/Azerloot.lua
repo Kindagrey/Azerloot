@@ -2991,7 +2991,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     for i = 1, table.getn(self.sounds) do
       local o = self.sounds[i]
       local sd = AzlW and AzlW.SoundPick and AzlW.SoundPick(o.what)
-      if sd and sd.file then o.value:SetText(AzT(sd.label)); o.value:SetTextColor(1, 0.82, 0)
+      if sd and (sd.file or sd.name) then o.value:SetText(AzT(sd.label)); o.value:SetTextColor(1, 0.82, 0)
       else o.value:SetText(AzT("Off")); o.value:SetTextColor(1, 0.3, 0.25) end
     end
   end
