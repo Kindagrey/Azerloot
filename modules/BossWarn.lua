@@ -131,7 +131,7 @@ end
 local alert
 local function Alert(text, sub, icon, sound)
   if not alert then
-    alert = CreateFrame("Frame", "AzerlootBossAlert", UIParent)
+    alert = CreateFrame("Button", "AzerlootBossAlert", UIParent)
     alert:SetFrameStrata("HIGH")
     alert:SetWidth(700); alert:SetHeight(80)
     local ic = alert:CreateTexture(nil, "ARTWORK")
@@ -151,7 +151,27 @@ local function Alert(text, sub, icon, sound)
     s:SetWidth(520)   -- a long line wraps under the big words
     alert.sub = s
     alert.queue = {}
+    -- while it is being moved: a dark box shows where it sits
+    local box = alert:CreateTexture(nil, "BACKGROUND")
+    box:SetTexture(WHITE); box:SetVertexColor(0, 0, 0); box:SetAlpha(0.5); box:SetAllPoints(alert); box:Hide()
+    alert.box = box
+    alert:SetMovable(true); alert:EnableMouse(false)
+    alert:RegisterForDrag("LeftButton")
+    alert:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    alert:SetScript("OnDragStart", function() if W.moving then W.dragged = true; this:StartMoving() end end)
+    alert:SetScript("OnDragStop", function()
+      this:StopMovingOrSizing()
+      local l, r, t = this:GetLeft(), this:GetRight(), this:GetTop()
+      if l and r and t then DB().alertPos = { (l + r) / 2, t } end
+      W.Place()
+    end)
+    alert:SetScript("OnClick", function()
+      if W.dragged then W.dragged = false; return end
+      if arg1 == "RightButton" then DB().alertPos = nil; W.Place(); return end
+      W.MoveMode(false)
+    end)
     alert:SetScript("OnUpdate", function()
+      if W.moving then return end
       this.left = (this.left or 0) - (arg1 or 0)
       -- words waiting behind these: they follow once these were read for 1.5 sec
       if table.getn(this.queue) > 0 and this.left <= 2.5 then
@@ -163,6 +183,7 @@ local function Alert(text, sub, icon, sound)
       this:SetAlpha(math.min(1, this.left / 0.6))
     end)
   end
+  if W.moving then return end   -- (being moved: the example stays)
   -- something said a moment ago is not covered at once: the new words wait their turn
   if alert:IsShown() and (alert.left or 0) > 2.5 then
     if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon, sound }) end
@@ -170,13 +191,45 @@ local function Alert(text, sub, icon, sound)
   end
   W.ShowAlert(text, sub, icon, sound)
 end
+-- where the words stand: where the player put them, else high in the middle of the screen
+function W.Place()
+  if not alert then return end
+  local p = DB().alertPos
+  alert:ClearAllPoints()
+  if type(p) == "table" and tonumber(p[1]) and tonumber(p[2]) then
+    alert:SetPoint("TOP", UIParent, "BOTTOMLEFT", p[1], p[2])
+  else
+    alert:SetPoint("TOP", UIParent, "TOP", 0, -150)
+  end
+end
+-- each player puts the words where he likes (Settings - Azerwarn - Move warnings, or
+-- /azl warnmove): they show as an example in a dark box to drag; a click ends it, a
+-- right-click puts them back in their first place
+function W.MoveMode(on)
+  if on == nil then on = not W.moving end
+  if on then
+    Alert(" ")
+    W.moving = true
+    alert.queue = {}
+    alert.text:SetText("Azerwarn")
+    alert.sub:SetText(AzT("Drag to move. Click when done; right-click puts it back in its first place."))
+    alert.icon:Hide()
+    alert.box:Show()
+    alert:EnableMouse(true)
+    alert:SetAlpha(1); alert:Show()
+    W.Place()
+  elseif alert then
+    W.moving = false
+    alert.box:Hide()
+    alert:EnableMouse(false)
+    alert:Hide()
+  end
+end
 -- (a sound only with a boss coming: the other words come quietly)
 function W.ShowAlert(text, sub, icon, sound)
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
-  -- high in the middle of the screen, clear of the game's own banners
-  alert:ClearAllPoints()
-  alert:SetPoint("TOP", UIParent, "TOP", 0, -150)
+  W.Place()
   alert.icon:ClearAllPoints()
   alert.icon:SetPoint("RIGHT", alert.text, "LEFT", -10, 0)
   if icon then alert.icon:SetTexture("Interface\\Icons\\" .. icon); alert.icon:Show() else alert.icon:Hide() end
@@ -782,6 +835,7 @@ function W.Slash(msg)
     end
     return true
   end
+  if msg == "warnmove" then W.MoveMode(); return true end
   if msg == "bosstest" then
     Alert(AzT("%d%% health!", 70), AzT("New attack, %s.", AzName("Shadow Fissure")), "Spell_Shadow_CreepingPlague")
     return true
