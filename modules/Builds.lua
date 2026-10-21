@@ -594,8 +594,10 @@ function B.Picking()
   if B.Count(AZL.PlayerClass()) == 0 then return false end
   -- opened by a click on the window's head: open until a build is chosen or it is closed
   if AzerlootDB.buildPick == "manual" then return true end
+  -- (a level-up's choice of a card or a pause is still the run: the choice stays, rather than
+  -- closing and opening again around it)
   local ph = (AzlPhase and AzlPhase()) or (AZS_GetPhase and AZS_GetPhase()) or nil
-  if ph ~= "ready" and ph ~= "playing" then return false end
+  if ph ~= "ready" and ph ~= "playing" and ph ~= "choosing" and ph ~= "paused" then return false end
   -- (after a reload the game's clock comes again only later: the warner's kept one meanwhile)
   local ok, t = pcall(function() return (AZS_GetRunTime and AZS_GetRunTime()) or (AzlW and AzlW.RunTime and AzlW.RunTime()) or 0 end)
   if ok and tonumber(t) and tonumber(t) > 120 then AzerlootDB.buildPick = nil; return false end
