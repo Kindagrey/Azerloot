@@ -593,7 +593,12 @@ function W.Update()
   local okT, now = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() or 0 end)
   now = okT and tonumber(now) or 0
   local d = DB()
-  if AZS_SCHEDULE_UPDATED then
+  -- (an empty schedule sent while the kept one still has bosses to come does not wipe it: the
+  -- game may send its lines anew, before the schedule, after a reload)
+  local kept = type(d.bossSched) == "table" and type(d.bossSched.list) == "table" and d.bossSched.list or {}
+  local future = false
+  for i = 1, table.getn(kept) do if tonumber(kept[i].at) and kept[i].at > now and now + 1 >= (tonumber(d.bossSched.t) or 0) then future = true end end
+  if AZS_SCHEDULE_UPDATED and (table.getn(up) > 0 or not future) then
     local keep = {}
     for i = 1, table.getn(up) do
       local x = up[i]
@@ -671,6 +676,10 @@ function W.StartLog()
           end
           local s = table.concat(b, " | ")
           if s ~= lastUnits then lastUnits = s; if s ~= "" then Log("units: " .. s) end end
+        elseif arg1 == "AZSBOSSES" then
+          -- (the schedule, when it changes)
+          local s = arg1 .. ": " .. tostring(arg2)
+          if s ~= W.lastLine then W.lastLine = s; Log(s) end
         elseif arg1 and string.sub(arg1, 1, 3) ~= "AZS" then
           Log("addon " .. tostring(arg1) .. ": " .. tostring(arg2))
         end
