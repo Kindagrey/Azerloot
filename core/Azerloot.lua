@@ -5938,10 +5938,10 @@ RefreshTracker = function()
   -- the boss warner's strip (modules\BossWarn.lua) under the head: the next boss, or the one
   -- alive with its health; on its own panel, like a section (not while a run's build is chosen)
   if AzlW and AzlW.StripPlace then
-    local sh = AzlW.StripPlace(tracker, W, y - 3, runPick)
+    local sh = AzlW.StripPlace(tracker, W, y - 4, runPick)
     if sh > 0 then
-      table.insert(pan, { t = y, b = y - 3 - sh - 3 })
-      y = y - 3 - sh - 3 - 6
+      table.insert(pan, { t = y, b = y - 4 - sh - 4 })
+      y = y - 4 - sh - 4 - 6
     end
   end
   tracker:SetWidth(W)

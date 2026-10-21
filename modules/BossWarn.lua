@@ -286,19 +286,19 @@ local function StripFrame()
   if bar then return bar end
   if not AzerlootTracker then return nil end
   bar = CreateFrame("Button", "AzerlootBossBar", AzerlootTracker)
-  bar:SetHeight(18)
+  bar:SetHeight(24)
   local ic = bar:CreateTexture(nil, "ARTWORK")
-  ic:SetWidth(16); ic:SetHeight(16)
-  ic:SetPoint("TOPLEFT", bar, "TOPLEFT", 2, -1)
+  ic:SetWidth(20); ic:SetHeight(20)
+  ic:SetPoint("TOPLEFT", bar, "TOPLEFT", 2, -2)
   ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   bar.icon = ic
   local nm = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  nm:SetPoint("LEFT", ic, "RIGHT", 5, 0); nm:SetJustifyH("LEFT")
+  nm:SetPoint("LEFT", ic, "RIGHT", 6, 0); nm:SetJustifyH("LEFT")
   nm:SetTextColor(1, 0.82, 0)
   Face(nm)
   bar.name = nm
   local info = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-  info:SetPoint("RIGHT", bar, "TOPRIGHT", -3, -9)
+  info:SetPoint("RIGHT", bar, "TOPRIGHT", -3, -12)
   info:SetTextColor(1, 0.9, 0.75)
   Face(info)
   bar.info = info
@@ -329,7 +329,7 @@ local function HealthBar(w)
     tr.SetValue = function(self, v) fl:SetWidth(math.max(1, w * v)) end
   end
   tr.w = w
-  tr:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 3, 4)
+  tr:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 3, 5)
   local mk = CreateFrame("Frame", nil, bar)
   mk:SetAllPoints(bar)
   mk:SetFrameLevel(tr:GetFrameLevel() + 3)
@@ -357,7 +357,7 @@ function W.StripPlace(tracker, w, y, hidden)
   s:ClearAllPoints()
   s:SetPoint("TOPLEFT", tracker, "TOPLEFT", 8, y)
   s:SetWidth(w - 16)
-  local h = W.mode == "boss" and 30 or 18
+  local h = W.mode == "boss" and 38 or 24
   s:SetHeight(h)
   if W.mode == "boss" then HealthBar(w - 22); hpb:Show() elseif hpb then hpb:Hide() end
   s:Show()
