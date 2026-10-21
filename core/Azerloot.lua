@@ -5059,6 +5059,27 @@ end
 -- the room below its top (a smaller screen, a long run) is scaled down until it fits,
 -- never below 45%; with room again it grows back.
 AzlFitState = {}   -- (the lines and the room when it was last made smaller)
+-- How tall a text is in the wishlist window, worked out from its words rather than asked of
+-- the client: right after a change the client tells the height of the text before it, and a
+-- window refreshed every second then took one height, then the other, for ever. Each line of
+-- the text is measured on its own, unwrapped, and counted as the lines it wraps into.
+function AzlTextHeight(fs, width)
+  local m = AzlFitState.m
+  if not m then m = UIParent:CreateFontString(nil, "OVERLAY"); m:Hide(); AzlFitState.m = m end
+  local face, size, flags = fs:GetFont()
+  size = tonumber(size) or 10
+  if face then m:SetFont(face, size, flags) end
+  local n, text, at = 0, (fs:GetText() or "") .. "\n", 1
+  while true do
+    local nl = string.find(text, "\n", at, true)
+    if not nl then break end
+    local line = string.sub(text, at, nl - 1)
+    m:SetText((line ~= "") and line or " ")
+    n = n + math.max(1, math.ceil((m:GetStringWidth() or 0) / math.max(40, width) + 0.05))
+    at = nl + 1
+  end
+  return math.max(1, n) * (size + 3)
+end
 function AzlFitTracker()
   if not tracker or (tracker.grip and tracker.grip.sizing) then return end
   local sh, h = UIParent:GetHeight(), tracker:GetHeight()
@@ -6029,7 +6050,7 @@ RefreshTracker = function()
     r:EnableMouse((not through) or isHead)
     if through and isHead then r:RegisterForClicks("LeftButtonUp")
     else r:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
-    r:SetWidth(W - 12); r.name:SetWidth(W - 55)
+    r:SetWidth(W - 12); r.name:SetWidth(W - 55); r.bonus:SetWidth(W - 55)
     local l = lines[i]
     r:ClearAllPoints()
     r.bonus:Hide()
@@ -6110,9 +6131,7 @@ RefreshTracker = function()
       if wrapped then
         -- as many lines as the name takes (the client may tell its height a moment late), its
         -- first line beside the icon, the others below: never up into the line above
-        local _, fsz = r.name:GetFont()
-        local lines = math.ceil((r.name:GetStringWidth() or 0) / math.max(40, W - 55) + 0.05)
-        h = math.max(TRACK_ROW, (r.name:GetHeight() or 12) + 6, lines * ((tonumber(fsz) or 10) + 2) + 6)
+        h = math.max(TRACK_ROW, AzlTextHeight(r.name, r.name:GetWidth() or (W - 55)) + 6)
         r.name:ClearAllPoints(); r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 24, -3)
       end
       r.strike:ClearAllPoints(); r.strike:SetPoint("LEFT", r.name, "LEFT", -1, 0)
@@ -6138,7 +6157,7 @@ RefreshTracker = function()
           r.bonus:SetTextColor(0.3, 1, 0.3)   -- the same green as the jewelry's lines
           r.bonus:Show()
           r.icon:ClearAllPoints(); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 3, -1)
-          h = 4 + (r.name:GetHeight() or 12) + (r.bonus:GetHeight() or 12)
+          h = 4 + AzlTextHeight(r.name, r.name:GetWidth() or (W - 55)) + AzlTextHeight(r.bonus, W - 55)
         end
       elseif away then
         -- every slot of its kind holds another piece: out of reach, crossed and struck
@@ -6161,7 +6180,7 @@ RefreshTracker = function()
           r.bonus:SetText("|cff4dff4d" .. string.gsub(text, "\n", "|r\n|cff4dff4d") .. "|r")
           r.bonus:Show()
           r.icon:ClearAllPoints(); r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 3, -1)
-          h = 4 + (r.name:GetHeight() or 12) + (r.bonus:GetHeight() or 12)
+          h = 4 + AzlTextHeight(r.name, r.name:GetWidth() or (W - 55)) + AzlTextHeight(r.bonus, W - 55)
         end
       elseif IsFound(e, worn) then
         r.check:Show(); r.name:SetAlpha(0.45)
