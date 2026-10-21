@@ -81,6 +81,9 @@ local function RunTime()
   end
   local c = d.runClock
   if type(c) == "table" and tonumber(c.t) and tonumber(c.at) and now - c.at >= 0 and now - c.at < 900 then
+    -- the clock runs only while the run is played: before the first step (ready), in a pause
+    -- or a choice it stands, as the game's own does
+    if Phase() ~= "playing" then c.at = now; return c.t end
     return c.t + (now - c.at)
   end
   return nil
