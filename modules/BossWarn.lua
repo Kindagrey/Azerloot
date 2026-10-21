@@ -301,6 +301,9 @@ function W.MoveMode(on)
       f:EnableMouse(false)
       f:Hide()
     end
+    -- ended by a click on an example: the wishlist's moving (Shift-click on the minimap
+    -- button) ends with it
+    if Azerloot_LayoutMode then Azerloot_LayoutMode(false) end
   end
 end
 W.Alert = Alert

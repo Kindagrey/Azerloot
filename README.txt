@@ -18,10 +18,12 @@ Updating: delete the old "Azerloot" folder first, then unpack the new one.
 OPENING THE BOOK
 ----------------
 Minimap button, /azl, or a key of your choice (Key Bindings menu).
+Shift-click on the minimap button: the wishlist window and both warning places can be
+dragged where you like; Shift-click again (or click a warning example) when done.
 
     /azl              open or close the book
     /azl tracker      wishlist window on/off
-    /azl minimap      minimap button on/off
+    /azl layout       move the wishlist and the warnings (as Shift-click on the minimap button)
     /azl collection   your collected boss pieces
     /azl reset        wishlist window back to its first place
 
@@ -77,7 +79,7 @@ the wishlist unloads the build ("Load into wishlist" brings it back whole).
 
 Search (top bar): rings, trinkets, amulets, boss loot, bosses, zones and pages.
 Settings (gear in the top bar): font, language (English, Deutsch, Français, Español,
-Português or Auto), minimap button and book size; then the wishlist window: on/off,
+Português or Auto) and book size; then the wishlist window: on/off,
 spell tracker, its size, its opacity, and back to its first place.
 
 

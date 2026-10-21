@@ -3042,7 +3042,7 @@ local function BuildSettings(search)
     return o
   end
   local sp = Panel(gear)
-  sp:SetWidth(170); sp:SetHeight(338)
+  sp:SetWidth(170); sp:SetHeight(319)
   -- sits right on the bar, its right edge in line with the book's corner
   sp:SetPoint("BOTTOMRIGHT", gear, "TOPRIGHT", 46, 8)
   sp:SetHead(AzT("Settings"))
@@ -3197,39 +3197,35 @@ local function BuildSettings(search)
     Switch(2, "Wishlist window", function() return DB().tracker ~= false end,
       function(on) DB().tracker = on; RefreshTracker() end,
       "The small window with your wishlist."),
-    Switch(3, "Minimap button", function() return not DB().minimapHidden end,
-      function(on) Azerloot_MinimapButton(on) end,
-      "The button at the minimap. Click it to open the book."),
   }
-  -- in two groups: the book (font, language, minimap button, size), then under a gold line
+  -- in two groups: the book (font, language, size), then under a gold line
   -- the wishlist window (shown, spells, size, see-through, back to its place)
   local SW = sp.switches
-  SW[3]:ClearAllPoints(); SW[3]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 2 * 19)
-  SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
-  SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 6 * 19 - 16)
+  SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 4 * 19 - 16)
+  SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
   -- the boss warner (Azerwarn) on its own, under a second gold line; its parts fold out
   local wr, wrt, wra, wsub = AzlWarnMenu(sp, Panel, Row, SetCheck)
   sp.warnRow, sp.warnMenu = wr, wsub
-  wr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 12 * 19 - 6 - 32)
+  wr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 11 * 19 - 6 - 32)
   local function OpenWarn() sub:Hide(); lsub:Hide(); wsub:Update(); wsub:Show(); wsub:Fit() end
   wr:SetScript("OnEnter", OpenWarn)
   wr:SetScript("OnClick", function() if wsub:IsVisible() then wsub:Hide() else OpenWarn() end end)
   local dv3 = sp:CreateTexture(nil, "ARTWORK"); dv3:SetTexture(MEDIA .. "divider_gold.tga")
-  dv3:SetHeight(12); dv3:SetPoint("TOP", sp, "TOP", 0, -38 - 12 * 19 - 6 - 15)
+  dv3:SetHeight(12); dv3:SetPoint("TOP", sp, "TOP", 0, -38 - 11 * 19 - 6 - 15)
   sp.div3 = dv3
   local dv2 = sp:CreateTexture(nil, "ARTWORK"); dv2:SetTexture(MEDIA .. "divider_gold.tga")
-  dv2:SetHeight(12); dv2:SetPoint("TOP", sp, "TOP", 0, -38 - 5 * 19 - 1)
+  dv2:SetHeight(12); dv2:SetPoint("TOP", sp, "TOP", 0, -38 - 4 * 19 - 1)
   sp.div2 = dv2
   -- the wishlist window's see-through background: a slider from clear to dark
   local ol = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ol:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 9 * 19 - 3 - 16)
+  ol:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 8 * 19 - 3 - 16)
   ol:SetText(AzT("Wishlist opacity"))
   local ov = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ov:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 9 * 19 - 3 - 16)
+  ov:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 8 * 19 - 3 - 16)
   local sl = CreateFrame("Slider", nil, sp)
   sl:SetOrientation("HORIZONTAL")
   sl:SetWidth(144); sl:SetHeight(16)
-  sl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 10 * 19 - 2 - 16)
+  sl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 9 * 19 - 2 - 16)
   sl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
     tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
   sl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -3255,14 +3251,14 @@ local function BuildSettings(search)
   -- the book's size: from 15% smaller to 25% larger than its own; it takes effect when the
   -- slider is let go, so the panel does not shift under the mouse while dragging
   local bl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 3 * 19 - 3)
+  bl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 2 * 19 - 3)
   bl:SetText(AzT("Book size"))
   local bv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 3 * 19 - 3)
+  bv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 2 * 19 - 3)
   local bsl = CreateFrame("Slider", nil, sp)
   bsl:SetOrientation("HORIZONTAL")
   bsl:SetWidth(144); bsl:SetHeight(16)
-  bsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 4 * 19 - 2)
+  bsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 3 * 19 - 2)
   bsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
     tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
   bsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -3295,14 +3291,14 @@ local function BuildSettings(search)
   -- the wishlist window's size, from 60% to 140% of its own: each player sets what reads
   -- well on his screen (a long wishlist still shrinks to fit below the window's top)
   local wl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  wl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 7 * 19 - 3 - 16)
+  wl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 6 * 19 - 3 - 16)
   wl:SetText(AzT("Wishlist size"))
   local wv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  wv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 7 * 19 - 3 - 16)
+  wv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 6 * 19 - 3 - 16)
   local wsl = CreateFrame("Slider", nil, sp)
   wsl:SetOrientation("HORIZONTAL")
   wsl:SetWidth(144); wsl:SetHeight(16)
-  wsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 8 * 19 - 2 - 16)
+  wsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 7 * 19 - 2 - 16)
   wsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
     tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
   wsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -3328,7 +3324,7 @@ local function BuildSettings(search)
   sp.trackSize = wsl
   -- a window dragged off the screen (or lost after a change of resolution) comes back here
   local rs = Row(sp, 152)
-  rs:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 11 * 19 - 6 - 16)
+  rs:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 10 * 19 - 6 - 16)
   local rst = rs:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
   rst:SetPoint("LEFT", rs, "LEFT", 4, 0); rst:SetText(AzT("Reset Wishlist position"))
   rs:SetScript("OnClick", function() Azerloot_ResetTracker() end)
@@ -3401,7 +3397,7 @@ local function BuildSettings(search)
     GameTooltip:SetOwner(this, "ANCHOR_BOTTOMLEFT")
     GameTooltip:AddLine(AzT("Settings"), 1, 0.82, 0)
     GameTooltip:AddLine(AzT("Language and font"), 0.85, 0.85, 0.85)
-    GameTooltip:AddLine(AzT("Windows and minimap button"), 0.85, 0.85, 0.85)
+    GameTooltip:AddLine(AzT("Wishlist window and Azerwarn"), 0.85, 0.85, 0.85)
     GameTooltip:AddLine(AzT("Size of the book"), 0.85, 0.85, 0.85)
     GameTooltip:Show()
   end)
@@ -6327,12 +6323,14 @@ local function BuildMinimapButton()
   mmButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
   mmButton:SetScript("OnClick", function()
     GameTooltip:Hide()
+    if IsShiftKeyDown and IsShiftKeyDown() then Azerloot_LayoutMode(); return end
     Azerloot_Toggle()
   end)
   mmButton:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, "ANCHOR_LEFT")
     GameTooltip:AddLine("Azerloot", 1, 0.82, 0)
     GameTooltip:AddLine(AzT("Click: open or close the book"), 0.9, 0.9, 0.9)
+    GameTooltip:AddLine(AzT("Shift-click: move the wishlist and the warnings"), 0.9, 0.9, 0.9)
     GameTooltip:AddLine(AzT("Settings: the gear in the book's top bar"), 0.6, 0.6, 0.6)
     GameTooltip:AddLine(AzT("Drag: move round the minimap"), 0.6, 0.6, 0.6)
     GameTooltip:Show()
@@ -6357,14 +6355,35 @@ local function BuildMinimapButton()
     PlaceMinimapButton()
   end)
   PlaceMinimapButton()
-  if MinimapDB().minimapHidden then mmButton:Hide() else mmButton:Show() end
+  -- always there: it is the way into the book and into moving the windows
+  MinimapDB().minimapHidden = nil
+  mmButton:Show()
 end
 
-function Azerloot_MinimapButton(show)
-  if not mmButton then BuildMinimapButton() end
-  if not mmButton then return end
-  MinimapDB().minimapHidden = not show
-  if show then PlaceMinimapButton(); mmButton:Show() else mmButton:Hide() end
+-- Shift-click on the minimap button: the wishlist window opens unlocked and both warning
+-- places show an example; dragging moves them. Another Shift-click (or a click on an
+-- example) ends it, and the wishlist gets its lock (and shown or not) back as it was.
+AzlLayout = { on = false }   -- (a global: the file's main chunk has no locals left)
+function Azerloot_LayoutMode(on)
+  local L = AzlLayout
+  if on == nil then on = not L.on end
+  local db = TrackerDB()
+  if on then
+    if L.on then return end
+    L.on, L.lock, L.shown = true, db.trackerLocked, db.tracker
+    db.tracker = true
+    db.trackerLocked = false
+    TrackerLockLook(); RefreshTracker()
+    if AzlW and AzlW.MoveMode then AzlW.MoveMode(true) end
+    Print(AzT("Move the wishlist and the warnings, then Shift-click the minimap button again."))
+  else
+    if not L.on then return end
+    L.on = false
+    db.trackerLocked, db.tracker = L.lock, L.shown
+    L.lock, L.shown = nil, nil
+    TrackerLockLook(); RefreshTracker()
+    if AzlW and AzlW.MoveMode and AzlW.moving then AzlW.MoveMode(false) end
+  end
 end
 
 BINDING_HEADER_AZERLOOT = "Azerloot"
@@ -6459,12 +6478,7 @@ SlashCmdList["AZERLOOT"] = function(msg)
     Print(AzT("%s: %d of %d pieces in your collection", AzG(ClassInfo(cls).name), have, table.getn(all)))
     return
   end
-  if msg == "minimap" then
-    local hidden = MinimapDB().minimapHidden
-    Azerloot_MinimapButton(hidden and true or false)
-    Print(AzT(hidden and "minimap button shown" or "minimap button hidden"))
-    return
-  end
+  if msg == "layout" then Azerloot_LayoutMode(); return end
   if msg == "reset" then
     Azerloot_ResetTracker()
     return
