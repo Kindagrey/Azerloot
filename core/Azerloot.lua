@@ -5140,12 +5140,13 @@ local function BuildTracker()
   -- the level-ups the game keeps waiting (Store Level-Ups), in the head card: a click opens
   -- them as the game's own Level Up! button does
   local lb = CreateFrame("Button", nil, tracker)
-  lb:SetHeight(16); lb:SetWidth(60); lb:SetFrameLevel(tracker:GetFrameLevel() + 3)
+  lb:SetHeight(14); lb:SetWidth(60); lb:SetFrameLevel(tracker:GetFrameLevel() + 3)
   local lg = lb:CreateTexture(nil, "BACKGROUND")
   lg:SetTexture(GLOW); lg:SetBlendMode("ADD"); lg:SetVertexColor(1, 0.62, 0.18)
-  lg:SetPoint("TOPLEFT", lb, "TOPLEFT", -8, 5); lg:SetPoint("BOTTOMRIGHT", lb, "BOTTOMRIGHT", 8, -5)
+  lg:SetPoint("TOPLEFT", lb, "TOPLEFT", -6, 4); lg:SetPoint("BOTTOMRIGHT", lb, "BOTTOMRIGHT", 6, -4)
   lb.glow = lg
-  local ltx = Font(lb, "GameFontNormal")
+  -- (small, as the build's count beside it)
+  local ltx = Font(lb, "GameFontNormalSmall")
   ltx:SetPoint("RIGHT", lb, "RIGHT", 0, 0); ltx:SetTextColor(1, 0.82, 0)
   lb.text = ltx
   local lhl = lb:CreateTexture(nil, "HIGHLIGHT")
