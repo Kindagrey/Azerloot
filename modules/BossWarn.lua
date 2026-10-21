@@ -173,7 +173,7 @@ W.SOUNDS = {
   { key = "off", label = "Off" },
   { key = "raid", label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
   { key = "ready", label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
-  { key = "horn", label = "Battleground horn", name = "PVPTHROUGHQUEUE" },
+  { key = "gong", label = "Auction house", name = "AUCTIONWINDOWOPEN" },
   { key = "invite", label = "Invitation", name = "igPlayerInvite" },
   { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
 }
