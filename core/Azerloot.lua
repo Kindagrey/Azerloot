@@ -3649,18 +3649,18 @@ local function BuildBossView(Strip)
       end
     end
   end)
-  -- the picked attack, set off as a note in the margin: a faint darker band of paper with a
-  -- bronze edge on its left (the brass of the book's clasps), the name in warm umber over a
-  -- bronze line that fades out, how often it comes on the right, and what it does below
-  local BRONZE = { 0.5, 0.3, 0.07 }
+  -- the picked attack, set off as a note in the margin: a faint darker band of paper with an
+  -- arcane violet edge on its left (Azerloot's own colour), the name in violet ink over a
+  -- violet line that fades out, how often it comes on the right, and what it does below
+  local VIOLET = { 0.55, 0.2, 0.8 }
   B.dbg = ui.bossView:CreateTexture(nil, "BACKGROUND"); B.dbg:SetTexture(WHITE)
   B.dbg:SetVertexColor(0.42, 0.22, 0.05); B.dbg:SetAlpha(0.13); B.dbg:SetWidth(318)
   B.dbar = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dbar:SetTexture(WHITE)
-  B.dbar:SetVertexColor(BRONZE[1], BRONZE[2], BRONZE[3]); B.dbar:SetAlpha(0.85); B.dbar:SetWidth(3)
-  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", { 0.36, 0.18, 0.03 }), 16))
+  B.dbar:SetVertexColor(VIOLET[1], VIOLET[2], VIOLET[3]); B.dbar:SetAlpha(0.85); B.dbar:SetWidth(3)
+  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", { 0.42, 0.12, 0.62 }), 16))
   B.dline = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dline:SetTexture(WHITE)
   B.dline:SetHeight(1); B.dline:SetWidth(300)
-  B.dline:SetGradientAlpha("HORIZONTAL", BRONZE[1], BRONZE[2], BRONZE[3], 0.8, BRONZE[1], BRONZE[2], BRONZE[3], 0)
+  B.dline:SetGradientAlpha("HORIZONTAL", VIOLET[1], VIOLET[2], VIOLET[3], 0.8, VIOLET[1], VIOLET[2], VIOLET[3], 0)
   B.dcd = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK_SOFT, 11))
   B.dcd:SetJustifyH("RIGHT")
   B.dtext = Engraved(Font(ui.bossView, "GameFontNormalSmall", INK, 12))
