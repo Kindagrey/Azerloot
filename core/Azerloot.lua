@@ -2911,7 +2911,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
   wra:SetPoint("RIGHT", wr, "RIGHT", -4, 0)
   wra:SetText(">")
   local ws = Panel(sp)
-  ws:SetWidth(182); ws:SetHeight(46 + (table.getn(AZL_WARN_PARTS) + 1) * 19)
+  ws:SetWidth(182); ws:SetHeight(46 + table.getn(AZL_WARN_PARTS) * 19)
   ws:SetHead("Azerwarn")
   ws:SetPoint("TOPLEFT", wr, "TOPRIGHT", 13, 8)   -- level with its row
   ws.items = {}
@@ -2949,22 +2949,6 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     o:SetScript("OnLeave", function() GameTooltip:Hide() end)
     ws.items[i] = o
   end
-  -- and a row to put the warnings where one likes them
-  local mv = Row(ws, 164)
-  mv:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - table.getn(AZL_WARN_PARTS) * 19)
-  local mvt = mv:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  mvt:SetPoint("LEFT", mv, "LEFT", 4, 0)
-  mvt:SetText(AzT("Move warnings"))
-  mv.label = mvt
-  mv:SetScript("OnClick", function() if AzlW and AzlW.MoveMode then AzlW.MoveMode() end end)
-  mv:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Move warnings"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("Two places, each moved on its own: the warnings, and runes, magnets, caches and achievements. Drag them where you like them, the mouse wheel makes them larger or smaller; click one when done. Right-click puts one back in its first place and size."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  mv:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  ws.moveRow = mv
   ws.Update = function(self)
     local d = DBw()
     for i = 1, table.getn(self.items) do
@@ -2980,12 +2964,9 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
       local w = (self.items[i].label:GetStringWidth() or 0) + 8 + (self.items[i].value:GetStringWidth() or 0) + 14
       if w > need then need = w end
     end
-    local mw = (self.moveRow.label:GetStringWidth() or 0) + 12
-    if mw > need then need = mw end
     need = math.ceil(need)
     self:SetWidth(need + 18)
     for i = 1, table.getn(self.items) do self.items[i]:SetWidth(need) end
-    self.moveRow:SetWidth(need)
     self.div:SetWidth(need + 2)
   end
   ws:Hide()

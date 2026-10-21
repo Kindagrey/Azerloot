@@ -156,7 +156,7 @@ end
 -- ---------- the words on the screen: two places ----------
 -- The big words (bosses, guardians, waves, mechanics, the warner's own) high in the middle;
 -- the small things (runes, magnets, caches, achievements) in a smaller place of their own,
--- low in the middle. Each player can move both (Settings - Azerwarn - Move warnings).
+-- low in the middle. Each player can move and size both (Shift-click on the minimap button).
 local alert   -- the big words' place (built on first use)
 local boxes = {}
 local BOX = {
@@ -307,7 +307,7 @@ function W.ShowAlert(text, sub, icon, sound) Show(Box("main"), text, sub, icon, 
 function W.Place()
   for _, f in pairs(boxes) do Place(f) end
 end
--- each player puts the words where he likes (Settings - Azerwarn - Move warnings, or
+-- each player puts the words where he likes (Shift-click on the minimap button, or
 -- /azl warnmove): both places show an example in a dark box to drag and to size with the
 -- mouse wheel; a click ends it, a right-click puts that one back in its first place and size
 function W.MoveMode(on)
