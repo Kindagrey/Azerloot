@@ -4,6 +4,8 @@
 Azerloot_GT = {}
 Azerloot_GT.de = {
   exact = {
+    ["The Legionlord's Medallion"] = "Medaillon des Legionsfürsten",
+    ["Demonic Empowerment"] = "Dämonische Ermächtigung",
     ["Your critical hits"] = "Deine kritischen Treffer",
     ["Female"] = "Weiblich",
     ["Male"] = "Männlich",
@@ -2875,6 +2877,8 @@ Azerloot_GT.de = {
 }
 Azerloot_GT.fr = {
   exact = {
+    ["The Legionlord's Medallion"] = "Médaillon du seigneur de la Légion",
+    ["Demonic Empowerment"] = "Renforcement démoniaque",
     ["Your critical hits"] = "Vos coups critiques",
     ["Female"] = "Femme",
     ["Male"] = "Homme",
@@ -5748,6 +5752,8 @@ Azerloot_GT.fr = {
 }
 Azerloot_GT.es = {
   exact = {
+    ["The Legionlord's Medallion"] = "Medallón del señor de la Legión",
+    ["Demonic Empowerment"] = "Potenciación demoníaca",
     ["Your critical hits"] = "Tus golpes críticos",
     ["Female"] = "Mujer",
     ["Male"] = "Hombre",
@@ -8656,6 +8662,8 @@ Azerloot_GT.es = {
 }
 Azerloot_GT.pt = {
   exact = {
+    ["The Legionlord's Medallion"] = "Medalhão do Senhor da Legião",
+    ["Demonic Empowerment"] = "Potencialização Demoníaca",
     ["Your critical hits"] = "Seus acertos críticos",
     ["Female"] = "Feminino",
     ["Male"] = "Masculino",

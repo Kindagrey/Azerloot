@@ -797,7 +797,7 @@ local SPELL_QUOTE = {
   rain_of_fire = "The sky falls in flames.", hellfire = "Burn with them, burn brighter.",
   death_coil = "A dark coil of terror.", searing_pain = "Simple. Searing.",
   drain_life = "Their life, your gain.", fear = "Run, little ones.",
-  soul_fire = "A soul burns hottest.",
+  soul_fire = "A soul burns hottest.", demonic_empowerment = "Your servants, unleashed.",
   wrath = "Nature's anger, made small.", moonfire = "The moon remembers.",
   starfire = "A star, brought low.", hurricane = "The wind takes sides.",
   insect_swarm = "A thousand tiny bites.", entangling_roots = "The forest holds them fast.",
