@@ -267,6 +267,10 @@ function W.OnBanner(b)
   if not W.AlertsOn() or not DB().bannersTaken then return end
   if b.name and b.name ~= "" and Said(b.name) then return end
   local text, rest = b.text, nil
+  -- a rune: "Restoration Rune picked up!" (the game says only its name)
+  if b.kind == "rune" and b.name and b.name ~= "" then
+    text = G(function() return AzT("%s picked up!", b.name) end) or text
+  end
   if string.len(text) > 70 then
     local first = First(text)
     if first ~= text then
