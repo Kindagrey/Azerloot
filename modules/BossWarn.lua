@@ -319,7 +319,9 @@ local function Box(kind)
       return
     end
     if this.left <= 0 then this:Hide(); return end
-    this:SetAlpha(math.min(1, this.left / 0.6))
+    -- in softly over 0.3 sec, out softly over its last 0.8 sec
+    local shown = BOX[this.kind].dur - this.left
+    this:SetAlpha(math.max(0, math.min(1, shown / 0.3, this.left / 0.8)))
   end)
   f:Hide()
   boxes[kind] = f
@@ -336,7 +338,7 @@ Show = function(f, text, sub, icon, sound)
   f.icon:SetPoint("RIGHT", f.text, "LEFT", -8, 0)
   if icon then f.icon:SetTexture("Interface\\Icons\\" .. icon); f.icon:Show() else f.icon:Hide() end
   f.left = BOX[f.kind].dur
-  f:SetAlpha(1)
+  f:SetAlpha(0)   -- (it fades in: its OnUpdate brings it up)
   f:Show()
   if sound then W.Sound(sound) end
 end
