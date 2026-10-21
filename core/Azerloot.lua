@@ -6441,7 +6441,7 @@ local function BuildMinimapButton()
   mmButton:Show()
 end
 
--- Shift-click on the minimap button: the wishlist window opens unlocked and both warning
+-- Shift-click on the minimap button: the wishlist window opens unlocked and the three warning
 -- places show an example; dragging moves them. Another Shift-click (or a click on an
 -- example) ends it, and the wishlist gets its lock (and shown or not) back as it was.
 AzlLayout = { on = false }   -- (a global: the file's main chunk has no locals left)

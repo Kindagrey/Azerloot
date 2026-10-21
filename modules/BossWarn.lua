@@ -153,15 +153,18 @@ local function TurnText(ph)
   return ""
 end
 
--- ---------- the words on the screen: two places ----------
+-- ---------- the words on the screen: three places ----------
 -- The big words (bosses, guardians, waves, mechanics, the warner's own) high in the middle;
 -- the small things (runes, magnets, caches, achievements) in a smaller place of their own,
--- low in the middle. Each player can move and size both (Shift-click on the minimap button).
+-- low in the middle, and the guardians and the waves in orange under the boss's words. Each
+-- player can move and size all three (Shift-click on the minimap button).
 local alert   -- the big words' place (built on first use)
 local boxes = {}
 local BOX = {
   main = { name = "AzerlootBossAlert", w = 700, h = 92, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos", size = "alertScale",
     point = { "TOP", "TOP", 0, -150 } },
+  mid = { name = "AzerlootMidAlert", w = 600, h = 70, big = 22, small = 13, icon = 34, wrap = 480, dur = 3, pos = "midPos", size = "midScale",
+    point = { "TOP", "TOP", 0, -262 } },
   small = { name = "AzerlootSmallAlert", w = 460, h = 58, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos", size = "smallScale",
     point = { "BOTTOM", "BOTTOM", 0, 190 } },
 }
@@ -227,7 +230,8 @@ local function Place(f)
 end
 -- while being moved: the example names the place's size
 local function MoveText(f)
-  f.text:SetText(AzT(f.kind == "main" and "Boss warnings" or "Small notices") .. "  " .. math.floor(Size(f.kind) * 100 + 0.5) .. "%")
+  local title = (f.kind == "main" and "Boss warnings") or (f.kind == "mid" and "Guardians and waves") or "Small notices"
+  f.text:SetText(AzT(title) .. "  " .. math.floor(Size(f.kind) * 100 + 0.5) .. "%")
 end
 local function Box(kind)
   if boxes[kind] then return boxes[kind] end
@@ -242,7 +246,10 @@ local function Box(kind)
   local t = f:CreateFontString(nil, "OVERLAY")
   t:SetFont("Fonts\\MORPHEUS.TTF", c.big, "THICKOUTLINE")
   -- danger in the raid warning's red; the good things (a rune, a magnet, a cache) in green
-  if kind == "small" then t:SetTextColor(0.35, 1, 0.35) else t:SetTextColor(1, 0.18, 0.12) end
+  -- (guardians and waves between them, in orange)
+  if kind == "small" then t:SetTextColor(0.35, 1, 0.35)
+  elseif kind == "mid" then t:SetTextColor(1, 0.55, 0.12)
+  else t:SetTextColor(1, 0.18, 0.12) end
   Face(t, "head")
   t:SetPoint("TOP", f, "TOP", math.floor(c.icon / 2) + 3, 0)
   f.text = t
@@ -337,15 +344,17 @@ end
 -- words for the screen: the big place, or the small one (low: a rune, a magnet, a cache, an
 -- achievement); something said a moment ago is not covered at once, the new words wait their
 -- turn (a sound only with a boss coming or turning: the other words come quietly)
+-- (low: true for the small place, "mid" for the guardians' and the waves')
 local function Alert(text, sub, icon, sound, low)
-  local f = Box(low and "small" or "main")
+  local kind = (low == "mid" and "mid") or (low and "small") or "main"
+  local f = Box(kind)
   if W.moving then return end   -- (being moved: the examples stay)
   local how = "shown"
   if f:IsShown() and (f.left or 0) > BOX[f.kind].dur - 1.5 then
-    if table.getn(f.queue) < (low and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }); how = "queued"
+    if table.getn(f.queue) < ((kind == "small") and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }); how = "queued"
     else how = "DROPPED" end
   end
-  if W.LogShown then W.LogShown(how, text, sub, low, sound) end
+  if W.LogShown then W.LogShown(how, text, sub, kind, sound) end
   if how ~= "shown" then return end
   Show(f, text, sub, icon, sound)
 end
@@ -362,12 +371,13 @@ function W.MoveMode(on)
   W.dragged = false
   if on then
     W.moving = true
-    for _, kind in ipairs({ "main", "small" }) do
+    for _, kind in ipairs({ "main", "mid", "small" }) do
       local f = Box(kind)
       f.queue = {}
       MoveText(f)
       -- what shows here, then (quieter) how to place it
-      f.sub:SetText(AzT(kind == "main" and "A boss coming and turning, its attacks, guardians, stampedes and packs."
+      f.sub:SetText(AzT((kind == "main" and "A boss coming and turning, its attacks and its defeat.")
+        or (kind == "mid" and "Guardians approaching or slain, swarms, stampedes and walls of foes.")
         or "Runes picked up, magnets, caches and achievements."))
       -- (on one line where it fits: the example uses the box's whole width)
       f.sub:SetWidth(BOX[kind].w - 40); f.hint:SetWidth(BOX[kind].w - 40)
@@ -488,6 +498,7 @@ function W.OnBanner(b)
   local boss = b.boss and Lookup(b.name) or nil
   if boss then arrived[string.lower(b.name)] = GetTime() end
   local low = b.kind == "rune" or b.kind == "magnet" or b.kind == "cache" or b.kind == "achievement"
+  if b.kind == "guardian" then low = "mid" end
   Alert(text, rest, boss and boss.icon or nil, nil, low)
 end
 W.banners = false
@@ -495,15 +506,46 @@ if AZS_RegisterBannerHandler then
   W.banners = pcall(AZS_RegisterBannerHandler, function(b) W.OnBanner(b) end) and true or false
 end
 
+local MID_TEXTS = {
+  ["%s approaches!"] = true,
+  ["%s approche !"] = true,
+  ["%s naht!"] = true,
+  ["%s se aproxima!"] = true,
+  ["A stampede charges through!"] = true,
+  ["A wall of foes closes in!"] = true,
+  ["Der Ansturm endet nie..."] = true,
+  ["Ein Schwarm umzingelt dich!"] = true,
+  ["Eine Stampede prescht heran!"] = true,
+  ["Eine Wand aus Feinden rückt näher!"] = true,
+  ["L'assaut ne finit jamais..."] = true,
+  ["La embestida no termina nunca..."] = true,
+  ["La nuée vous encercle !"] = true,
+  ["O ataque nunca termina..."] = true,
+  ["O enxame cerca você!"] = true,
+  ["Swarm surrounds you!"] = true,
+  ["The onslaught never ends..."] = true,
+  ["Uma debandada atravessa o campo!"] = true,
+  ["Uma muralha de inimigos se aproxima!"] = true,
+  ["Un mur d'ennemis se referme !"] = true,
+  ["Une ruée traverse le champ !"] = true,
+  ["¡%s se acerca!"] = true,
+  ["¡Un enjambre te rodea!"] = true,
+  ["¡Un muro de enemigos se acerca!"] = true,
+  ["¡Una estampida arrasa el campo!"] = true,
+}
 local function Emote(text, who)
   W.NoteLang(who)
   if not W.AlertsOn() or not DB().bannersTaken or type(text) ~= "string" then return end
   -- (the same thing told by a banner a moment before, or after: once)
   if W.banners and Said(who, "emote") then return end
   if GUARD_SLAIN[text] then
-    Alert(G(function() return AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger.") end))
+    local t1, t2 = G(function() return AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger.") end)
+    Alert(t1, t2, nil, nil, "mid")
     return
   end
+  -- a guardian coming and the waves (a swarm, a stampede, a wall of foes): the orange place;
+  -- so too any other words of the game's that name no one (a wave it may add later)
+  local mid = MID_TEXTS[text] or not string.find(text, "%s", 1, true)
   if type(who) == "string" and who ~= "" then
     text = string.gsub(text, "%%s", (string.gsub(who, "%%", "%%%%")))
   end
@@ -528,7 +570,7 @@ local function Emote(text, who)
     -- who sent it (a guardian, a pack), under the words when they do not name it
     local sub = rest
     if not sub and type(who) == "string" and who ~= "" and not string.find(text, who, 1, true) then sub = who end
-    Alert(text, sub)
+    Alert(text, sub, nil, nil, mid and "mid" or nil)
   end
 end
 W.Emote = Emote
@@ -934,9 +976,9 @@ local function Log(line)
 end
 -- what the warner itself put on the screen (or queued, or had no room for), so a run's log
 -- shows every call beside the game's line it came from
-function W.LogShown(how, text, sub, low, sound)
+function W.LogShown(how, text, sub, kind, sound)
   if not DB().bossLogOn then return end
-  Log(">> " .. how .. (low and " small" or " main") .. (sound and " +sound" or "") .. ": "
+  Log(">> " .. how .. " " .. tostring(kind) .. (sound and " +sound" or "") .. ": "
     .. tostring(text) .. (sub and sub ~= "" and ("  /  " .. tostring(sub)) or ""))
 end
 -- the fights' every tick and hit filled the log in two minutes: only those naming a boss stay

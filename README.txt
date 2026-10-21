@@ -18,7 +18,7 @@ Updating: delete the old "Azerloot" folder first, then unpack the new one.
 OPENING THE BOOK
 ----------------
 Minimap button, /azl, or a key of your choice (Key Bindings menu).
-Shift-click on the minimap button: the wishlist window and both warning places can be
+Shift-click on the minimap button: the wishlist window and the three warning places can be
 dragged where you like, the mouse wheel over a warning makes it larger or smaller;
 Shift-click again (or click a warning example) when done.
 
