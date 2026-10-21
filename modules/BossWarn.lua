@@ -255,8 +255,21 @@ local function Box(kind)
   f.queue = {}
   f.left = 0
   -- while it is being moved: a dark box shows where it sits
+  -- (and under its words, a quieter line on how to place it, only while being moved)
+  local hint = f:CreateFontString(nil, "OVERLAY")
+  hint:SetFont("Fonts\\FRIZQT__.TTF", c.small, "OUTLINE")
+  hint:SetTextColor(0.7, 0.65, 0.55)
+  Face(hint)
+  hint:SetPoint("TOP", s, "BOTTOM", 0, -6)
+  hint:SetWidth(c.wrap)
+  hint:Hide()
+  f.hint = hint
+  -- the dark box: room above the big words, and under the hint as much
   local box = f:CreateTexture(nil, "BACKGROUND")
-  box:SetTexture(WHITE); box:SetVertexColor(0, 0, 0); box:SetAlpha(0.5); box:SetAllPoints(f); box:Hide()
+  box:SetTexture(WHITE); box:SetVertexColor(0, 0, 0); box:SetAlpha(0.5)
+  box:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 10); box:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0, 10)
+  box:SetPoint("BOTTOM", hint, "BOTTOM", 0, -10)
+  box:Hide()
   f.box = box
   f:SetMovable(true); f:EnableMouse(false)
   f:RegisterForDrag("LeftButton")
@@ -354,8 +367,9 @@ function W.MoveMode(on)
       MoveText(f)
       -- what shows here, then (quieter) how to place it
       f.sub:SetText(AzT(kind == "main" and "A boss coming and turning, its attacks, guardians, stampedes and packs"
-        or "Runes picked up, magnets, caches and achievements")
-        .. "\n|cffb3a68c" .. AzT("Drag: move · Mouse wheel: size · Click: done · Right-click: reset") .. "|r")
+        or "Runes picked up, magnets, caches and achievements"))
+      f.hint:SetText(AzT("Drag: move · Mouse wheel: size · Click: done · Right-click: reset"))
+      f.hint:Show()
       f.icon:Hide()
       f.box:Show()
       f:EnableMouse(true)
@@ -367,6 +381,7 @@ function W.MoveMode(on)
     W.moving = false
     for _, f in pairs(boxes) do
       f.box:Hide()
+      f.hint:Hide()
       f:EnableMouse(false)
       f:EnableMouseWheel(false)
       f:Hide()
