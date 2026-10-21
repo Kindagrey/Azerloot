@@ -2942,7 +2942,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     for i = 1, table.getn(self.items) do
       local on, v = d.bossWarn ~= false and d[self.items[i].key] ~= false, self.items[i].value
       if on then v:SetText(AzT("On")); v:SetTextColor(0.3, 1, 0.3)
-      else v:SetText(AzT("Off")); v:SetTextColor(0.6, 0.6, 0.6) end
+      else v:SetText(AzT("Off")); v:SetTextColor(1, 0.3, 0.25) end
     end
   end
   -- as wide as its longest name needs
@@ -3157,7 +3157,7 @@ local function BuildSettings(search)
     o.value, o.label = v, t
     o.Update = function(self)
       if get() then self.value:SetText(AzT("On")); self.value:SetTextColor(0.3, 1, 0.3)
-      else self.value:SetText(AzT("Off")); self.value:SetTextColor(0.6, 0.6, 0.6) end
+      else self.value:SetText(AzT("Off")); self.value:SetTextColor(1, 0.3, 0.25) end
     end
     o:SetScript("OnClick", function() set(not get()); this:Update() end)
     o:SetScript("OnEnter", function()
