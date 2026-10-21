@@ -5762,6 +5762,9 @@ RefreshTracker = function()
     lvb:Hide()
   end
   if AzlB then y, cardBuild = AzlB.TrackerHead(tracker, W, y) end
+  -- a new run's choice of a build stands alone: the lists come once a build is chosen (or
+  -- the choice is closed, or two minutes have passed)
+  if AzlB and AzlB.RunPick and AzlB.RunPick() then lines = {} end
   local cardBottom, below, hinted = AzlTrackerCard(cardBuild, ci, waiting)
   if cardBuild or hinted then y = below end
   -- the head card itself takes a click: the choice of a build opens under it

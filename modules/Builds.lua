@@ -598,6 +598,9 @@ function B.Picking()
   return true
 end
 function B.TrackerWanted() return B.Picking() end
+-- the choice a new run opens by itself (not one opened by a click on the window's head):
+-- while it waits, the wishlist window shows the choice alone
+function B.RunPick() return B.Picking() and AzerlootDB.buildPick == true end
 -- the choice of a build, opened by hand (a click on the wishlist window's head); a second
 -- click closes it again
 function B.OpenPick()
