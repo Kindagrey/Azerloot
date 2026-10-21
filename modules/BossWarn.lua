@@ -13,6 +13,7 @@ local W = AzlW
 local MEDIA = "Interface\\AddOns\\Azerloot\\media\\textures\\"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local BAR_W = 300
+local bar   -- the boss bar (built on first use)
 
 local function DB()
   if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
@@ -86,17 +87,16 @@ local function Alert(text, sub, icon)
     alert = CreateFrame("Frame", "AzerlootBossAlert", UIParent)
     alert:SetFrameStrata("HIGH")
     alert:SetWidth(700); alert:SetHeight(80)
-    alert:SetPoint("CENTER", UIParent, "CENTER", 0, 190)
     local ic = alert:CreateTexture(nil, "ARTWORK")
     ic:SetWidth(42); ic:SetHeight(42)
     alert.icon = ic
     local t = alert:CreateFontString(nil, "OVERLAY")
-    t:SetFont("Fonts\\MORPHEUS.TTF", 34, "THICKOUTLINE")
+    t:SetFont("Fonts\\MORPHEUS.TTF", 28, "THICKOUTLINE")
     t:SetTextColor(1, 0.55, 0.12)
     t:SetPoint("TOP", alert, "TOP", 24, 0)
     alert.text = t
     local s = alert:CreateFontString(nil, "OVERLAY")
-    s:SetFont("Fonts\\FRIZQT__.TTF", 17, "OUTLINE")
+    s:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
     s:SetTextColor(1, 0.9, 0.65)
     s:SetPoint("TOP", t, "BOTTOM", 0, -6)
     alert.sub = s
@@ -108,6 +108,12 @@ local function Alert(text, sub, icon)
   end
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
+  -- right under the boss bar, wherever it has been put: the game's own banners (a boss or
+  -- a guardian coming, a stampede, a lair taken back) keep the middle of the screen
+  if not bar and W.Build then W.Build() end
+  alert:ClearAllPoints()
+  if bar then alert:SetPoint("TOP", bar, "BOTTOM", 0, -10)
+  else alert:SetPoint("TOP", UIParent, "TOP", 0, -200) end
   alert.icon:ClearAllPoints()
   alert.icon:SetPoint("RIGHT", alert.text, "LEFT", -10, 0)
   if icon then alert.icon:SetTexture("Interface\\Icons\\" .. icon); alert.icon:Show() else alert.icon:Hide() end
@@ -119,8 +125,7 @@ end
 W.Alert = Alert
 
 -- ---------- the bar ----------
-local bar
-local function Build()
+function W.Build()
   bar = CreateFrame("Frame", "AzerlootBossBar", UIParent)
   bar:SetFrameStrata("MEDIUM")
   bar:SetWidth(BAR_W + 24); bar:SetHeight(64)
@@ -264,7 +269,7 @@ local seen = {}       -- per boss id: the turns already announced
 local warned = {}     -- per schedule index: the 10-second warning given
 local alive = {}      -- the boss ids seen alive, to announce one once
 function W.Update()
-  if not bar then Build() end
+  if not bar then W.Build() end
   local ph = Phase()
   local running = ph == "playing" or ph == "ready" or ph == "paused" or ph == "choosing"
   if not running then
