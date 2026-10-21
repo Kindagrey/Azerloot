@@ -181,18 +181,42 @@ local function MuteEmoteFrame()
   end
 end
 W.MuteEmoteFrame = MuteEmoteFrame
+-- the game's words for a guardian slain, in each of its languages: too long for the middle of
+-- the screen, said shorter by the warner
+local GUARD_SLAIN = {
+  ["%s a fost ucis! Bârlogul lui dă comori și puterea lui, iar ceilalți gardieni devin mai puternici."] = true,
+  ["%s est tué ! Son antre livre un trésor et sa force, et les autres gardiens deviennent plus forts."] = true,
+  ["%s foi morto! O covil entrega tesouro e força, e os outros guardiões ficam mais fortes."] = true,
+  ["%s ginie! Jego legowisko oddaje skarb i siłę, a pozostali strażnicy rosną w siłę."] = true,
+  ["%s is slain! Its lair yields treasure and its strength, and the other guardians grow stronger."] = true,
+  ["%s padl! Jeho doupě vydává poklad a jeho sílu a ostatní strážci sílí."] = true,
+  ["%s wurde getötet! Sein Hort gibt Schätze und seine Stärke frei, und die anderen Wächter werden stärker."] = true,
+  ["%s öldürüldü! İni hazinesini ve gücünü bırakıyor, diğer muhafızlar güçleniyor."] = true,
+  ["%s загинув! Його лігво дає скарби і його силу, а інші вартові стають сильнішими."] = true,
+  ["%s повержен! Его логово отдаёт сокровище и его силу, а остальные стражи становятся сильнее."] = true,
+  ["%s 처치되었습니다! 소굴이 보물과 힘을 내주고, 다른 수호자들이 강해집니다."] = true,
+  ["%sが倒れた！その巣穴から宝と力が得られ、他の守護者たちは強くなる。"] = true,
+  ["%s被击杀了！它的巢穴交出了财宝和力量，其他守护者变得更强。"] = true,
+  ["¡%s ha caído! Su guarida entrega su tesoro y su fuerza, y los demás guardianes se hacen más fuertes."] = true,
+}
 local function Emote(text, who)
   if not W.On() or not DB().bannersTaken or type(text) ~= "string" then return end
+  if GUARD_SLAIN[text] then
+    Alert(AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger."))
+    return
+  end
   if type(who) == "string" and who ~= "" then
     text = string.gsub(text, "%%s", (string.gsub(who, "%%", "%%%%")))
   end
+  -- other long words (a text the game may add later): the first sentence only
+  if string.len(text) > 70 then text = First(text) end
   local b = Lookup(who)
   if b then
     -- a boss coming: its own call (from the bar, a moment before) is not said twice
     local k = string.lower(who)
     if arrived[k] and GetTime() - arrived[k] < 4 then return end
     arrived[k] = GetTime()
-    Alert(text, b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b.icon)
+    Alert(text, nil, b.icon)
   else
     -- who sent it (a guardian, a pack), under the words when they do not name it
     local sub
@@ -399,7 +423,7 @@ function W.Update()
       local k = string.lower(tostring(u.name))
       if not (arrived[k] and GetTime() - arrived[k] < 4) then
         arrived[k] = GetTime()
-        Alert(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), b and b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b and b.icon)
+        Alert(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), nil, b and b.icon)
       end
     end
     -- its turns: a word as it comes close (5% before), the big words when it happens
