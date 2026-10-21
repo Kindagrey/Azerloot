@@ -362,19 +362,8 @@ function W.StripPlace(tracker, w, y, hidden)
   if W.mode == "boss" then HealthBar(w - 22); hpb:Show() elseif hpb then hpb:Hide() end
   s:SetHeight(W.mode == "boss" and 38 or 24)
   s:Show()
-  W.placing = true
   W.Fill()
-  W.placing = nil
-  -- a name too long for one line takes two: the strip grows by a line, the icon and the
-  -- number stay beside it, in the middle
-  local extra = W.extra or 0
-  W.placedExtra = extra
-  local h = (W.mode == "boss" and 38 or 24) + extra
-  s:SetHeight(h)
-  local cy = 12 + extra / 2
-  bar.icon:ClearAllPoints(); bar.icon:SetPoint("LEFT", bar, "TOPLEFT", 2, -cy)
-  bar.info:ClearAllPoints(); bar.info:SetPoint("RIGHT", bar, "TOPRIGHT", -3, -cy)
-  return h
+  return W.mode == "boss" and 38 or 24
 end
 
 -- the strip's words and bar from what the last look found
@@ -391,7 +380,7 @@ function W.Fill()
     if u.enraged then info = "|cffff4020" .. AzT("Enraged") .. "|r  " .. info end
     bar.info:SetText(info)
     bar.info:SetTextColor(1, 0.9, 0.75); bar.info:SetAlpha(1)
-    W.FitName(b and AzG(b.name) or tostring(u.name))
+    W.FitName(b and AzG(b.name) or tostring(u.name), W.ShortName(b))
     local tr = hpb
     if tr then
       tr:SetValue(math.min(1, pct))
@@ -412,12 +401,36 @@ function W.Fill()
     bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
     bar.info:SetText(Clock(nb.left))
     W.leftAt, W.left = GetTime(), nb.left
-    W.FitName(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)), b and AzG(b.name) or tostring(nb.name))
+    local sn = W.ShortName(b)
+    W.FitName(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)), sn and AzT("Next boss: %s", sn))
   end
 end
 
--- the name in the room left of the number: whole, else without "Next boss:", else a little
--- smaller, else shortened with "..." (it never runs into the time)
+-- the short form of a long name: its own name without the title, in every language (the word
+-- the boss is known by: first or last in the game's name), else nothing
+local SHORT = {
+  ["Morbent Fel"] = "first", ["Nimar the Slayer"] = "first", ["Alzzin the Wildshaper"] = "first",
+  ["Jin'do the Hexxer"] = "first", ["Hakkar the Soulflayer"] = "first", ["Korrak the Bloodrager"] = "first",
+  ["Ivus the Forest Lord"] = "first", ["Lokholar the Ice Lord"] = "first", ["Glacius the Frozen Titan"] = "first",
+  ["Ossirian the Unscarred"] = "first", ["Noth the Plaguebringer"] = "first", ["Zevrim Thornhoof"] = "first",
+  ["Tendris Warpwood"] = "first",
+  ["Lord Hel'nurath"] = "last", ["Lord Falconcrest"] = "last", ["Lord Aliden Perenolde"] = "last",
+  ["High Priestess Jeklik"] = "last", ["High Priest Venoxis"] = "last", ["Bloodlord Mandokir"] = "last",
+  ["Houndmaster Loksey"] = "last", ["Scarlet Commander Mograine"] = "last", ["High Inquisitor Whitemane"] = "last",
+  ["General Angerforge"] = "last", ["Emperor Dagran Thaurissan"] = "last", ["Majordomo Executus"] = "last",
+  ["Princess Huhuran"] = "last", ["Warchief Rend Blackhand"] = "Rend",
+}
+function W.ShortName(b)
+  if not b then return nil end
+  local how, t = SHORT[b.name], AzG(b.name)
+  if not how then return nil end
+  if how == "first" then return (string.gsub(t, "[%s,].*$", "")) end
+  if how == "last" then return (string.gsub(t, "^.*%s", "")) end
+  return how
+end
+
+-- the name in the room left of the number: whole, else with the boss's short name ("Next boss:
+-- Mograine"), else a little smaller, else shortened with "..." (it never runs into the time)
 local nameSize
 function W.FitName(text, short)
   local fs = bar.name
@@ -425,17 +438,18 @@ function W.FitName(text, short)
   if not nameSize then nameSize = size end
   if face and nameSize then fs:SetFont(face, nameSize, flags) end
   local room = (bar:GetWidth() or 200) - 34 - (bar.info:GetStringWidth() or 30)
-  fs:SetWidth(room)
-  local extra = 0
   fs:SetText(text)
-  if (fs:GetStringWidth() or 0) > room and short then fs:SetText(short) end
-  if (fs:GetStringWidth() or 0) > room and face and nameSize and AzlFitText then
-    AzlFitText(fs, room, nameSize, nameSize - 1)
+  if (fs:GetStringWidth() or 0) <= room then return end
+  if short then fs:SetText(short); text = short end
+  if (fs:GetStringWidth() or 0) <= room then return end
+  if face and nameSize and AzlFitText then AzlFitText(fs, room, nameSize, nameSize - 1) end
+  local n = string.len(text)
+  while n > 4 and (fs:GetStringWidth() or 0) > room do
+    n = n - 1
+    -- (never in the middle of a letter of several bytes)
+    while n > 4 and string.byte(text, n + 1) and string.byte(text, n + 1) >= 128 and string.byte(text, n + 1) < 192 do n = n - 1 end
+    fs:SetText((string.gsub(string.sub(text, 1, n), "[%s,]+$", "")) .. "...")
   end
-  -- still too long: on two lines, whole
-  if (fs:GetStringWidth() or 0) > room then extra = 11 end
-  W.extra = extra
-  if not W.placing and W.placedExtra ~= nil and W.placedExtra ~= extra and AZL and AZL.RefreshTracker then AZL.RefreshTracker() end
 end
 
 -- the time to the next boss turns from yellow (3 minutes and more) through orange (1:30) to
