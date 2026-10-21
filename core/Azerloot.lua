@@ -5937,9 +5937,10 @@ RefreshTracker = function()
   -- the head card on its own panel, like the sections below it
   table.insert(pan, { t = -4, b = cardBottom, card = true })
   -- the boss warner's strip (modules\BossWarn.lua) under the head: the next boss, or the one
-  -- alive with its health; on its own panel, like a section (not while a run's build is chosen)
+  -- alive with its health; on its own panel, like a section (while a run's build is chosen,
+  -- under the choice)
   if AzlW and AzlW.StripPlace then
-    local sh = AzlW.StripPlace(tracker, W, y - 4, runPick)
+    local sh = AzlW.StripPlace(tracker, W, y - 4, false)
     if sh > 0 then
       table.insert(pan, { t = y, b = y - 4 - sh - 4 })
       y = y - 4 - sh - 4 - 6
