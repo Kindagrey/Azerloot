@@ -6294,16 +6294,20 @@ end
 -- drag it to move it round the edge. Square minimaps (SurvivorsDragonUi) get a square path.
 local mmButton
 
-local function MinimapDB()
-  if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
-  -- north-west until the player moves it (the left side belongs to the damage meter's button)
-  if AzerlootDB.minimapAngle == nil or not AzerlootDB.minimapMoved then AzerlootDB.minimapAngle = 135 end
-  return AzerlootDB
-end
-
 local function SquareMinimap()
   local ok, loaded = pcall(IsAddOnLoaded, "SurvivorsDragonUi")
   return ok and loaded
+end
+
+-- until the player moves it: on the left, just above the game's own damage meter button
+-- (that one sits a little under the middle of the left side, at about 197 degrees); on the
+-- square map straight left, on the smaller round one a bit higher, so the two never touch
+local function MinimapDB()
+  if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
+  if AzerlootDB.minimapAngle == nil or not AzerlootDB.minimapMoved then
+    AzerlootDB.minimapAngle = SquareMinimap() and 180 or 170
+  end
+  return AzerlootDB
 end
 
 local function PlaceMinimapButton()
