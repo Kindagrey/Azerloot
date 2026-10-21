@@ -2901,19 +2901,19 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
   local ws = Panel(sp)
   ws:SetWidth(182); ws:SetHeight(46 + table.getn(AZL_WARN_PARTS) * 19)
   ws:SetHead("Azerwarn")
-  ws:SetPoint("TOPLEFT", sp, "TOPRIGHT", 4, 0)
+  ws:SetPoint("TOPLEFT", wr, "TOPRIGHT", 13, 8)   -- level with its row
   ws.items = {}
   local function DBw() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end return AzerlootDB end
   for i = 1, table.getn(AZL_WARN_PARTS) do
     local part = AZL_WARN_PARTS[i]
     local o = Row(ws, 164)
     o:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (i - 1) * 19)
-    local ck = o:CreateTexture(nil, "OVERLAY")
-    ck:SetWidth(14); ck:SetHeight(14); ck:SetPoint("LEFT", o, "LEFT", 2, 0)
-    SetCheck(ck)
-    o.check = ck
+    -- On in green or Off in grey at its right, like the settings' switches
+    local v = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    v:SetPoint("RIGHT", o, "RIGHT", -4, 0)
+    o.value = v
     local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetPoint("LEFT", o, "LEFT", 20, 0)
+    t:SetPoint("LEFT", o, "LEFT", 4, 0)
     t:SetText(AzT(part.label))
     o.label = t
     o.key = part.key
@@ -2922,7 +2922,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
       -- (the old single switch, off: both parts start off)
       if d.bossWarn == false then d.bossWarn = nil; d.bossAlerts = false; d.bossBar = false end
       d[this.key] = (d[this.key] == false)
-      ws:Update()
+      ws:Update(); ws:Fit()
       if AzlW and AzlW.Banners then AzlW.Banners() end
       if AzlW and AzlW.Update then AzlW.Update() end
     end)
@@ -2940,15 +2940,16 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
   ws.Update = function(self)
     local d = DBw()
     for i = 1, table.getn(self.items) do
-      local on = d.bossWarn ~= false and d[self.items[i].key] ~= false
-      if on then self.items[i].check:Show() else self.items[i].check:Hide() end
+      local on, v = d.bossWarn ~= false and d[self.items[i].key] ~= false, self.items[i].value
+      if on then v:SetText(AzT("On")); v:SetTextColor(0.3, 1, 0.3)
+      else v:SetText(AzT("Off")); v:SetTextColor(0.6, 0.6, 0.6) end
     end
   end
   -- as wide as its longest name needs
   ws.Fit = function(self)
     local need = 164
     for i = 1, table.getn(self.items) do
-      local w = (self.items[i].label:GetStringWidth() or 0) + 28
+      local w = (self.items[i].label:GetStringWidth() or 0) + 8 + (self.items[i].value:GetStringWidth() or 0) + 14
       if w > need then need = w end
     end
     need = math.ceil(need)
@@ -3041,7 +3042,7 @@ local function BuildSettings(search)
   sub:SetWidth(182); sub:SetHeight(46 + table.getn(FACES) * 19)
   sub:SetHead(AzT("Font"))
   -- beside the settings, past the book's right edge and clear of the chapter tabs below
-  sub:SetPoint("TOPLEFT", sp, "TOPRIGHT", 4, 0)
+  sub:SetPoint("TOPLEFT", fr, "TOPRIGHT", 13, 8)   -- level with its row
   sub.items = {}
   for i = 1, table.getn(FACES) do
     local fc = FACES[i]
@@ -3102,7 +3103,7 @@ local function BuildSettings(search)
   local lsub = Panel(sp)
   lsub:SetWidth(182); lsub:SetHeight(46 + table.getn(AZL_LANGS) * 19)
   lsub:SetHead(AzT("Language"))
-  lsub:SetPoint("TOPLEFT", sp, "TOPRIGHT", 4, 0)
+  lsub:SetPoint("TOPLEFT", lr, "TOPRIGHT", 13, 8)
   lsub.items = {}
   for i = 1, table.getn(AZL_LANGS) do
     local lg = AZL_LANGS[i]
