@@ -596,7 +596,8 @@ function B.Picking()
   if AzerlootDB.buildPick == "manual" then return true end
   local ph = (AzlPhase and AzlPhase()) or (AZS_GetPhase and AZS_GetPhase()) or nil
   if ph ~= "ready" and ph ~= "playing" then return false end
-  local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() or 0 end)
+  -- (after a reload the game's clock comes again only later: the warner's kept one meanwhile)
+  local ok, t = pcall(function() return (AZS_GetRunTime and AZS_GetRunTime()) or (AzlW and AzlW.RunTime and AzlW.RunTime()) or 0 end)
   if ok and tonumber(t) and tonumber(t) > 120 then AzerlootDB.buildPick = nil; return false end
   return true
 end

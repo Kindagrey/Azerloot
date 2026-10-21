@@ -63,10 +63,29 @@ local function Face(fs, role)
   return fs
 end
 
+-- After a reload the game sends the run's phase and clock again only when they change: the
+-- phase then comes from the book's own snapshot (AzlPhase), the clock from the last one kept,
+-- run on by the real time since
 local function Phase()
-  local ok, ph = pcall(function() return AZS_GetPhase and AZS_GetPhase() end)
+  local ok, ph = pcall(function() return (AzlPhase and AzlPhase()) or (AZS_GetPhase and AZS_GetPhase()) end)
   return ok and ph or nil
 end
+local function RunTime()
+  local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() end)
+  t = ok and tonumber(t) or nil
+  local d = DB()
+  local now = time and time() or 0
+  if t then
+    d.runClock = { t = t, at = now }
+    return t
+  end
+  local c = d.runClock
+  if type(c) == "table" and tonumber(c.t) and tonumber(c.at) and now - c.at >= 0 and now - c.at < 900 then
+    return c.t + (now - c.at)
+  end
+  return nil
+end
+W.RunTime = RunTime
 
 local function Clock(s)
   s = math.max(0, math.floor((tonumber(s) or 0) + 0.5))
@@ -590,8 +609,7 @@ function W.Update()
   up = okU and type(up) == "table" and up or {}
   -- the game sends its schedule at a run's start and when it changes, not again after a
   -- /reload: the last one sent is kept, and used until the game sends a new one
-  local okT, now = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() or 0 end)
-  now = okT and tonumber(now) or 0
+  local now = RunTime() or 0
   local d = DB()
   -- (an empty schedule sent while the kept one still has bosses to come does not wipe it: the
   -- game may send its lines anew, before the schedule, after a reload)
