@@ -289,7 +289,7 @@ local function StripFrame()
   bar:SetHeight(24)
   local ic = bar:CreateTexture(nil, "ARTWORK")
   ic:SetWidth(20); ic:SetHeight(20)
-  ic:SetPoint("TOPLEFT", bar, "TOPLEFT", 2, -2)
+  ic:SetPoint("LEFT", bar, "TOPLEFT", 2, -12)
   ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   bar.icon = ic
   local nm = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -307,6 +307,7 @@ local function StripFrame()
   bar:SetScript("OnClick", function() W.OpenPage(stripBoss) end)
   bar:SetScript("OnEnter", function() W.Tip(this) end)
   bar:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  bar:SetScript("OnUpdate", function() if W.Pulse then W.Pulse() end end)
   bar:Hide()
   return bar
 end
@@ -330,7 +331,8 @@ local function HealthBar(w)
   end
   tr.w = w
   tr:SetPoint("BOTTOMLEFT", bar, "BOTTOMLEFT", 3, 5)
-  local mk = CreateFrame("Frame", nil, bar)
+  -- (a child of the health bar: hidden with it, when the next boss is told instead)
+  local mk = CreateFrame("Frame", nil, tr)
   mk:SetAllPoints(bar)
   mk:SetFrameLevel(tr:GetFrameLevel() + 3)
   tr.mk = mk
@@ -357,11 +359,21 @@ function W.StripPlace(tracker, w, y, hidden)
   s:ClearAllPoints()
   s:SetPoint("TOPLEFT", tracker, "TOPLEFT", 8, y)
   s:SetWidth(w - 16)
-  local h = W.mode == "boss" and 38 or 24
-  s:SetHeight(h)
   if W.mode == "boss" then HealthBar(w - 22); hpb:Show() elseif hpb then hpb:Hide() end
+  s:SetHeight(W.mode == "boss" and 38 or 24)
   s:Show()
+  W.placing = true
   W.Fill()
+  W.placing = nil
+  -- a name too long for one line takes two: the strip grows by a line, the icon and the
+  -- number stay beside it, in the middle
+  local extra = W.extra or 0
+  W.placedExtra = extra
+  local h = (W.mode == "boss" and 38 or 24) + extra
+  s:SetHeight(h)
+  local cy = 12 + extra / 2
+  bar.icon:ClearAllPoints(); bar.icon:SetPoint("LEFT", bar, "TOPLEFT", 2, -cy)
+  bar.info:ClearAllPoints(); bar.info:SetPoint("RIGHT", bar, "TOPRIGHT", -3, -cy)
   return h
 end
 
@@ -375,10 +387,11 @@ function W.Fill()
     local pct = hpm > 0 and hp / hpm or 0
     stripBoss = b
     bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
-    bar.name:SetText(b and AzG(b.name) or tostring(u.name))
     local info = string.format("%d%%", math.floor(pct * 100 + 0.5))
     if u.enraged then info = "|cffff4020" .. AzT("Enraged") .. "|r  " .. info end
     bar.info:SetText(info)
+    bar.info:SetTextColor(1, 0.9, 0.75); bar.info:SetAlpha(1)
+    W.FitName(b and AzG(b.name) or tostring(u.name))
     local tr = hpb
     if tr then
       tr:SetValue(math.min(1, pct))
@@ -397,12 +410,59 @@ function W.Fill()
     local b = Lookup(nb.name)
     stripBoss = b
     bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
-    bar.name:SetText(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)))
     bar.info:SetText(Clock(nb.left))
+    W.leftAt, W.left = GetTime(), nb.left
+    W.FitName(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)), b and AzG(b.name) or tostring(nb.name))
   end
-  -- a long name gives way to the number at the right
-  bar.name:SetWidth(math.max(40, (bar:GetWidth() or 200) - 30 - (bar.info:GetStringWidth() or 30)))
 end
+
+-- the name in the room left of the number: whole, else without "Next boss:", else a little
+-- smaller, else shortened with "..." (it never runs into the time)
+local nameSize
+function W.FitName(text, short)
+  local fs = bar.name
+  local face, size, flags = fs:GetFont()
+  if not nameSize then nameSize = size end
+  if face and nameSize then fs:SetFont(face, nameSize, flags) end
+  local room = (bar:GetWidth() or 200) - 34 - (bar.info:GetStringWidth() or 30)
+  fs:SetWidth(room)
+  local extra = 0
+  fs:SetText(text)
+  if (fs:GetStringWidth() or 0) > room and short then fs:SetText(short) end
+  if (fs:GetStringWidth() or 0) > room and face and nameSize and AzlFitText then
+    AzlFitText(fs, room, nameSize, nameSize - 1)
+  end
+  -- still too long: on two lines, whole
+  if (fs:GetStringWidth() or 0) > room then extra = 11 end
+  W.extra = extra
+  if not W.placing and W.placedExtra ~= nil and W.placedExtra ~= extra and AZL and AZL.RefreshTracker then AZL.RefreshTracker() end
+end
+
+-- the time to the next boss turns from yellow (3 minutes and more) through orange (1:30) to
+-- red (0:15), smoothly; from 1:30 on it pulses, and faster from 0:15 on
+local function Lerp(a, b, f) return a + (b - a) * f end
+function W.TimeColour(left)
+  local Y, O, R = { 1, 0.82, 0 }, { 1, 0.5, 0.05 }, { 1, 0.16, 0.1 }
+  local c
+  if left >= 180 then c = Y
+  elseif left >= 90 then local f = (180 - left) / 90; c = { Lerp(Y[1], O[1], f), Lerp(Y[2], O[2], f), Lerp(Y[3], O[3], f) }
+  elseif left >= 15 then local f = (90 - left) / 75; c = { Lerp(O[1], R[1], f), Lerp(O[2], R[2], f), Lerp(O[3], R[3], f) }
+  else c = R end
+  -- the pulse: none before 1:30, growing in over the next 10 seconds; quicker and deeper at
+  -- the end
+  local amp, speed = 0, 4
+  if left < 90 then amp = 0.3 * math.min(1, (90 - left) / 10) end
+  if left < 15 then amp, speed = 0.45, 7 end
+  return c, amp, speed
+end
+local function Pulse()
+  if not bar or not bar:IsShown() or W.mode ~= "next" or not W.leftAt then return end
+  local left = math.max(0, (W.left or 0) - (GetTime() - W.leftAt))
+  local c, amp, speed = W.TimeColour(left)
+  bar.info:SetTextColor(c[1], c[2], c[3])
+  bar.info:SetAlpha(1 - amp * (0.5 + 0.5 * math.sin(GetTime() * speed)))
+end
+W.Pulse = Pulse
 
 -- its tooltip: the boss, its health and next turn, every danger it has
 function W.Tip(s)
