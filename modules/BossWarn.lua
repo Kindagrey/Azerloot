@@ -166,6 +166,43 @@ local BOX = {
     point = { "BOTTOM", "BOTTOM", 0, 190 } },
 }
 local Show
+-- the sounds a player can pick for a boss in 10 seconds and for a boss's turn (Settings -
+-- Azerwarn); played from their files: as named interface sounds the game cut them short in
+-- a busy fight. The first is none at all.
+W.SOUNDS = {
+  { key = "off", label = "Off" },
+  { key = "raid", label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
+  { key = "ready", label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
+  { key = "bell", label = "Bell", file = "Sound\\Doodad\\BellTollAlliance.wav" },
+  { key = "flag", label = "Flag taken", file = "Sound\\Spells\\PVPFlagTaken.wav" },
+  { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
+}
+-- which sound each call has: "soon" (a boss in 10 seconds) and "turn" (a boss's phase)
+local SOUND_KEY = { soon = "soundSoon", turn = "soundTurn" }
+function W.SoundPick(what)
+  local k = DB()[SOUND_KEY[what] or ""] or "raid"
+  for i = 1, table.getn(W.SOUNDS) do if W.SOUNDS[i].key == k then return W.SOUNDS[i], i end end
+  return W.SOUNDS[2], 2
+end
+function W.PlaySoundOf(sd)
+  if not sd or not sd.file then return end
+  local ok = PlaySoundFile and pcall(PlaySoundFile, sd.file)
+  if not ok and sd.name and PlaySound then pcall(PlaySound, sd.name) end
+end
+-- (true: the boss in 10 seconds, as before)
+function W.Sound(what)
+  if what == true then what = "soon" end
+  W.PlaySoundOf((W.SoundPick(what)))
+end
+-- the next sound for a call, played at once to be heard
+function W.NextSound(what)
+  local _, i = W.SoundPick(what)
+  local n = i + 1
+  if n > table.getn(W.SOUNDS) then n = 1 end
+  DB()[SOUND_KEY[what]] = W.SOUNDS[n].key
+  W.PlaySoundOf(W.SOUNDS[n])
+  return W.SOUNDS[n]
+end
 -- each place's size, as the player made it with the mouse wheel: from half to twice its own
 local function Size(kind)
   local v = tonumber(DB()[BOX[kind].size]) or 1
@@ -280,12 +317,7 @@ Show = function(f, text, sub, icon, sound)
   f.left = BOX[f.kind].dur
   f:SetAlpha(1)
   f:Show()
-  -- the raid warning's sound, played from its file: as a named interface sound the game cut
-  -- it short in a busy fight
-  if sound then
-    local ok = PlaySoundFile and pcall(PlaySoundFile, "Sound\\Interface\\RaidWarning.wav")
-    if not ok and PlaySound then pcall(PlaySound, "RaidWarning") end
-  end
+  if sound then W.Sound(sound) end
 end
 
 -- words for the screen: the big place, or the small one (low: a rune, a magnet, a cache, an
@@ -811,7 +843,7 @@ function W.Update()
         local icon = p.a and p.a.icon or (p.adds and "Ability_Warrior_BattleShout") or nil
         -- a short hint with a sound (what it does is in the line's tooltip and the book)
         local t1, t2 = G(function() return AzT("%d%% health!", p.pct), TurnText(p) end)
-        Say(t1, t2, icon, true)
+        Say(t1, t2, icon, "turn")
       end
     end
     SetMode("boss", { u = u, b = b })
@@ -854,7 +886,7 @@ function W.Update()
     if nb.left <= 10 and nb.left > 0 and not warned[nb.index or nb.name] then
       warned[nb.index or nb.name] = true
       local b = Lookup(nb.name)
-      Say(G(function() return AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)) end), nil, b and b.icon, true)
+      Say(G(function() return AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)) end), nil, b and b.icon, "soon")
     end
     SetMode("next", { nb = nb })
   else

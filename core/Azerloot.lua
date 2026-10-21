@@ -2911,7 +2911,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
   wra:SetPoint("RIGHT", wr, "RIGHT", -4, 0)
   wra:SetText(">")
   local ws = Panel(sp)
-  ws:SetWidth(182); ws:SetHeight(46 + table.getn(AZL_WARN_PARTS) * 19)
+  ws:SetWidth(182); ws:SetHeight(46 + (table.getn(AZL_WARN_PARTS) + 2) * 19)
   ws:SetHead("Azerwarn")
   ws:SetPoint("TOPLEFT", wr, "TOPRIGHT", 13, 8)   -- level with its row
   ws.items = {}
@@ -2949,6 +2949,37 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     o:SetScript("OnLeave", function() GameTooltip:Hide() end)
     ws.items[i] = o
   end
+  -- the two sounds: a boss in 10 seconds, and a boss's turn; a click gives the next one (and
+  -- plays it), Off among them
+  local SOUND_ROWS = {
+    { what = "soon", label = "Sound: boss in 10 sec.", tip = "Played with the warning that a boss comes in 10 seconds. Click for the next sound, it plays at once; Off is among them." },
+    { what = "turn", label = "Sound: boss phase", tip = "Played when a boss turns: a new phase or a new attack once wounded. Click for the next sound, it plays at once; Off is among them." },
+  }
+  ws.sounds = {}
+  for i = 1, table.getn(SOUND_ROWS) do
+    local sr = SOUND_ROWS[i]
+    local o = Row(ws, 164)
+    o:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (table.getn(AZL_WARN_PARTS) + i - 1) * 19)
+    local v = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    v:SetPoint("RIGHT", o, "RIGHT", -4, 0)
+    o.value = v
+    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    t:SetPoint("LEFT", o, "LEFT", 4, 0)
+    t:SetText(AzT(sr.label))
+    o.label, o.what, o.tip = t, sr.what, sr.tip
+    o:SetScript("OnClick", function()
+      if AzlW and AzlW.NextSound then AzlW.NextSound(this.what) end
+      ws:Update(); ws:Fit()
+    end)
+    o:SetScript("OnEnter", function()
+      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+      GameTooltip:AddLine(this.label:GetText(), 1, 0.82, 0)
+      GameTooltip:AddLine(AzT(this.tip), 0.85, 0.85, 0.85, 1)
+      GameTooltip:Show()
+    end)
+    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    ws.sounds[i] = o
+  end
   ws.Update = function(self)
     local d = DBw()
     for i = 1, table.getn(self.items) do
@@ -2956,17 +2987,27 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
       if on then v:SetText(AzT("On")); v:SetTextColor(0.3, 1, 0.3)
       else v:SetText(AzT("Off")); v:SetTextColor(1, 0.3, 0.25) end
     end
+    -- a sound by its name in gold, Off in red
+    for i = 1, table.getn(self.sounds) do
+      local o = self.sounds[i]
+      local sd = AzlW and AzlW.SoundPick and AzlW.SoundPick(o.what)
+      if sd and sd.file then o.value:SetText(AzT(sd.label)); o.value:SetTextColor(1, 0.82, 0)
+      else o.value:SetText(AzT("Off")); o.value:SetTextColor(1, 0.3, 0.25) end
+    end
   end
   -- as wide as its longest name needs
   ws.Fit = function(self)
     local need = 164
-    for i = 1, table.getn(self.items) do
-      local w = (self.items[i].label:GetStringWidth() or 0) + 8 + (self.items[i].value:GetStringWidth() or 0) + 14
+    local all = {}
+    for i = 1, table.getn(self.items) do table.insert(all, self.items[i]) end
+    for i = 1, table.getn(self.sounds) do table.insert(all, self.sounds[i]) end
+    for i = 1, table.getn(all) do
+      local w = (all[i].label:GetStringWidth() or 0) + 8 + (all[i].value:GetStringWidth() or 0) + 14
       if w > need then need = w end
     end
     need = math.ceil(need)
     self:SetWidth(need + 18)
-    for i = 1, table.getn(self.items) do self.items[i]:SetWidth(need) end
+    for i = 1, table.getn(all) do all[i]:SetWidth(need) end
     self.div:SetWidth(need + 2)
   end
   ws:Hide()
