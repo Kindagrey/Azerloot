@@ -5058,6 +5058,7 @@ end
 -- The window at the size the player set in the settings (60% to 140%); one longer than
 -- the room below its top (a smaller screen, a long run) is scaled down until it fits,
 -- never below 45%; with room again it grows back.
+AzlFitState = {}   -- (the lines and the room when it was last made smaller)
 function AzlFitTracker()
   if not tracker or (tracker.grip and tracker.grip.sizing) then return end
   local sh, h = UIParent:GetHeight(), tracker:GetHeight()
@@ -5073,10 +5074,14 @@ function AzlFitTracker()
   -- (a step either way changes how the letters fall, and with them the window's length a
   -- little: so it shrinks only when it does not fit, a bit more than needed, and grows back
   -- only with clearly more room; else it swung between two sizes for ever)
+  -- (once made smaller, it grows back only when its lines or the screen changed: its own
+  -- longer or shorter wrapping alone never brings it back up)
   local fit, want = room / h, nil
+  local F = AzlFitState
+  local same = F.at and F.at[1] == F.lines and math.abs(F.at[2] - room) < 1
   if cur > base + 0.005 then want = math.min(base, fit * 0.97)
-  elseif fit < cur - 0.005 then want = fit * 0.97
-  elseif cur < base - 0.005 and fit > cur + 0.08 then want = math.min(base, fit * 0.97)
+  elseif fit < cur - 0.005 then want = fit * 0.97; F.at = { F.lines, room }
+  elseif cur < base - 0.005 and fit > cur + 0.08 and not same then want = math.min(base, fit * 0.97)
   end
   if not want then return end
   want = math.max(0.45, math.min(base, want))
@@ -6201,6 +6206,7 @@ RefreshTracker = function()
   -- of a build at a run's start stands alone, as tall as it needs)
   if runPick then tracker:SetHeight(-y + 14)
   else tracker:SetHeight(math.max(-y + 14, TrackerDB().trackerH or 0)) end
+  AzlFitState.lines = table.getn(lines)
   AzlFitTracker()
   if (n > 0 or (AzlB and AzlB.TrackerWanted())) and TrackerDB().tracker then tracker:Show() else tracker:Hide() end
 end
