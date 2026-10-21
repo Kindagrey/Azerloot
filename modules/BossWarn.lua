@@ -5,6 +5,10 @@
 -- The bosses' attacks and turns come from data\BossLoot.lua (read from the game's code); the
 -- living bosses and the schedule from the game's own addon lines (AZS_GetBosses,
 -- AZS_GetUpcomingBosses).
+-- The game's own banners (a boss entering, a pack hunting you, a guardian taking its lair
+-- back, a stampede) come to an addon as CHAT_MSG_RAID_BOSS_EMOTE: while the warner is on, the
+-- game's banners are switched off (its own setting "Show Banners", given back when the warner
+-- is switched off or the game is left) and their words come in the warner's alert instead.
 -- "/azl bosslog" writes down for one run what else the game tells an addon in a fight (to
 -- find out whether a boss's casts can be seen); the lines go to AzerlootDB.bossLog.
 
@@ -100,12 +104,27 @@ local function Alert(text, sub, icon)
     s:SetTextColor(1, 0.9, 0.65)
     s:SetPoint("TOP", t, "BOTTOM", 0, -6)
     alert.sub = s
+    alert.queue = {}
     alert:SetScript("OnUpdate", function()
       this.left = (this.left or 0) - (arg1 or 0)
+      -- words waiting behind these: they follow once these were read for 1.5 sec
+      if table.getn(this.queue) > 0 and this.left <= 2.5 then
+        local q = table.remove(this.queue, 1)
+        W.ShowAlert(q[1], q[2], q[3])
+        return
+      end
       if this.left <= 0 then this:Hide(); return end
       this:SetAlpha(math.min(1, this.left / 0.6))
     end)
   end
+  -- something said a moment ago is not covered at once: the new words wait their turn
+  if alert:IsShown() and (alert.left or 0) > 2.5 then
+    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon }) end
+    return
+  end
+  W.ShowAlert(text, sub, icon)
+end
+function W.ShowAlert(text, sub, icon)
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
   -- right under the boss bar, wherever it has been put: the game's own banners (a boss or
@@ -123,6 +142,59 @@ local function Alert(text, sub, icon)
   if PlaySound then pcall(PlaySound, "RaidWarning") end
 end
 W.Alert = Alert
+
+-- ---------- the game's banners, in the warner's words ----------
+local arrived = {}   -- boss name (lower case) -> when its coming was called out
+local function Hud(shown)
+  if not AZS_SetHudShown then return end
+  pcall(AZS_SetHudShown, "banners", shown)
+end
+local function HudShown()
+  if not AZS_IsHudShown then return true end
+  local ok, v = pcall(AZS_IsHudShown, "banners")
+  return not ok or v ~= false
+end
+-- the warner on: the game's banners off (only when they were on: a player who switched them
+-- off in the game keeps them off); the warner off: given back
+function W.Banners()
+  local d = DB()
+  if W.On() then
+    if not d.bannersTaken and HudShown() then d.bannersTaken = true; Hud(false)
+    elseif d.bannersTaken and not W.hid then Hud(false) end   -- (given back on leaving)
+    W.hid = true
+  elseif d.bannersTaken then
+    d.bannersTaken = nil; Hud(true)
+  end
+end
+local function Emote(text, who)
+  if not W.On() or not DB().bannersTaken or type(text) ~= "string" then return end
+  if type(who) == "string" and who ~= "" then
+    text = string.gsub(text, "%%s", (string.gsub(who, "%%", "%%%%")))
+  end
+  local b = Lookup(who)
+  if b then
+    -- a boss coming: its own call (from the bar, a moment before) is not said twice
+    local k = string.lower(who)
+    if arrived[k] and GetTime() - arrived[k] < 4 then return end
+    arrived[k] = GetTime()
+    Alert(text, b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b.icon)
+  else
+    Alert(text)
+  end
+end
+W.Emote = Emote
+local emoteF = CreateFrame("Frame")
+emoteF:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
+emoteF:RegisterEvent("PLAYER_LOGOUT")
+emoteF:SetScript("OnEvent", function()
+  if event == "PLAYER_LOGOUT" then
+    -- the banners' setting is the game's own and outlives the addon: given back on leaving
+    -- (taken again on the next start), so the game never stays without them
+    if DB().bannersTaken then Hud(true) end
+    return
+  end
+  Emote(arg1, arg2)
+end)
 
 -- ---------- the bar ----------
 function W.Build()
@@ -296,7 +368,11 @@ function W.Update()
       local ph0 = (b and b.phases) or {}
       for k = 1, table.getn(ph0) do if p0 <= ph0[k].pct - 1 then s0[k] = true end end
       seen[u.id] = s0
-      Alert(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), b and b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b and b.icon)
+      local k = string.lower(tostring(u.name))
+      if not (arrived[k] and GetTime() - arrived[k] < 4) then
+        arrived[k] = GetTime()
+        Alert(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), b and b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b and b.icon)
+      end
     end
     -- its turns: a word as it comes close (5% before), the big words when it happens
     local pct = (tonumber(u.hpm) or 0) > 0 and (u.hp / u.hpm * 100) or 100
@@ -352,7 +428,7 @@ local function Log(line)
   if type(d.bossLog) ~= "table" then d.bossLog = {} end
   local t = AZS_GetRunTime and AZS_GetRunTime() or 0
   table.insert(d.bossLog, string.format("%7.1f  %s", tonumber(t) or 0, line))
-  while table.getn(d.bossLog) > 600 do table.remove(d.bossLog, 1) end
+  while table.getn(d.bossLog) > 1500 do table.remove(d.bossLog, 1) end
 end
 local lastUnits = ""
 function W.StartLog()
@@ -368,6 +444,9 @@ function W.StartLog()
       if not listed[event] then
         if type(arg1) ~= "string" or not string.find(arg1, "%a %a") or string.len(arg1) > 200 then return end
       end
+      -- the hero's own hits, the pets' and the small foes' deaths fill the log too fast
+      if type(arg1) == "string" and (string.find(arg1, "[Yy]our ") or string.find(event, "PET")
+        or (string.find(event, "DEATH") and not Lookup((string.gsub(arg1, " dies%.$", ""))))) then return end
       if event == "CHAT_MSG_ADDON" then
         -- the game's own lines: only the bosses' (the rest come every moment)
         if arg1 == "AZSUNITS" and type(arg2) == "string" then
@@ -413,5 +492,6 @@ ticker:SetScript("OnUpdate", function()
   if acc < 0.2 then return end
   acc = 0
   if DB().bossLogOn then W.StartLog() end
+  W.Banners()
   W.Update()
 end)
