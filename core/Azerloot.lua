@@ -444,7 +444,7 @@ local function SpellEntries(cls)
 end
 
 -- every class spell's id in the game (from its spell table)
-local SPELL_ID = { cleave = 845, whirlwind = 1680, thunder_clap = 6343, mortal_strike = 12294, execute = 5308, demo_shout = 1160, battle_shout = 6673, bloodthirst = 23881, rend = 772, shield_slam = 23922, bloodrage = 2687, consecration = 26573, exorcism = 879, hammer_of_wrath = 24275, holy_shock = 25912, holy_wrath = 2812, judgement = 20271, hammer_of_justice = 853, holy_light = 635, divine_shield = 642, holy_shield = 20925, redemption = 7328, auto_shot = 75, arcane_shot = 3044, multi_shot = 2643, serpent_sting = 1978, volley = 1510, explosive_trap = 13812, concussive_shot = 5116, aimed_shot = 19434, immolation_trap = 13797, frost_trap = 13810, hunters_mark = 1130, sinister_strike = 1752, eviscerate = 2098, blade_flurry = 13877, rupture = 1943, kidney_shot = 408, gouge = 1776, ghostly_strike = 14278, adrenaline_rush = 13750, backstab = 53, slice_and_dice = 5171, seal_fate = 14186, smite = 585, sw_pain = 589, mind_blast = 8092, holy_nova = 15237, pw_shield = 17, renew = 139, holy_fire = 14914, mind_flay = 15407, psychic_scream = 8122, devouring_plague = 2944, lightwell = 724, lightning_bolt = 403, chain_lightning = 421, earth_shock = 8042, flame_shock = 8050, frost_shock = 8056, lightning_shield = 324, magma_totem = 8190, searing_totem = 3599, fire_nova = 1535, healing_wave = 331, call_of_flame = 16038, fireball = 133, frostbolt = 116, arcane_missiles = 7269, frost_nova = 122, arcane_explosion = 1449, blizzard = 10, flamestrike = 2120, fire_blast = 2136, cone_of_cold = 120, blast_wave = 11113, pyroblast = 11366, ice_barrier = 11426, polymorph = 118, shadow_bolt = 686, corruption = 172, immolate = 348, curse_of_agony = 980, rain_of_fire = 5740, hellfire = 1949, death_coil = 6789, searing_pain = 5676, drain_life = 689, fear = 5782, soul_fire = 6353, wrath = 5176, moonfire = 8921, starfire = 2912, hurricane = 16914, insect_swarm = 5570, entangling_roots = 339, rejuvenation = 774, regrowth = 8936, thorns = 467, swipe = 779, shred = 5221, faerie_fire = 770, perception = 20600, blood_fury = 23234, stoneform = 20594, shadowmeld = 20580, will_of_the_forsaken = 7744, war_stomp = 20549, escape_artist = 20589, berserking = 26635, penance = 25912, arcane_power = 12042 }
+local SPELL_ID = { cleave = 845, whirlwind = 1680, thunder_clap = 6343, mortal_strike = 12294, execute = 5308, demo_shout = 1160, battle_shout = 6673, bloodthirst = 23881, rend = 772, shield_slam = 23922, bloodrage = 2687, consecration = 26573, exorcism = 879, hammer_of_wrath = 24275, holy_shock = 25912, holy_wrath = 2812, judgement = 20271, hammer_of_justice = 853, holy_light = 635, divine_shield = 642, holy_shield = 20925, redemption = 7328, auto_shot = 75, arcane_shot = 3044, multi_shot = 2643, serpent_sting = 1978, volley = 1510, explosive_trap = 13812, concussive_shot = 5116, aimed_shot = 19434, immolation_trap = 13797, frost_trap = 13810, hunters_mark = 1130, sinister_strike = 1752, eviscerate = 2098, blade_flurry = 13877, rupture = 1943, kidney_shot = 408, gouge = 1776, ghostly_strike = 14278, adrenaline_rush = 13750, backstab = 53, slice_and_dice = 5171, seal_fate = 14186, smite = 585, sw_pain = 589, mind_blast = 8092, holy_nova = 15237, pw_shield = 17, renew = 139, holy_fire = 14914, mind_flay = 15407, psychic_scream = 8122, devouring_plague = 2944, lightwell = 724, lightning_bolt = 403, chain_lightning = 421, earth_shock = 8042, flame_shock = 8050, frost_shock = 8056, lightning_shield = 324, magma_totem = 8190, searing_totem = 3599, fire_nova = 1535, healing_wave = 331, call_of_flame = 16038, fireball = 133, frostbolt = 116, arcane_missiles = 7269, frost_nova = 122, arcane_explosion = 1449, blizzard = 10, flamestrike = 2120, fire_blast = 2136, cone_of_cold = 120, blast_wave = 11113, pyroblast = 11366, ice_barrier = 11426, polymorph = 118, shadow_bolt = 686, corruption = 172, immolate = 348, curse_of_agony = 980, rain_of_fire = 5740, hellfire = 1949, death_coil = 6789, searing_pain = 5676, drain_life = 689, fear = 5782, soul_fire = 6353, demonic_empowerment = 18708, wrath = 5176, moonfire = 8921, starfire = 2912, hurricane = 16914, insect_swarm = 5570, entangling_roots = 339, rejuvenation = 774, regrowth = 8936, thorns = 467, swipe = 779, shred = 5221, faerie_fire = 770, perception = 20600, blood_fury = 23234, stoneform = 20594, shadowmeld = 20580, will_of_the_forsaken = 7744, war_stomp = 20549, escape_artist = 20589, berserking = 26635, penance = 25912, arcane_power = 12042 }
 local spellScan = { bonus = {}, at = -10 }   -- the action bar's spells, read at most once a second
 local function ScanTip()
   if not AzerlootScanTip then CreateFrame("GameTooltip", "AzerlootScanTip", UIParent, "GameTooltipTemplate") end
@@ -702,6 +702,11 @@ function AzlGameTextEn(t)
   AzlGameMemo[t] = hit
   return hit
 end
+-- a spell newer than the game's own spell table: its words from the game's text, with its
+-- numbers from the game's spell list (cooldown 25 sec)
+AZL_SPELL_TEXT = {
+  demonic_empowerment = "Your demons deal 30% more damage and attack 15% faster for 8 sec. Cast once enemies are within 30 yd and a demon fights for you.",
+}
 local function SpellDesc(key, force)
   local id = SPELL_ID[key]
   if not id then return nil end
@@ -731,10 +736,12 @@ local function SpellDesc(key, force)
     else
       local saved = type(AzerlootDB) == "table" and type(AzerlootDB.spellDesc) == "table" and AzerlootDB.spellDesc[key]
       if saved then d = AzG(saved)
+      elseif AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key])
       elseif AzLang() ~= "en" then d = AzT("The game describes a spell only to its own class. Play that class once, and its text is kept here.") end
     end
   end
   tip:Hide()
+  if not d and AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key]) end
   spellCache.desc[key] = d or false
   if d then spellCache.info[key] = info end
   return d
