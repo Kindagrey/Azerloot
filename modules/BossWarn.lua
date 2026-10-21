@@ -240,8 +240,45 @@ local GUARD_SLAIN = {
   ["%s被击杀了！它的巢穴交出了财宝和力量，其他守护者变得更强。"] = true,
   ["¡%s ha caído! Su guarida entrega su tesoro y su fuerza, y los demás guardianes se hacen más fuertes."] = true,
 }
+-- what was told of whom, a moment ago: the game's banner and its emote of the same thing are
+-- told once
+local said = {}
+local function Said(who)
+  if type(who) ~= "string" or who == "" then return false end
+  local k = string.lower(who)
+  if said[k] and GetTime() - said[k] < 3 then return true end
+  said[k] = GetTime()
+  return false
+end
+
+-- The game's banners, as it sends them to addons (since its update of 21 October): every one,
+-- bosses, guardians, achievements, zones, magnets, caches and runes, with its text in the
+-- player's language, even while its own banners are hidden
+function W.OnBanner(b)
+  if type(b) ~= "table" or type(b.text) ~= "string" or b.text == "" then return end
+  if not W.AlertsOn() or not DB().bannersTaken then return end
+  if b.name and b.name ~= "" and Said(b.name) then return end
+  local text, rest = b.text, nil
+  if string.len(text) > 70 then
+    local first = First(text)
+    if first ~= text then
+      rest = string.gsub(string.sub(text, string.len(first) + 1), "^%s+", "")
+      text = first
+    end
+  end
+  local boss = b.boss and Lookup(b.name) or nil
+  if boss then arrived[string.lower(b.name)] = GetTime() end
+  Alert(text, rest, boss and boss.icon or nil)
+end
+W.banners = false
+if AZS_RegisterBannerHandler then
+  W.banners = pcall(AZS_RegisterBannerHandler, function(b) W.OnBanner(b) end) and true or false
+end
+
 local function Emote(text, who)
   if not W.AlertsOn() or not DB().bannersTaken or type(text) ~= "string" then return end
+  -- (the same thing told by a banner a moment before, or after: once)
+  if W.banners and Said(who) then return end
   if GUARD_SLAIN[text] then
     Alert(AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger."))
     return
@@ -288,7 +325,7 @@ emoteF:SetScript("OnEvent", function()
   end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- a boss down: the game's banner for it is off with the others, so the warner says it
-    if not W.AlertsOn() or not DB().bannersTaken or type(arg1) ~= "string" then return end
+    if W.banners or not W.AlertsOn() or not DB().bannersTaken or type(arg1) ~= "string" then return end
     local who = string.gsub(arg1, " dies%.$", "")
     local b = Lookup(who)
     if b then Alert(AzT("%s is defeated!", AzG(b.name)), nil, b.icon) end
@@ -586,7 +623,8 @@ function W.Update()
       for k = 1, table.getn(ph0) do if p0 <= ph0[k].pct - 1 then s0[k] = true end end
       seen[u.id] = s0
       local k = string.lower(tostring(u.name))
-      if not (arrived[k] and GetTime() - arrived[k] < 4) then
+      -- (with the game's banners it tells a boss's coming itself)
+      if not W.banners and not (arrived[k] and GetTime() - arrived[k] < 4) then
         arrived[k] = GetTime()
         Say(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), nil, b and b.icon)
       end
@@ -673,6 +711,14 @@ local function Log(line)
 end
 local lastUnits = ""
 function W.StartLog()
+  if not logF and AZS_RegisterBannerHandler then
+    -- (the game's banners too, with their kind)
+    pcall(AZS_RegisterBannerHandler, function(b)
+      if DB().bossLogOn and type(b) == "table" then
+        Log("banner " .. tostring(b.kind) .. " [" .. tostring(b.name) .. "]: " .. tostring(b.text))
+      end
+    end)
+  end
   if not logF then
     logF = CreateFrame("Frame")
     for i = 1, table.getn(LOG_EVENTS) do pcall(logF.RegisterEvent, logF, LOG_EVENTS[i]) end

@@ -5962,6 +5962,7 @@ RefreshTracker = function()
     r:ClearAllPoints()
     r.bonus:Hide()
     r.icon:ClearAllPoints(); r.icon:SetPoint("LEFT", r, "LEFT", 3, 0)
+    r.name:ClearAllPoints(); r.name:SetPoint("LEFT", r.icon, "RIGHT", 5, 0)
     if l and l.header then
       r.entry = nil
       r.icon:Hide(); r.check:Hide(); r.cross:Hide(); r.name:Hide(); r.strike:Hide()
@@ -6034,7 +6035,14 @@ RefreshTracker = function()
       -- a name over two lines (a long name, a long language) gets the room of both
       local wrapped = (r.name:GetStringWidth() or 0) > W - 55
       local h = TRACK_ROW
-      if wrapped then h = math.max(TRACK_ROW, (r.name:GetHeight() or 12) + 6) end
+      if wrapped then
+        -- as many lines as the name takes (the client may tell its height a moment late), its
+        -- first line beside the icon, the others below: never up into the line above
+        local _, fsz = r.name:GetFont()
+        local lines = math.ceil((r.name:GetStringWidth() or 0) / math.max(40, W - 55) + 0.05)
+        h = math.max(TRACK_ROW, (r.name:GetHeight() or 12) + 6, lines * ((tonumber(fsz) or 10) + 2) + 6)
+        r.name:ClearAllPoints(); r.name:SetPoint("TOPLEFT", r, "TOPLEFT", 24, -3)
+      end
       r.strike:ClearAllPoints(); r.strike:SetPoint("LEFT", r.name, "LEFT", -1, 0)
       if e.kind == "Spell" then
         -- a spell the hero has in this run gets the green check; its bonuses, read from the

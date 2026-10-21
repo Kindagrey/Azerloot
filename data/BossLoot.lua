@@ -70,7 +70,7 @@ Azerloot_Loot.zones = {
     { name = "Zevrim Thornhoof", minute = 4, health = 3800, hit = 24, speed = 5.8, yell = "Your blood will feed the forest's corruption!",
       icon = "Spell_Shadow_UnholyFrenzy", abilities = { { name = "Shadow Bolt", icon = "Spell_Shadow_ShadowBolt", kind = "bolts", p = { 5 }, cd = 5, dm = 0.45 }, { name = "Rain of Fire", icon = "Spell_Shadow_RainOfFire", kind = "follow", p = { 5, 1.5, 2.5, 0 }, cd = 9, dm = 2.2 }, { name = "Sacrifice", icon = "Spell_Shadow_AntiMagicShell", kind = "tether", p = { 15, 5 }, cd = 13, dm = 0.45 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 6 }, cd = 14, dm = 0 } } },
     { name = "Alzzin the Wildshaper", minute = 7, health = 9400, hit = 32, speed = 6.0, yell = "The wilds will consume you!",
-      icon = "Spell_Nature_Regeneration", abilities = { { name = "Hurricane", icon = "Spell_Nature_Cyclone", kind = "circle", p = { 9, 1.6 }, cd = 7, dm = 2.2 }, { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "seq", p = { 0.1 }, steps = { { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "root", p = { 1.4 }, dm = 0 }, { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "circle", p = { 6, 2.8 }, dm = 2 } }, cd = 12, dm = 2 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 5, dm = 0.45 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } }, phases = { { pct = 50, a = { name = "Cat Form", icon = "Ability_Druid_CatForm", kind = "stance", p = {  }, steps = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "seq", p = { 1.6 }, steps = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, dm = 2 }, { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, dm = 2 } }, cd = 9, dm = 2 }, { name = "Whirlwind", icon = "Ability_Whirlwind", kind = "spin", p = { 7, 4 }, cd = 11, dm = 0.5 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 6, dm = 0.45 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } }, dm = 0 } } } },
+      icon = "Spell_Nature_Regeneration", abilities = { { name = "Hurricane", icon = "Spell_Nature_Cyclone", kind = "circle", p = { 9, 1.6 }, cd = 7, dm = 2.2 }, { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "circle", p = { 6, 2.8 }, cd = 12, dm = 2 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 5, dm = 0.45 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } }, phases = { { pct = 50, a = { name = "Cat Form", icon = "Ability_Druid_CatForm", kind = "stance", p = {  }, steps = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "seq", p = { 1.6 }, steps = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, dm = 2 }, { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, dm = 2 } }, cd = 9, dm = 2 }, { name = "Whirlwind", icon = "Ability_Whirlwind", kind = "spin", p = { 7, 4 }, cd = 11, dm = 0.5 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 6, dm = 0.45 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } }, dm = 0 } } } },
     { name = "Tendris Warpwood", minute = 11, health = 18000, hit = 40, speed = 4.8, yell = "Who disturbs the Warpwood?",
       icon = "Spell_Nature_ProtectionformNature", abilities = { { name = "Trample", icon = "Spell_Nature_NaturesWrath", kind = "nova", p = { 10 }, cd = 7, dm = 2 }, { name = "Trample", icon = "Spell_Nature_Earthquake", kind = "line", p = { 30, 5, 1.4 }, cd = 9, dm = 2.2 }, { name = "Hurricane", icon = "Spell_Nature_Cyclone", kind = "circle", p = { 10, 1.5 }, cd = 9, dm = 2.2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 10 }, cd = 13, dm = 0 } } },
     { name = "Immol'thar", minute = 14, health = 30000, hit = 48, speed = 5.6, yell = "Immol'thar breaks free of its prison!",
@@ -100,13 +100,13 @@ Azerloot_Loot.zones = {
     { name = "Scarlet Commander Mograine", minute = 14, health = 30000, hit = 48, speed = 6.2, yell = "Infidels! They must be purified!",
       icon = "INV_Shield_14", abilities = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, cd = 7, dm = 2 }, { name = "Consecration", icon = "Spell_Holy_InnerFire", kind = "follow", p = { 5, 0, 1.4, 8 }, cd = 8, dm = 1.6 }, { name = "War Stomp", icon = "Ability_WarStomp", kind = "knock", p = { 9, 2, 13 }, cd = 10, dm = 2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 10 }, cd = 12, dm = 0 } }, phases = { { pct = 50, a = { name = "Divine Shield", icon = "Spell_Holy_DivineIntervention", kind = "seq", p = { 0.1 }, steps = { { name = "Divine Shield", icon = "Spell_Holy_DivineIntervention", kind = "shield", p = { 5 }, dm = 0 }, { name = "Consecration", icon = "Spell_Holy_InnerFire", kind = "follow", p = { 8, 0, 1, 6 }, dm = 1.2 } }, dm = 1.2 } } } },
     { name = "High Inquisitor Whitemane", minute = 18, final = true, health = 57000, hit = 58, speed = 6.0, yell = "Mograine has fallen? You shall pay for this treachery!",
-      icon = "Spell_Holy_Resurrection", abilities = { { name = "Arcane Missiles", icon = "Spell_Nature_StarFall", kind = "bolts", p = { 8 }, cd = 5, dm = 0.45 }, { name = "Holy Wrath", icon = "Spell_Holy_Excorcism", kind = "rows", p = { 3, 3.5, 0.6, 2 }, cd = 13, dm = 2.2 }, { name = "Arcane Explosion", icon = "Spell_Nature_WispSplode", kind = "circles", p = { 5, 5, 1.6 }, cd = 8, dm = 2.4 }, { name = "Deep Sleep", icon = "Spell_Nature_Sleep", kind = "seq", p = { 0.1 }, steps = { { name = "Deep Sleep", icon = "Spell_Nature_Sleep", kind = "root", p = { 1.6 }, dm = 0 }, { name = "Consecration", icon = "Spell_Holy_InnerFire", kind = "follow", p = { 6, 0, 3.4, 8 }, dm = 2.4 } }, cd = 16, dm = 2.4 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 12 }, cd = 11, dm = 0 } }, phases = { { pct = 50, adds = 10 } } },
+      icon = "Spell_Holy_Resurrection", abilities = { { name = "Arcane Missiles", icon = "Spell_Nature_StarFall", kind = "bolts", p = { 8 }, cd = 5, dm = 0.45 }, { name = "Holy Wrath", icon = "Spell_Holy_Excorcism", kind = "rows", p = { 3, 3.5, 0.6, 2 }, cd = 13, dm = 2.2 }, { name = "Arcane Explosion", icon = "Spell_Nature_WispSplode", kind = "circles", p = { 5, 5, 1.6 }, cd = 8, dm = 2.4 }, { name = "Consecration", icon = "Spell_Holy_InnerFire", kind = "follow", p = { 6, 0, 3.4, 8 }, cd = 16, dm = 2.4 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 12 }, cd = 11, dm = 0 } }, phases = { { pct = 50, adds = 10 } } },
   } },
   { key = "av", name = "Alterac Valley", subtitle = "The Frozen Wilds", rarity = "PvP", chance = 25, might = 2.95, bosses = {
     { name = "Korrak the Bloodrager", minute = 4, health = 4000, hit = 25, speed = 5.6, yell = "Korrak smash puny ones!",
       icon = "Ability_Racial_BloodRage", abilities = { { name = "Charge", icon = "Ability_Warrior_Charge", kind = "charge", p = {  }, cd = 7, dm = 2 }, { name = "Whirlwind", icon = "Ability_Whirlwind", kind = "spin", p = { 6, 4 }, cd = 11, dm = 0.5 }, { name = "War Stomp", icon = "Ability_BullRush", kind = "knock", p = { 8, 1.6, 13 }, cd = 9, dm = 2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 6 }, cd = 14, dm = 0 } } },
     { name = "Ivus the Forest Lord", minute = 8, health = 10000, hit = 33, speed = 5.2, yell = "Who disturbs the slumber of the forest?",
-      icon = "Spell_Nature_Tranquility", abilities = { { name = "Hurricane", icon = "Spell_Nature_Cyclone", kind = "circle", p = { 9, 1.6 }, cd = 7, dm = 2.2 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 5, dm = 0.45 }, { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "seq", p = { 0.1 }, steps = { { name = "Entangling Roots", icon = "Spell_Nature_StrangleVines", kind = "root", p = { 1.4 }, dm = 0 }, { name = "Starshards", icon = "Spell_Arcane_StarFire", kind = "circles", p = { 3, 5, 2.8 }, dm = 1.8 } }, cd = 13, dm = 1.8 }, { name = "Healing Ward", icon = "Spell_Holy_LayOnHands", kind = "heal_wards", p = { 3, 6 }, cd = 19, dm = 0 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } } },
+      icon = "Spell_Nature_Tranquility", abilities = { { name = "Hurricane", icon = "Spell_Nature_Cyclone", kind = "circle", p = { 9, 1.6 }, cd = 7, dm = 2.2 }, { name = "Wrath", icon = "Spell_Nature_AbolishMagic", kind = "bolts", p = { 5 }, cd = 5, dm = 0.45 }, { name = "Starshards", icon = "Spell_Arcane_StarFire", kind = "circles", p = { 3, 5, 2.8 }, cd = 13, dm = 1.8 }, { name = "Healing Ward", icon = "Spell_Holy_LayOnHands", kind = "heal_wards", p = { 3, 6 }, cd = 19, dm = 0 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 8 }, cd = 14, dm = 0 } } },
     { name = "Lokholar the Ice Lord", minute = 12, health = 19000, hit = 42, speed = 5.4, yell = "I am the Ice Lord. Your blood will freeze in your veins!",
       icon = "Spell_Frost_SummonWaterElemental", abilities = { { name = "Frost Nova", icon = "Spell_Frost_FrostNova", kind = "circles", p = { 4, 5, 1.6 }, cd = 7, dm = 2.2 }, { name = "Frost Nova", icon = "Spell_Frost_FrostShock", kind = "ring", p = { 5, 12, 1.6 }, cd = 9, dm = 2 }, { name = "Chill", icon = "Spell_Frost_IceStorm", kind = "orbs", p = { 2, 3.5, 8 }, cd = 14, dm = 0.5 }, { name = "Frost Nova", icon = "Spell_Frost_Glacier", kind = "rows", p = { 2, 3.5, 0.6, 2 }, cd = 15, dm = 2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 10 }, cd = 13, dm = 0 } } },
     { name = "Glacius the Frozen Titan", minute = 16, health = 23250, hit = 48, speed = 5.0, yell = "The mountain remembers. The mountain will bury you!",
@@ -148,7 +148,7 @@ Azerloot_Loot.zones = {
     { name = "Sapphiron", minute = 16, health = 26000, hit = 54, speed = 5.8, yell = "Sapphiron rises from the frozen lair, its wings filling the hall with frost!",
       icon = "Spell_Frost_FrostShock", abilities = { { name = "Frost Nova", icon = "Spell_Frost_FrostNova", kind = "circles", p = { 5, 5, 1.4 }, cd = 8, dm = 2.2 }, { name = "Frostbolt", icon = "Spell_Frost_FrostBolt02", kind = "bolts", p = { 7 }, cd = 5, dm = 0.45 }, { name = "Life Drain", icon = "Spell_Shadow_LifeDrain02", kind = "tether", p = { 18, 5 }, cd = 16, dm = 0.4 }, { name = "Frost Breath", icon = "Spell_Frost_Glacier", kind = "towers", p = { 3, 4, 12, 5 }, cd = 24, dm = 6 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 12 }, cd = 12, dm = 0 } }, phases = { { pct = 50, a = { name = "Frost Breath", icon = "Spell_Frost_FrostNova", kind = "towers", p = { 3, 4, 12, 5 }, dm = 6 } } } },
     { name = "Kel'Thuzad", minute = 20, final = true, health = 58500, hit = 66, speed = 5.8, yell = "Your petty magics are no challenge to the might of the Scourge!",
-      icon = "Spell_Shadow_DarkRitual", abilities = { { name = "Frostbolt", icon = "Spell_Frost_FrostBolt02", kind = "bolts", p = { 9 }, cd = 4.5, dm = 0.45 }, { name = "Shadow Fissure", icon = "Spell_Shadow_CreepingPlague", kind = "follow", p = { 5, 0, 3, 0 }, cd = 7, dm = 3.5 }, { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "seq", p = { 1.6 }, steps = { { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "nova", p = { 10 }, dm = 2.2 }, { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "ring", p = { 6, 16, 1.6 }, dm = 2.4 } }, cd = 10, dm = 2.4 }, { name = "Frostbolt", icon = "Spell_Frost_FrostBolt", kind = "cross", p = { 40, 1.8 }, cd = 13, dm = 2.6 }, { name = "Frost Blast", icon = "Spell_Frost_Glacier", kind = "seq", p = { 0.1 }, steps = { { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "root", p = { 1.4 }, dm = 0 }, { name = "Shadow Fissure", icon = "Spell_Shadow_CreepingPlague", kind = "circle", p = { 5, 2.8 }, dm = 3 } }, cd = 15, dm = 3 }, { name = "Detonate Mana", icon = "Spell_Nature_WispSplode", kind = "bomb", p = { 7, 5 }, cd = 16, dm = 2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 14 }, cd = 10, dm = 0 } }, phases = { { pct = 70, a = { name = "Shadow Fissure", icon = "Spell_Shadow_CreepingPlague", kind = "rows", p = { 3, 3.5, 0.5, 2 }, dm = 3 } }, { pct = 45, adds = 14 }, { pct = 25, a = { name = "Detonate Mana", icon = "Spell_Nature_WispSplode", kind = "towers", p = { 3, 4, 12, 4.5 }, dm = 5 } } } },
+      icon = "Spell_Shadow_DarkRitual", abilities = { { name = "Frostbolt", icon = "Spell_Frost_FrostBolt02", kind = "bolts", p = { 9 }, cd = 4.5, dm = 0.45 }, { name = "Shadow Fissure", icon = "Spell_Shadow_CreepingPlague", kind = "follow", p = { 5, 0, 3, 0 }, cd = 7, dm = 3.5 }, { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "seq", p = { 1.6 }, steps = { { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "nova", p = { 10 }, dm = 2.2 }, { name = "Frost Blast", icon = "Spell_Frost_FreezingBreath", kind = "ring", p = { 6, 16, 1.6 }, dm = 2.4 } }, cd = 10, dm = 2.4 }, { name = "Frostbolt", icon = "Spell_Frost_FrostBolt", kind = "cross", p = { 40, 1.8 }, cd = 13, dm = 2.6 }, { name = "Shadow Fissure", icon = "Spell_Shadow_BlackPlague", kind = "circle", p = { 5, 2.8 }, cd = 15, dm = 3 }, { name = "Detonate Mana", icon = "Spell_Nature_WispSplode", kind = "bomb", p = { 7, 5 }, cd = 16, dm = 2 }, { name = "Calls for help", icon = "Ability_Warrior_BattleShout", kind = "adds", p = { 14 }, cd = 10, dm = 0 } }, phases = { { pct = 70, a = { name = "Shadow Fissure", icon = "Spell_Shadow_CreepingPlague", kind = "rows", p = { 3, 3.5, 0.5, 2 }, dm = 3 } }, { pct = 45, adds = 14 }, { pct = 25, a = { name = "Detonate Mana", icon = "Spell_Nature_WispSplode", kind = "towers", p = { 3, 4, 12, 4.5 }, dm = 5 } } } },
   } },
 }
 
@@ -164,7 +164,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Recruit's Legplates", slot = "Legs", icon = "INV_Pants_04", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Recruit's Sabatons", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Recruit's Sabatons", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Recruit's Bracers", slot = "Wrist", icon = "INV_Bracer_07", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Recruit's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_23", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Worn Claymore", slot = "Main Hand", icon = "INV_Sword_08", bonus = { "+8.4% damage" } } },
@@ -178,7 +178,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Legplates of Valor", slot = "Legs", icon = "INV_Pants_04", bonus = { "+17 max health", "+0.6% critical strike", "+0.4 health per second", "+2.8% area of effect" } } },
-      { { name = "Sabatons of Valor", slot = "Feet", icon = "INV_Boots_Plate_03", bonus = { "+2.1% damage", "-3% cooldowns", "+0.7% critical strike", "+3.6% movement speed" } } },
+      { { name = "Sabatons of Valor", slot = "Feet", icon = "INV_Boots_Plate_03", bonus = { "+2.1% damage", "-3% cooldowns", "+0.7% critical strike", "+8.9% movement speed" } } },
       { { name = "Bracers of Valor", slot = "Wrist", icon = "INV_Bracer_18", bonus = { "-3% cooldowns", "+7 max health", "+1.4% critical strike", "+1% damage reduction" } } },
       { { name = "Gauntlets of Valor", slot = "Hands", icon = "INV_Gauntlets_26", bonus = { "-1% cooldowns", "+6 max health", "+1.4% critical strike", "+7.1% critical damage" } } },
       { { name = "Bastard Sword of Valor", slot = "Main Hand", icon = "INV_Sword_07", bonus = { "+14.3% damage", "+0.7% critical strike", "+1.4% movement speed" } } },
@@ -192,7 +192,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Legplates of Might", slot = "Legs", icon = "INV_Pants_04", bonus = { "+24 max health", "+0.9% critical strike", "+0.5 health per second", "+4.5% area of effect" } } },
-      { { name = "Sabatons of Might", slot = "Feet", icon = "INV_Boots_Plate_04", bonus = { "+3.4% damage", "-4.4% cooldowns", "+1.1% critical strike", "+5.2% movement speed" } } },
+      { { name = "Sabatons of Might", slot = "Feet", icon = "INV_Boots_Plate_04", bonus = { "+3.4% damage", "-4.4% cooldowns", "+1.1% critical strike", "+13.1% movement speed" } } },
       { { name = "Bracers of Might", slot = "Wrist", icon = "INV_Bracer_19", bonus = { "-4.4% cooldowns", "+11 max health", "+2.1% critical strike", "+1.7% damage reduction" } } },
       { { name = "Gauntlets of Might", slot = "Hands", icon = "INV_Gauntlets_10", bonus = { "-1.7% cooldowns", "+9 max health", "+2.1% critical strike", "+10.5% critical damage" } } },
       { { name = "Blackhand Doomsaw", slot = "Main Hand", icon = "INV_Weapon_ShortBlade_12", bonus = { "+21% damage", "+1.1% critical strike", "+2.2% movement speed" } } },
@@ -206,7 +206,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Legplates of Wrath", slot = "Legs", icon = "INV_Pants_04", bonus = { "+34 max health", "+1.3% critical strike", "+0.7 health per second", "+6.7% area of effect" } } },
-      { { name = "Sabatons of Wrath", slot = "Feet", icon = "INV_Boots_Plate_04", bonus = { "+5% damage", "-6.1% cooldowns", "+1.7% critical strike", "+7.3% movement speed" } } },
+      { { name = "Sabatons of Wrath", slot = "Feet", icon = "INV_Boots_Plate_04", bonus = { "+5% damage", "-6.1% cooldowns", "+1.7% critical strike", "+18.4% movement speed" } } },
       { { name = "Bracers of Wrath", slot = "Wrist", icon = "INV_Bracer_19", bonus = { "-6.1% cooldowns", "+17 max health", "+2.9% critical strike", "+2.5% damage reduction" } } },
       { { name = "Gauntlets of Wrath", slot = "Hands", icon = "INV_Gauntlets_10", bonus = { "-2.5% cooldowns", "+13 max health", "+2.9% critical strike", "+14.7% critical damage" } } },
       { { name = "Ravager's Greatblade", slot = "Main Hand", icon = "INV_Sword_56", bonus = { "+29.4% damage", "+1.7% critical strike", "+3.4% movement speed" } } },
@@ -220,7 +220,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Legplates", slot = "Legs", icon = "INV_Pants_04", horde = "Warlord's Legplates", hordeIcon = "INV_Pants_04", bonus = { "+39 max health", "+1.6% critical strike", "+0.8 health per second", "+8.1% area of effect" } } },
-      { { name = "Field Marshal's Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", horde = "Warlord's Sabatons", hordeIcon = "INV_Boots_Plate_04", bonus = { "+6.1% damage", "-7% cooldowns", "+2% critical strike", "+8.4% movement speed" } } },
+      { { name = "Field Marshal's Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", horde = "Warlord's Sabatons", hordeIcon = "INV_Boots_Plate_04", bonus = { "+6.1% damage", "-7% cooldowns", "+2% critical strike", "+21% movement speed" } } },
       { { name = "Field Marshal's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+20 max health", "+3.4% critical strike", "+3% damage reduction" } } },
       { { name = "Field Marshal's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_29", horde = "Warlord's Gauntlets", hordeIcon = "INV_Gauntlets_10", bonus = { "-3% cooldowns", "+16 max health", "+3.4% critical strike", "+16.8% critical damage" } } },
       { { name = "Grand Marshal's Claymore", slot = "Main Hand", icon = "INV_Sword_39", horde = "High Warlord's Greatsword", hordeIcon = "INV_Sword_48", bonus = { "+33.6% damage", "+2% critical strike", "+4.1% movement speed" } } },
@@ -234,7 +234,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Dreadnaught Legplates", slot = "Legs", icon = "INV_Pants_Plate_05", rarity = "Epic", bonus = { "+45 max health", "+1.9% critical strike", "+1 health per second", "+9.5% area of effect", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Dreadnaught Sabatons", slot = "Feet", icon = "INV_Boots_Plate_06", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+2.4% critical strike", "+9.7% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Dreadnaught Sabatons", slot = "Feet", icon = "INV_Boots_Plate_06", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+2.4% critical strike", "+24.2% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Dreadnaught Bracers", slot = "Wrist", icon = "INV_Bracer_15", rarity = "Epic", bonus = { "-8% cooldowns", "+24 max health", "+3.9% critical strike", "+3.6% damage reduction", "4.2% chance for an ability to strike twice" } } },
       { { name = "Dreadnaught Gauntlets", slot = "Hands", icon = "INV_Gauntlets_28", rarity = "Epic", bonus = { "-3.6% cooldowns", "+19 max health", "+3.9% critical strike", "+19.3% critical damage", "4.2% chance for an ability to strike twice" } } },
       { { name = "Sulfuras, Hand of Ragnaros", slot = "Main Hand", icon = "INV_Hammer_Unique_Sulfuras", rarity = "Legendary", bonus = { "+38.6% damage", "+2.4% critical strike", "+4.8% movement speed", "+1 target to every ability" } } },
@@ -250,7 +250,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Squire's Legplates", slot = "Legs", icon = "INV_Pants_04", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Squire's Sabatons", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Squire's Sabatons", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Squire's Bracers", slot = "Wrist", icon = "INV_Bracer_07", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Squire's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_23", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Wooden Maul", slot = "Main Hand", icon = "INV_Hammer_01", bonus = { "+8.4% damage" } } },
@@ -264,7 +264,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Lightforge Legplates", slot = "Legs", icon = "INV_Pants_04", bonus = { "-1% cooldowns", "+23 max health", "+0.4 health per second" } } },
-      { { name = "Lightforge Sabatons", slot = "Feet", icon = "INV_Boots_Plate_03", bonus = { "-3% cooldowns", "+0.7% critical strike", "+5% movement speed" } } },
+      { { name = "Lightforge Sabatons", slot = "Feet", icon = "INV_Boots_Plate_03", bonus = { "-3% cooldowns", "+0.7% critical strike", "+10.3% movement speed" } } },
       { { name = "Lightforge Bracers", slot = "Wrist", icon = "INV_Bracer_14", bonus = { "-4.4% cooldowns", "+1.4% critical strike", "+0.2 health per second" } } },
       { { name = "Lightforge Gauntlets", slot = "Hands", icon = "INV_Gauntlets_19", bonus = { "+8 max health", "+1.4% critical strike", "+7.1% critical damage", "+0.3 health per second" } } },
       { { name = "Hammer of the Squire", slot = "Main Hand", icon = "INV_Hammer_03", bonus = { "+16.4% damage", "+1% movement speed" } } },
@@ -278,7 +278,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Lawbringer Legplates", slot = "Legs", icon = "INV_Pants_04", bonus = { "-1.7% cooldowns", "+33 max health", "+0.5 health per second" } } },
-      { { name = "Lawbringer Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", bonus = { "-4.4% cooldowns", "+1.1% critical strike", "+7.5% movement speed" } } },
+      { { name = "Lawbringer Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", bonus = { "-4.4% cooldowns", "+1.1% critical strike", "+15.4% movement speed" } } },
       { { name = "Lawbringer Bracers", slot = "Wrist", icon = "INV_Bracer_18", bonus = { "-6.6% cooldowns", "+2.1% critical strike", "+0.3 health per second" } } },
       { { name = "Lawbringer Gauntlets", slot = "Hands", icon = "INV_Gauntlets_29", bonus = { "+13 max health", "+2.1% critical strike", "+10.5% critical damage", "+0.4 health per second" } } },
       { { name = "Hammer of the Lightforge", slot = "Main Hand", icon = "INV_Hammer_03", bonus = { "+24.4% damage", "+1.7% movement speed" } } },
@@ -292,7 +292,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Judgement Legplates", slot = "Legs", icon = "INV_Pants_04", bonus = { "-2.5% cooldowns", "+47 max health", "+0.7 health per second" } } },
-      { { name = "Judgement Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", bonus = { "-6.1% cooldowns", "+1.7% critical strike", "+10.7% movement speed" } } },
+      { { name = "Judgement Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", bonus = { "-6.1% cooldowns", "+1.7% critical strike", "+21.7% movement speed" } } },
       { { name = "Judgement Bracers", slot = "Wrist", icon = "INV_Bracer_18", bonus = { "-9.5% cooldowns", "+2.9% critical strike", "+0.5 health per second" } } },
       { { name = "Judgement Gauntlets", slot = "Hands", icon = "INV_Gauntlets_29", bonus = { "+20 max health", "+2.9% critical strike", "+14.7% critical damage", "+0.7 health per second" } } },
       { { name = "Lightforged Hammer", slot = "Main Hand", icon = "INV_Hammer_05", bonus = { "+34.4% damage", "+2.5% movement speed" } } },
@@ -306,7 +306,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Legplates", slot = "Legs", icon = "INV_Pants_04", horde = "Field Marshal's Legplates", hordeIcon = "INV_Pants_04", bonus = { "-3% cooldowns", "+55 max health", "+0.8 health per second" } } },
-      { { name = "Field Marshal's Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", horde = "Field Marshal's Sabatons", hordeIcon = "INV_Boots_Plate_09", bonus = { "-7% cooldowns", "+2% critical strike", "+12.5% movement speed" } } },
+      { { name = "Field Marshal's Sabatons", slot = "Feet", icon = "INV_Boots_Plate_09", horde = "Field Marshal's Sabatons", hordeIcon = "INV_Boots_Plate_09", bonus = { "-7% cooldowns", "+2% critical strike", "+25.1% movement speed" } } },
       { { name = "Field Marshal's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Field Marshal's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-11.1% cooldowns", "+3.4% critical strike", "+0.6 health per second" } } },
       { { name = "Field Marshal's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_29", horde = "Field Marshal's Gauntlets", hordeIcon = "INV_Gauntlets_29", bonus = { "+24 max health", "+3.4% critical strike", "+16.8% critical damage", "+0.8 health per second" } } },
       { { name = "Grand Marshal's Demolisher", slot = "Main Hand", icon = "INV_Hammer_03", horde = "Grand Marshal's Demolisher", hordeIcon = "INV_Hammer_03", bonus = { "+39.7% damage", "+3% movement speed" } } },
@@ -320,7 +320,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Redemption Legplates", slot = "Legs", icon = "INV_Pants_Mail_15", rarity = "Epic", bonus = { "-3.6% cooldowns", "+64 max health", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Redemption Sabatons", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "-8% cooldowns", "+2.4% critical strike", "+14.4% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Redemption Sabatons", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "-8% cooldowns", "+2.4% critical strike", "+28.9% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Redemption Bracers", slot = "Wrist", icon = "INV_Bracer_02", rarity = "Epic", bonus = { "-12.8% cooldowns", "+3.9% critical strike", "+0.7 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Redemption Gauntlets", slot = "Hands", icon = "INV_Gauntlets_25", rarity = "Epic", bonus = { "+29 max health", "+3.9% critical strike", "+19.3% critical damage", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Ashbringer", slot = "Main Hand", icon = "INV_Sword_48", rarity = "Legendary", bonus = { "+45.8% damage", "+3.6% movement speed", "+1 target to every ability" } } },
@@ -336,7 +336,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Tracker's Legguards", slot = "Legs", icon = "INV_Pants_03", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Tracker's Greaves", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Tracker's Greaves", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Tracker's Bracers", slot = "Wrist", icon = "INV_Jewelry_Ring_02", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Tracker's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_09", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Short Bow", slot = "Ranged", icon = "INV_Weapon_Bow_05", bonus = { "+8.4% damage" } } },
@@ -350,7 +350,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Beaststalker's Legguards", slot = "Legs", icon = "INV_Pants_03", bonus = { "+25 max health", "+0.6 health per second" } } },
-      { { name = "Beaststalker's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", bonus = { "+2.1% damage", "-3% cooldowns", "+4.6% movement speed" } } },
+      { { name = "Beaststalker's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", bonus = { "+2.1% damage", "-3% cooldowns", "+10% movement speed" } } },
       { { name = "Beaststalker's Bracers", slot = "Wrist", icon = "INV_Bracer_17", bonus = { "-3% cooldowns", "+2% critical strike", "+2.8% area of effect" } } },
       { { name = "Beaststalker's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_10", bonus = { "+2.1% damage", "+2.1% critical strike", "+7.1% critical damage" } } },
       { { name = "Hunting Bow of the Wilds", slot = "Ranged", icon = "INV_Weapon_Bow_08", bonus = { "+14.3% damage", "+7 max health", "+1% damage reduction" } } },
@@ -364,7 +364,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Giantstalker's Legguards", slot = "Legs", icon = "INV_Pants_Mail_03", bonus = { "+37 max health", "+1 health per second" } } },
-      { { name = "Giantstalker's Greaves", slot = "Feet", icon = "INV_Boots_Chain_13", bonus = { "+3.4% damage", "-4.4% cooldowns", "+6.9% movement speed" } } },
+      { { name = "Giantstalker's Greaves", slot = "Feet", icon = "INV_Boots_Chain_13", bonus = { "+3.4% damage", "-4.4% cooldowns", "+14.8% movement speed" } } },
       { { name = "Giantstalker's Bracers", slot = "Wrist", icon = "INV_Bracer_17", bonus = { "-4.4% cooldowns", "+3% critical strike", "+4.5% area of effect" } } },
       { { name = "Giantstalker's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_10", bonus = { "+3.4% damage", "+3.2% critical strike", "+10.5% critical damage" } } },
       { { name = "Bow of the Dragonflight", slot = "Ranged", icon = "INV_Weapon_Bow_13", bonus = { "+21% damage", "+11 max health", "+1.7% damage reduction" } } },
@@ -378,7 +378,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Dragonstalker's Legguards", slot = "Legs", icon = "INV_Pants_03", bonus = { "+54 max health", "+1.4 health per second" } } },
-      { { name = "Dragonstalker's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", bonus = { "+5% damage", "-6.1% cooldowns", "+9.9% movement speed" } } },
+      { { name = "Dragonstalker's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", bonus = { "+5% damage", "-6.1% cooldowns", "+20.9% movement speed" } } },
       { { name = "Dragonstalker's Bracers", slot = "Wrist", icon = "INV_Bracer_17", bonus = { "-6.1% cooldowns", "+4.3% critical strike", "+6.7% area of effect" } } },
       { { name = "Dragonstalker's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_10", bonus = { "+5% damage", "+4.6% critical strike", "+14.7% critical damage" } } },
       { { name = "Ahn'Qiraj Rifle", slot = "Ranged", icon = "INV_Weapon_Rifle_11", bonus = { "+29.4% damage", "+17 max health", "+2.5% damage reduction" } } },
@@ -392,7 +392,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Legguards", slot = "Legs", icon = "INV_Pants_Mail_17", horde = "Warlord's Legguards", hordeIcon = "INV_Pants_Mail_16", bonus = { "+63 max health", "+1.7 health per second" } } },
-      { { name = "Field Marshal's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", horde = "Warlord's Greaves", hordeIcon = "INV_Boots_Plate_06", bonus = { "+6.1% damage", "-7% cooldowns", "+11.4% movement speed" } } },
+      { { name = "Field Marshal's Greaves", slot = "Feet", icon = "INV_Boots_Plate_07", horde = "Warlord's Greaves", hordeIcon = "INV_Boots_Plate_06", bonus = { "+6.1% damage", "-7% cooldowns", "+24% movement speed" } } },
       { { name = "Field Marshal's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+5% critical strike", "+8.1% area of effect" } } },
       { { name = "Field Marshal's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_10", horde = "Warlord's Gauntlets", hordeIcon = "INV_Gauntlets_11", bonus = { "+6.1% damage", "+5.4% critical strike", "+16.8% critical damage" } } },
       { { name = "Grand Marshal's Bullseye", slot = "Ranged", icon = "INV_Weapon_Bow_12", horde = "High Warlord's Recurve", hordeIcon = "INV_Weapon_Bow_08", bonus = { "+33.6% damage", "+20 max health", "+3% damage reduction" } } },
@@ -406,7 +406,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Cryptstalker Legguards", slot = "Legs", icon = "INV_Pants_Mail_15", rarity = "Epic", bonus = { "+74 max health", "+1.9 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Cryptstalker Greaves", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+13.2% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Cryptstalker Greaves", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+27.7% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Cryptstalker Bracers", slot = "Wrist", icon = "INV_Bracer_02", rarity = "Epic", bonus = { "-8% cooldowns", "+5.8% critical strike", "+9.5% area of effect", "4.2% chance for an ability to strike twice" } } },
       { { name = "Cryptstalker Gauntlets", slot = "Hands", icon = "INV_Gauntlets_25", rarity = "Epic", bonus = { "+7.1% damage", "+6.2% critical strike", "+19.3% critical damage", "4.2% chance for an ability to strike twice" } } },
       { { name = "Rhok'delar, Longbow of the Ancient Keepers", slot = "Ranged", icon = "INV_Weapon_Bow_01", rarity = "Legendary", bonus = { "+38.6% damage", "+24 max health", "+3.6% damage reduction", "+1 target to every ability" } } },
@@ -422,7 +422,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Footpad's Pants", slot = "Legs", icon = "INV_Pants_Wolf", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Footpad's Boots", slot = "Feet", icon = "INV_Boots_03", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Footpad's Boots", slot = "Feet", icon = "INV_Boots_03", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Footpad's Bracers", slot = "Wrist", icon = "INV_Bracer_05", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Footpad's Gloves", slot = "Hands", icon = "INV_Gauntlets_05", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Worn Dagger", slot = "Main Hand", icon = "INV_Weapon_ShortBlade_05", bonus = { "+8.4% damage" } }, { name = "Rusty Shiv", slot = "Off Hand", icon = "INV_Weapon_ShortBlade_05", bonus = { "+4.2% damage", "+6 max health" } } },
@@ -436,7 +436,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Shadowcraft Pants", slot = "Legs", icon = "INV_Pants_02", bonus = { "+2.1% damage", "+17 max health", "+0.7% critical strike", "+0.4 health per second" } } },
-      { { name = "Shadowcraft Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-3% cooldowns", "+7 max health", "+3.6% movement speed", "+1% damage reduction" } } },
+      { { name = "Shadowcraft Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-3% cooldowns", "+7 max health", "+8.9% movement speed", "+1% damage reduction" } } },
       { { name = "Shadowcraft Bracers", slot = "Wrist", icon = "INV_Bracer_07", bonus = { "-4% cooldowns", "+6 max health", "+1.4% critical strike" } } },
       { { name = "Shadowcraft Gloves", slot = "Hands", icon = "INV_Gauntlets_24", bonus = { "+2.1% critical strike", "+7.1% critical damage", "+1.4% movement speed" } } },
       { { name = "Assassin's Blade", slot = "Main Hand", icon = "INV_Weapon_ShortBlade_05", bonus = { "+14.3% damage", "-1.4% cooldowns", "+0.2 health per second" } }, { name = "Thief's Blade", slot = "Off Hand", icon = "INV_Weapon_ShortBlade_05", bonus = { "+7.1% damage", "+18 max health", "+0.3 health per second" } } },
@@ -450,7 +450,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Nightslayer Pants", slot = "Legs", icon = "INV_Pants_06", bonus = { "+3.4% damage", "+24 max health", "+1.1% critical strike", "+0.5 health per second" } } },
-      { { name = "Nightslayer Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-4.4% cooldowns", "+11 max health", "+5.2% movement speed", "+1.7% damage reduction" } } },
+      { { name = "Nightslayer Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-4.4% cooldowns", "+11 max health", "+13.1% movement speed", "+1.7% damage reduction" } } },
       { { name = "Nightslayer Bracers", slot = "Wrist", icon = "INV_Bracer_02", bonus = { "-6.1% cooldowns", "+9 max health", "+2.1% critical strike" } } },
       { { name = "Nightslayer Gloves", slot = "Hands", icon = "INV_Gauntlets_21", bonus = { "+3.2% critical strike", "+10.5% critical damage", "+2.2% movement speed" } } },
       { { name = "Shadowcraft Dirk", slot = "Main Hand", icon = "INV_Weapon_ShortBlade_02", bonus = { "+21% damage", "-2.2% cooldowns", "+0.3 health per second" } }, { name = "Nightslayer Kris", slot = "Off Hand", icon = "INV_Weapon_ShortBlade_02", bonus = { "+10.5% damage", "+27 max health", "+0.4 health per second" } } },
@@ -464,7 +464,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Bloodfang Pants", slot = "Legs", icon = "INV_Pants_06", bonus = { "+5% damage", "+34 max health", "+1.7% critical strike", "+0.7 health per second" } } },
-      { { name = "Bloodfang Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-6.1% cooldowns", "+17 max health", "+7.3% movement speed", "+2.5% damage reduction" } } },
+      { { name = "Bloodfang Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "-6.1% cooldowns", "+17 max health", "+18.4% movement speed", "+2.5% damage reduction" } } },
       { { name = "Bloodfang Bracers", slot = "Wrist", icon = "INV_Bracer_02", bonus = { "-8.6% cooldowns", "+13 max health", "+2.9% critical strike" } } },
       { { name = "Bloodfang Gloves", slot = "Hands", icon = "INV_Gauntlets_21", bonus = { "+4.6% critical strike", "+14.7% critical damage", "+3.4% movement speed" } } },
       { { name = "Blackwing Shiv", slot = "Main Hand", icon = "INV_Weapon_Shortblade_28", bonus = { "+29.4% damage", "-3.4% cooldowns", "+0.5 health per second" } }, { name = "Fang of the Faceless", slot = "Off Hand", icon = "INV_Weapon_Shortblade_28", bonus = { "+14.7% damage", "+40 max health", "+0.7 health per second" } } },
@@ -478,7 +478,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Pants", slot = "Legs", icon = "INV_Pants_06", horde = "Warlord's Pants", hordeIcon = "INV_Pants_06", bonus = { "+6.1% damage", "+39 max health", "+2% critical strike", "+0.8 health per second" } } },
-      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_08", horde = "Warlord's Boots", hordeIcon = "INV_Boots_08", bonus = { "-7% cooldowns", "+20 max health", "+8.4% movement speed", "+3% damage reduction" } } },
+      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_08", horde = "Warlord's Boots", hordeIcon = "INV_Boots_08", bonus = { "-7% cooldowns", "+20 max health", "+21% movement speed", "+3% damage reduction" } } },
       { { name = "Field Marshal's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-10% cooldowns", "+16 max health", "+3.4% critical strike" } } },
       { { name = "Field Marshal's Gloves", slot = "Hands", icon = "INV_Gauntlets_21", horde = "Warlord's Gloves", hordeIcon = "INV_Gauntlets_25", bonus = { "+5.4% critical strike", "+16.8% critical damage", "+4.1% movement speed" } } },
       { { name = "Grand Marshal's Dirk", slot = "Main Hand", icon = "INV_Weapon_ShortBlade_26", horde = "High Warlord's Razor", hordeIcon = "INV_Weapon_ShortBlade_13", bonus = { "+33.6% damage", "-4.1% cooldowns", "+0.6 health per second" } }, { name = "Grand Marshal's Mageblade", slot = "Off Hand", icon = "INV_Weapon_ShortBlade_26", horde = "High Warlord's Spellblade", hordeIcon = "INV_Weapon_ShortBlade_13", bonus = { "+16.8% damage", "+46 max health", "+0.8 health per second" } } },
@@ -492,7 +492,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Bonescythe Pants", slot = "Legs", icon = "INV_Pants_Plate_05", rarity = "Epic", bonus = { "+7.1% damage", "+45 max health", "+2.4% critical strike", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Bonescythe Boots", slot = "Feet", icon = "INV_Boots_Plate_06", rarity = "Epic", bonus = { "-8% cooldowns", "+24 max health", "+9.7% movement speed", "+3.6% damage reduction", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Bonescythe Boots", slot = "Feet", icon = "INV_Boots_Plate_06", rarity = "Epic", bonus = { "-8% cooldowns", "+24 max health", "+24.2% movement speed", "+3.6% damage reduction", "4.2% chance for an ability to strike twice" } } },
       { { name = "Bonescythe Bracers", slot = "Wrist", icon = "INV_Bracer_15", rarity = "Epic", bonus = { "-11.6% cooldowns", "+19 max health", "+3.9% critical strike", "4.2% chance for an ability to strike twice" } } },
       { { name = "Bonescythe Gloves", slot = "Hands", icon = "INV_Gauntlets_28", rarity = "Epic", bonus = { "+6.2% critical strike", "+19.3% critical damage", "+4.8% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Thunderfury, Blessed Blade of the Windseeker", slot = "Main Hand", icon = "INV_Sword_39", rarity = "Legendary", bonus = { "+38.6% damage", "-4.8% cooldowns", "+0.7 health per second", "+1 target to every ability" } }, { name = "Kingsfall", slot = "Off Hand", icon = "INV_knife_1h_stratholme_d_01", rarity = "Legendary", bonus = { "+19.3% damage", "+55 max health", "+1 health per second", "+1 target to every ability" } } },
@@ -508,7 +508,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Acolyte's Leggings", slot = "Legs", icon = "INV_Pants_01", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Acolyte's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Acolyte's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Acolyte's Bindings", slot = "Wrist", icon = "INV_Bracer_10", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Acolyte's Gloves", slot = "Hands", icon = "INV_Gauntlets_06", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Acolyte's Staff", slot = "Main Hand", icon = "INV_Staff_02", bonus = { "+8.4% damage" } } },
@@ -522,7 +522,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Devout Leggings", slot = "Legs", icon = "INV_Pants_08", bonus = { "+17 max health", "+0.7% critical strike", "+1.4% movement speed", "+0.4 health per second" } } },
-      { { name = "Devout Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "-4.4% cooldowns", "+3.6% movement speed", "+0.2 health per second" } } },
+      { { name = "Devout Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "-4.4% cooldowns", "+8.9% movement speed", "+0.2 health per second" } } },
       { { name = "Devout Bindings", slot = "Wrist", icon = "INV_Belt_31", bonus = { "-3% cooldowns", "+8 max health", "+1.4% critical strike", "+0.3 health per second" } } },
       { { name = "Devout Gloves", slot = "Hands", icon = "INV_Gauntlets_14", bonus = { "+2.1% damage", "+1.4% critical strike", "+7.1% critical damage", "+1% movement speed" } } },
       { { name = "Staff of the Devout", slot = "Main Hand", icon = "INV_Staff_08", bonus = { "+14.3% damage", "+0.6% critical strike", "+2.8% area of effect" } } },
@@ -536,7 +536,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Leggings of Prophecy", slot = "Legs", icon = "INV_Pants_08", bonus = { "+24 max health", "+1.1% critical strike", "+2.2% movement speed", "+0.5 health per second" } } },
-      { { name = "Boots of Prophecy", slot = "Feet", icon = "INV_Boots_07", bonus = { "-6.6% cooldowns", "+5.2% movement speed", "+0.3 health per second" } } },
+      { { name = "Boots of Prophecy", slot = "Feet", icon = "INV_Boots_07", bonus = { "-6.6% cooldowns", "+13.1% movement speed", "+0.3 health per second" } } },
       { { name = "Bindings of Prophecy", slot = "Wrist", icon = "INV_Bracer_09", bonus = { "-4.4% cooldowns", "+13 max health", "+2.1% critical strike", "+0.4 health per second" } } },
       { { name = "Gloves of Prophecy", slot = "Hands", icon = "INV_Gauntlets_14", bonus = { "+3.4% damage", "+2.1% critical strike", "+10.5% critical damage", "+1.7% movement speed" } } },
       { { name = "Staff of Prophecy", slot = "Main Hand", icon = "INV_Staff_07", bonus = { "+21% damage", "+0.9% critical strike", "+4.5% area of effect" } } },
@@ -550,7 +550,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Leggings of Transcendence", slot = "Legs", icon = "INV_Pants_08", bonus = { "+34 max health", "+1.7% critical strike", "+3.4% movement speed", "+0.7 health per second" } } },
-      { { name = "Boots of Transcendence", slot = "Feet", icon = "INV_Boots_07", bonus = { "-9.5% cooldowns", "+7.3% movement speed", "+0.5 health per second" } } },
+      { { name = "Boots of Transcendence", slot = "Feet", icon = "INV_Boots_07", bonus = { "-9.5% cooldowns", "+18.4% movement speed", "+0.5 health per second" } } },
       { { name = "Bindings of Transcendence", slot = "Wrist", icon = "INV_Bracer_09", bonus = { "-6.1% cooldowns", "+20 max health", "+2.9% critical strike", "+0.7 health per second" } } },
       { { name = "Gloves of Transcendence", slot = "Hands", icon = "INV_Gauntlets_14", bonus = { "+5% damage", "+2.9% critical strike", "+14.7% critical damage", "+2.5% movement speed" } } },
       { { name = "Benediction", slot = "Main Hand", icon = "INV_Staff_30", bonus = { "+29.4% damage", "+1.3% critical strike", "+6.7% area of effect" } } },
@@ -564,7 +564,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Leggings", slot = "Legs", icon = "INV_Pants_06", horde = "Warlord's Leggings", hordeIcon = "INV_Pants_07", bonus = { "+39 max health", "+2% critical strike", "+4.1% movement speed", "+0.8 health per second" } } },
-      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_07", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "-11.1% cooldowns", "+8.4% movement speed", "+0.6 health per second" } } },
+      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_07", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "-11.1% cooldowns", "+21% movement speed", "+0.6 health per second" } } },
       { { name = "Field Marshal's Bindings", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bindings", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+24 max health", "+3.4% critical strike", "+0.8 health per second" } } },
       { { name = "Field Marshal's Gloves", slot = "Hands", icon = "INV_Gauntlets_14", horde = "Warlord's Gloves", hordeIcon = "INV_Gauntlets_27", bonus = { "+6.1% damage", "+3.4% critical strike", "+16.8% critical damage", "+3% movement speed" } } },
       { { name = "Grand Marshal's Stave", slot = "Main Hand", icon = "INV_Staff_14", horde = "High Warlord's War Staff", hordeIcon = "INV_Misc_Bone_ElfSkull_01", bonus = { "+33.6% damage", "+1.6% critical strike", "+8.1% area of effect" } } },
@@ -578,7 +578,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Leggings of Faith", slot = "Legs", icon = "INV_Pants_Cloth_05", rarity = "Epic", bonus = { "+45 max health", "+2.4% critical strike", "+4.8% movement speed", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Boots of Faith", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "-12.8% cooldowns", "+9.7% movement speed", "+0.7 health per second", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Boots of Faith", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "-12.8% cooldowns", "+24.2% movement speed", "+0.7 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Bindings of Faith", slot = "Wrist", icon = "INV_Bracer_13", rarity = "Epic", bonus = { "-8% cooldowns", "+29 max health", "+3.9% critical strike", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Gloves of Faith", slot = "Hands", icon = "INV_Gauntlets_17", rarity = "Epic", bonus = { "+7.1% damage", "+3.9% critical strike", "+19.3% critical damage", "+3.6% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Anathema", slot = "Main Hand", icon = "INV_Staff_12", rarity = "Legendary", bonus = { "+38.6% damage", "+1.9% critical strike", "+9.5% area of effect", "+1 target to every ability" } } },
@@ -594,7 +594,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Primal Legguards", slot = "Legs", icon = "INV_Pants_03", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Primal Greaves", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Primal Greaves", slot = "Feet", icon = "INV_Boots_01", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Primal Bracers", slot = "Wrist", icon = "INV_Jewelry_Ring_02", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Primal Gauntlets", slot = "Hands", icon = "INV_Gauntlets_09", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Spiked Club", slot = "Main Hand", icon = "INV_Mace_01", bonus = { "+8.4% damage" } }, { name = "Round Buckler", slot = "Off Hand", icon = "INV_Shield_09", bonus = { "+4.2% damage", "+6 max health" } } },
@@ -608,7 +608,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Legguards of Elements", slot = "Legs", icon = "INV_Pants_03", bonus = { "+24 max health", "+1% damage reduction", "+0.4 health per second" } } },
-      { { name = "Greaves of Elements", slot = "Feet", icon = "INV_Boots_Wolf", bonus = { "-4% cooldowns", "+6 max health", "+3.6% movement speed" } } },
+      { { name = "Greaves of Elements", slot = "Feet", icon = "INV_Boots_Wolf", bonus = { "-4% cooldowns", "+6 max health", "+8.9% movement speed" } } },
       { { name = "Bracers of Elements", slot = "Wrist", icon = "INV_Bracer_02", bonus = { "-3% cooldowns", "+2.1% critical strike", "+1.4% movement speed" } } },
       { { name = "Gauntlets of Elements", slot = "Hands", icon = "INV_Gauntlets_11", bonus = { "-1.4% cooldowns", "+1.4% critical strike", "+7.1% critical damage", "+0.2 health per second" } } },
       { { name = "Mace of the Elements", slot = "Main Hand", icon = "INV_Mace_01", bonus = { "+14.3% damage", "+8 max health", "+0.3 health per second" } }, { name = "Crested Shield", slot = "Off Hand", icon = "INV_Shield_04", bonus = { "+9.2% damage", "+10 max health", "+1% movement speed" } } },
@@ -622,7 +622,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Earthfury Legguards", slot = "Legs", icon = "INV_Pants_03", bonus = { "+35 max health", "+1.7% damage reduction", "+0.5 health per second" } } },
-      { { name = "Earthfury Greaves", slot = "Feet", icon = "INV_Boots_Plate_06", bonus = { "-6.1% cooldowns", "+9 max health", "+5.2% movement speed" } } },
+      { { name = "Earthfury Greaves", slot = "Feet", icon = "INV_Boots_Plate_06", bonus = { "-6.1% cooldowns", "+9 max health", "+13.1% movement speed" } } },
       { { name = "Earthfury Bracers", slot = "Wrist", icon = "INV_Bracer_16", bonus = { "-4.4% cooldowns", "+3.2% critical strike", "+2.2% movement speed" } } },
       { { name = "Earthfury Gauntlets", slot = "Hands", icon = "INV_Gauntlets_11", bonus = { "-2.2% cooldowns", "+2.1% critical strike", "+10.5% critical damage", "+0.3 health per second" } } },
       { { name = "Earthfury Hammer", slot = "Main Hand", icon = "INV_Mace_1H_Stratholme_D_01", bonus = { "+21% damage", "+13 max health", "+0.4 health per second" } }, { name = "Totem Shield", slot = "Off Hand", icon = "INV_Shield_18", bonus = { "+13.9% damage", "+14 max health", "+1.7% movement speed" } } },
@@ -636,7 +636,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Legguards of Ten Storms", slot = "Legs", icon = "INV_Pants_03", bonus = { "+51 max health", "+2.5% damage reduction", "+0.7 health per second" } } },
-      { { name = "Greaves of Ten Storms", slot = "Feet", icon = "INV_Boots_Plate_06", bonus = { "-8.6% cooldowns", "+13 max health", "+7.3% movement speed" } } },
+      { { name = "Greaves of Ten Storms", slot = "Feet", icon = "INV_Boots_Plate_06", bonus = { "-8.6% cooldowns", "+13 max health", "+18.4% movement speed" } } },
       { { name = "Bracers of Ten Storms", slot = "Wrist", icon = "INV_Bracer_16", bonus = { "-6.1% cooldowns", "+4.6% critical strike", "+3.4% movement speed" } } },
       { { name = "Gauntlets of Ten Storms", slot = "Hands", icon = "INV_Gauntlets_11", bonus = { "-3.4% cooldowns", "+2.9% critical strike", "+14.7% critical damage", "+0.5 health per second" } } },
       { { name = "Blackwing Mace", slot = "Main Hand", icon = "INV_Mace_07", bonus = { "+29.4% damage", "+20 max health", "+0.7 health per second" } }, { name = "Aegis of the Ten Storms", slot = "Off Hand", icon = "INV_Shield_21", bonus = { "+19.7% damage", "+20 max health", "+2.5% movement speed" } } },
@@ -650,7 +650,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Warlord's Legguards", slot = "Legs", icon = "INV_Pants_Mail_15", horde = "Warlord's Legguards", hordeIcon = "INV_Pants_Mail_15", bonus = { "+59 max health", "+3% damage reduction", "+0.8 health per second" } } },
-      { { name = "Warlord's Greaves", slot = "Feet", icon = "INV_Boots_Plate_06", horde = "Warlord's Greaves", hordeIcon = "INV_Boots_Plate_06", bonus = { "-10% cooldowns", "+16 max health", "+8.4% movement speed" } } },
+      { { name = "Warlord's Greaves", slot = "Feet", icon = "INV_Boots_Plate_06", horde = "Warlord's Greaves", hordeIcon = "INV_Boots_Plate_06", bonus = { "-10% cooldowns", "+16 max health", "+21% movement speed" } } },
       { { name = "Warlord's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+5.4% critical strike", "+4.1% movement speed" } } },
       { { name = "Warlord's Gauntlets", slot = "Hands", icon = "INV_Gauntlets_11", horde = "Warlord's Gauntlets", hordeIcon = "INV_Gauntlets_11", bonus = { "-4.1% cooldowns", "+3.4% critical strike", "+16.8% critical damage", "+0.6 health per second" } } },
       { { name = "High Warlord's Battle Mace", slot = "Main Hand", icon = "INV_Hammer_20", horde = "High Warlord's Battle Mace", hordeIcon = "INV_Hammer_20", bonus = { "+33.6% damage", "+24 max health", "+0.8 health per second" } }, { name = "High Warlord's Shield Wall", slot = "Off Hand", icon = "INV_Shield_19", horde = "High Warlord's Shield Wall", hordeIcon = "INV_Shield_19", bonus = { "+22.9% damage", "+22 max health", "+3% movement speed" } } },
@@ -664,7 +664,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Earthshatter Legguards", slot = "Legs", icon = "INV_Pants_Mail_15", rarity = "Epic", bonus = { "+69 max health", "+3.6% damage reduction", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Earthshatter Greaves", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "-11.6% cooldowns", "+19 max health", "+9.7% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Earthshatter Greaves", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "-11.6% cooldowns", "+19 max health", "+24.2% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Earthshatter Bracers", slot = "Wrist", icon = "INV_Bracer_02", rarity = "Epic", bonus = { "-8% cooldowns", "+6.2% critical strike", "+4.8% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Earthshatter Gauntlets", slot = "Hands", icon = "INV_Gauntlets_25", rarity = "Epic", bonus = { "-4.8% cooldowns", "+3.9% critical strike", "+19.3% critical damage", "+0.7 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Doomhammer", slot = "Main Hand", icon = "INV_Mace_27", rarity = "Legendary", bonus = { "+38.6% damage", "+29 max health", "+1 health per second", "+1 target to every ability" } }, { name = "Shield of the Earthshatter", slot = "Off Hand", icon = "INV_Shield_28", rarity = "Legendary", bonus = { "+26.5% damage", "+26 max health", "+3.6% movement speed", "+1 target to every ability" } } },
@@ -680,7 +680,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Apprentice's Leggings", slot = "Legs", icon = "INV_Pants_01", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Apprentice's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Apprentice's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Apprentice's Bindings", slot = "Wrist", icon = "INV_Bracer_10", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Apprentice's Gloves", slot = "Hands", icon = "INV_Gauntlets_06", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Apprentice's Staff", slot = "Main Hand", icon = "INV_Staff_02", bonus = { "+8.4% damage" } } },
@@ -694,7 +694,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Magister's Leggings", slot = "Legs", icon = "INV_Pants_06", bonus = { "-1.4% cooldowns", "+17 max health", "+0.6 health per second" } } },
-      { { name = "Magister's Boots", slot = "Feet", icon = "INV_Boots_02", bonus = { "-3% cooldowns", "+8 max health", "+3.6% movement speed", "+0.3 health per second" } } },
+      { { name = "Magister's Boots", slot = "Feet", icon = "INV_Boots_02", bonus = { "-3% cooldowns", "+8 max health", "+8.9% movement speed", "+0.3 health per second" } } },
       { { name = "Magister's Bindings", slot = "Wrist", icon = "INV_Jewelry_Ring_23", bonus = { "+2.1% damage", "-3% cooldowns", "+1.4% critical strike", "+1% movement speed" } } },
       { { name = "Magister's Gloves", slot = "Hands", icon = "INV_Gauntlets_17", bonus = { "+2% critical strike", "+7.1% critical damage", "+2.8% area of effect" } } },
       { { name = "Magister's Staff", slot = "Main Hand", icon = "INV_Staff_08", bonus = { "+16.4% damage", "+0.7% critical strike" } } },
@@ -708,7 +708,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Arcanist Leggings", slot = "Legs", icon = "INV_Pants_08", bonus = { "-2.2% cooldowns", "+24 max health", "+0.9 health per second" } } },
-      { { name = "Arcanist Boots", slot = "Feet", icon = "INV_Boots_07", bonus = { "-4.4% cooldowns", "+13 max health", "+5.2% movement speed", "+0.4 health per second" } } },
+      { { name = "Arcanist Boots", slot = "Feet", icon = "INV_Boots_07", bonus = { "-4.4% cooldowns", "+13 max health", "+13.1% movement speed", "+0.4 health per second" } } },
       { { name = "Arcanist Bindings", slot = "Wrist", icon = "INV_Belt_29", bonus = { "+3.4% damage", "-4.4% cooldowns", "+2.1% critical strike", "+1.7% movement speed" } } },
       { { name = "Arcanist Gloves", slot = "Hands", icon = "INV_Gauntlets_14", bonus = { "+3% critical strike", "+10.5% critical damage", "+4.5% area of effect" } } },
       { { name = "Arcanist's Staff", slot = "Main Hand", icon = "INV_Staff_07", bonus = { "+24.4% damage", "+1.1% critical strike" } } },
@@ -722,7 +722,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Netherwind Leggings", slot = "Legs", icon = "INV_Pants_08", bonus = { "-3.4% cooldowns", "+34 max health", "+1.2 health per second" } } },
-      { { name = "Netherwind Boots", slot = "Feet", icon = "INV_Boots_07", bonus = { "-6.1% cooldowns", "+20 max health", "+7.3% movement speed", "+0.7 health per second" } } },
+      { { name = "Netherwind Boots", slot = "Feet", icon = "INV_Boots_07", bonus = { "-6.1% cooldowns", "+20 max health", "+18.4% movement speed", "+0.7 health per second" } } },
       { { name = "Netherwind Bindings", slot = "Wrist", icon = "INV_Bracer_09", bonus = { "+5% damage", "-6.1% cooldowns", "+2.9% critical strike", "+2.5% movement speed" } } },
       { { name = "Netherwind Gloves", slot = "Hands", icon = "INV_Gauntlets_14", bonus = { "+4.3% critical strike", "+14.7% critical damage", "+6.7% area of effect" } } },
       { { name = "Staff of Dominance", slot = "Main Hand", icon = "INV_Weapon_Halberd_AhnQiraj", bonus = { "+34.4% damage", "+1.7% critical strike" } } },
@@ -736,7 +736,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Leggings", slot = "Legs", icon = "INV_Pants_08", horde = "Warlord's Leggings", hordeIcon = "INV_Pants_07", bonus = { "-4.1% cooldowns", "+39 max health", "+1.4 health per second" } } },
-      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_Cloth_03", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "-7% cooldowns", "+24 max health", "+8.4% movement speed", "+0.8 health per second" } } },
+      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_Cloth_03", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "-7% cooldowns", "+24 max health", "+21% movement speed", "+0.8 health per second" } } },
       { { name = "Field Marshal's Bindings", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bindings", hordeIcon = "INV_Bracer_02", bonus = { "+6.1% damage", "-7% cooldowns", "+3.4% critical strike", "+3% movement speed" } } },
       { { name = "Field Marshal's Gloves", slot = "Hands", icon = "INV_Gauntlets_14", horde = "Warlord's Gloves", hordeIcon = "INV_Gauntlets_19", bonus = { "+5% critical strike", "+16.8% critical damage", "+8.1% area of effect" } } },
       { { name = "Grand Marshal's Stave", slot = "Main Hand", icon = "INV_Staff_14", horde = "High Warlord's War Staff", hordeIcon = "INV_Misc_Bone_ElfSkull_01", bonus = { "+39.7% damage", "+2% critical strike" } } },
@@ -750,7 +750,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Frostfire Leggings", slot = "Legs", icon = "INV_Pants_Cloth_05", rarity = "Epic", bonus = { "-4.8% cooldowns", "+45 max health", "+1.7 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Frostfire Boots", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "-8% cooldowns", "+29 max health", "+9.7% movement speed", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Frostfire Boots", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "-8% cooldowns", "+29 max health", "+24.2% movement speed", "+1 health per second", "4.2% chance for an ability to strike twice" } } },
       { { name = "Frostfire Bindings", slot = "Wrist", icon = "INV_Bracer_13", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+3.9% critical strike", "+3.6% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Frostfire Gloves", slot = "Hands", icon = "INV_Gauntlets_17", rarity = "Epic", bonus = { "+5.8% critical strike", "+19.3% critical damage", "+9.5% area of effect", "4.2% chance for an ability to strike twice" } } },
       { { name = "Atiesh, Greatstaff of the Guardian", slot = "Main Hand", icon = "INV_Staff_Medivh", rarity = "Legendary", bonus = { "+45.8% damage", "+2.4% critical strike", "+1 target to every ability" } } },
@@ -766,7 +766,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Novice's Leggings", slot = "Legs", icon = "INV_Pants_01", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Novice's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Novice's Boots", slot = "Feet", icon = "INV_Boots_09", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Novice's Bindings", slot = "Wrist", icon = "INV_Bracer_10", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Novice's Gloves", slot = "Hands", icon = "INV_Gauntlets_06", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Novice's Staff", slot = "Main Hand", icon = "INV_Staff_02", bonus = { "+8.4% damage" } } },
@@ -780,7 +780,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Dreadmist Leggings", slot = "Legs", icon = "INV_Pants_08", bonus = { "+17 max health", "+0.6% critical strike", "+0.4 health per second", "+2.8% area of effect" } } },
-      { { name = "Dreadmist Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "+2.1% damage", "-3% cooldowns", "+0.7% critical strike", "+3.6% movement speed" } } },
+      { { name = "Dreadmist Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "+2.1% damage", "-3% cooldowns", "+0.7% critical strike", "+8.9% movement speed" } } },
       { { name = "Dreadmist Bindings", slot = "Wrist", icon = "INV_Bracer_13", bonus = { "-3% cooldowns", "+7 max health", "+1.4% critical strike", "+1% damage reduction" } } },
       { { name = "Dreadmist Gloves", slot = "Hands", icon = "INV_Gauntlets_32", bonus = { "-1% cooldowns", "+6 max health", "+1.4% critical strike", "+7.1% critical damage" } } },
       { { name = "Dreadmist Staff", slot = "Main Hand", icon = "INV_Staff_08", bonus = { "+14.3% damage", "+0.7% critical strike", "+1.4% movement speed" } } },
@@ -794,7 +794,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Felheart Leggings", slot = "Legs", icon = "INV_Pants_Cloth_14", bonus = { "+24 max health", "+0.9% critical strike", "+0.5 health per second", "+4.5% area of effect" } } },
-      { { name = "Felheart Boots", slot = "Feet", icon = "INV_Boots_Cloth_05", bonus = { "+3.4% damage", "-4.4% cooldowns", "+1.1% critical strike", "+5.2% movement speed" } } },
+      { { name = "Felheart Boots", slot = "Feet", icon = "INV_Boots_Cloth_05", bonus = { "+3.4% damage", "-4.4% cooldowns", "+1.1% critical strike", "+13.1% movement speed" } } },
       { { name = "Felheart Bindings", slot = "Wrist", icon = "INV_Bracer_07", bonus = { "-4.4% cooldowns", "+11 max health", "+2.1% critical strike", "+1.7% damage reduction" } } },
       { { name = "Felheart Gloves", slot = "Hands", icon = "INV_Gauntlets_19", bonus = { "-1.7% cooldowns", "+9 max health", "+2.1% critical strike", "+10.5% critical damage" } } },
       { { name = "Felheart Staff", slot = "Main Hand", icon = "INV_Staff_07", bonus = { "+21% damage", "+1.1% critical strike", "+2.2% movement speed" } } },
@@ -808,7 +808,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Nemesis Leggings", slot = "Legs", icon = "INV_Pants_07", bonus = { "+34 max health", "+1.3% critical strike", "+0.7 health per second", "+6.7% area of effect" } } },
-      { { name = "Nemesis Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "+5% damage", "-6.1% cooldowns", "+1.7% critical strike", "+7.3% movement speed" } } },
+      { { name = "Nemesis Boots", slot = "Feet", icon = "INV_Boots_05", bonus = { "+5% damage", "-6.1% cooldowns", "+1.7% critical strike", "+18.4% movement speed" } } },
       { { name = "Nemesis Bindings", slot = "Wrist", icon = "INV_Bracer_07", bonus = { "-6.1% cooldowns", "+17 max health", "+2.9% critical strike", "+2.5% damage reduction" } } },
       { { name = "Nemesis Gloves", slot = "Hands", icon = "INV_Gauntlets_19", bonus = { "-2.5% cooldowns", "+13 max health", "+2.9% critical strike", "+14.7% critical damage" } } },
       { { name = "Staff of the Shadow Flame", slot = "Main Hand", icon = "INV_Staff_06", bonus = { "+29.4% damage", "+1.7% critical strike", "+3.4% movement speed" } } },
@@ -822,7 +822,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Leggings", slot = "Legs", icon = "INV_Pants_Cloth_09", horde = "Warlord's Leggings", hordeIcon = "INV_Pants_07", bonus = { "+39 max health", "+1.6% critical strike", "+0.8 health per second", "+8.1% area of effect" } } },
-      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_07", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "+6.1% damage", "-7% cooldowns", "+2% critical strike", "+8.4% movement speed" } } },
+      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_07", horde = "Warlord's Boots", hordeIcon = "INV_Boots_05", bonus = { "+6.1% damage", "-7% cooldowns", "+2% critical strike", "+21% movement speed" } } },
       { { name = "Field Marshal's Bindings", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bindings", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+20 max health", "+3.4% critical strike", "+3% damage reduction" } } },
       { { name = "Field Marshal's Gloves", slot = "Hands", icon = "INV_Gauntlets_14", horde = "Warlord's Gloves", hordeIcon = "INV_Gauntlets_19", bonus = { "-3% cooldowns", "+16 max health", "+3.4% critical strike", "+16.8% critical damage" } } },
       { { name = "Grand Marshal's Stave", slot = "Main Hand", icon = "INV_Staff_14", horde = "High Warlord's War Staff", hordeIcon = "INV_Misc_Bone_ElfSkull_01", bonus = { "+33.6% damage", "+2% critical strike", "+4.1% movement speed" } } },
@@ -836,7 +836,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Plagueheart Leggings", slot = "Legs", icon = "INV_Pants_Cloth_05", rarity = "Epic", bonus = { "+45 max health", "+1.9% critical strike", "+1 health per second", "+9.5% area of effect", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Plagueheart Boots", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+2.4% critical strike", "+9.7% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Plagueheart Boots", slot = "Feet", icon = "INV_Boots_Fabric_01", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+2.4% critical strike", "+24.2% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Plagueheart Bindings", slot = "Wrist", icon = "INV_Bracer_13", rarity = "Epic", bonus = { "-8% cooldowns", "+24 max health", "+3.9% critical strike", "+3.6% damage reduction", "4.2% chance for an ability to strike twice" } } },
       { { name = "Plagueheart Gloves", slot = "Hands", icon = "INV_Gauntlets_17", rarity = "Epic", bonus = { "-3.6% cooldowns", "+19 max health", "+3.9% critical strike", "+19.3% critical damage", "4.2% chance for an ability to strike twice" } } },
       { { name = "Atiesh, Greatstaff of the Guardian", slot = "Main Hand", icon = "INV_Staff_Medivh", rarity = "Legendary", bonus = { "+38.6% damage", "+2.4% critical strike", "+4.8% movement speed", "+1 target to every ability" } } },
@@ -852,7 +852,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Thicket Pants", slot = "Legs", icon = "INV_Pants_Wolf", bonus = { "+10 max health", "+0.2 health per second" } } },
-      { { name = "Thicket Boots", slot = "Feet", icon = "INV_Boots_03", bonus = { "-1.7% cooldowns", "+2.1% movement speed" } } },
+      { { name = "Thicket Boots", slot = "Feet", icon = "INV_Boots_03", bonus = { "-1.7% cooldowns", "+5.3% movement speed" } } },
       { { name = "Thicket Bracers", slot = "Wrist", icon = "INV_Bracer_05", bonus = { "-1.7% cooldowns", "+0.8% critical strike" } } },
       { { name = "Thicket Gloves", slot = "Hands", icon = "INV_Gauntlets_05", bonus = { "+0.8% critical strike", "+4.2% critical damage" } } },
       { { name = "Gnarled Staff", slot = "Main Hand", icon = "INV_Staff_02", bonus = { "+8.4% damage" } } },
@@ -866,7 +866,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Wildheart Pants", slot = "Legs", icon = "INV_Pants_08", bonus = { "+25 max health", "+0.6 health per second" } } },
-      { { name = "Wildheart Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+2.1% damage", "-3% cooldowns", "+4.6% movement speed" } } },
+      { { name = "Wildheart Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+2.1% damage", "-3% cooldowns", "+10% movement speed" } } },
       { { name = "Wildheart Bracers", slot = "Wrist", icon = "INV_Bracer_09", bonus = { "-3% cooldowns", "+2% critical strike", "+2.8% area of effect" } } },
       { { name = "Wildheart Gloves", slot = "Hands", icon = "INV_Gauntlets_17", bonus = { "+2.1% damage", "+2.1% critical strike", "+7.1% critical damage" } } },
       { { name = "Wildheart Staff", slot = "Main Hand", icon = "INV_Staff_08", bonus = { "+14.3% damage", "+7 max health", "+1% damage reduction" } } },
@@ -880,7 +880,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Cenarion Pants", slot = "Legs", icon = "INV_Pants_06", bonus = { "+37 max health", "+1 health per second" } } },
-      { { name = "Cenarion Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+3.4% damage", "-4.4% cooldowns", "+6.9% movement speed" } } },
+      { { name = "Cenarion Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+3.4% damage", "-4.4% cooldowns", "+14.8% movement speed" } } },
       { { name = "Cenarion Bracers", slot = "Wrist", icon = "INV_Bracer_03", bonus = { "-4.4% cooldowns", "+3% critical strike", "+4.5% area of effect" } } },
       { { name = "Cenarion Gloves", slot = "Hands", icon = "INV_Gauntlets_07", bonus = { "+3.4% damage", "+3.2% critical strike", "+10.5% critical damage" } } },
       { { name = "Cenarion Staff", slot = "Main Hand", icon = "INV_Staff_07", bonus = { "+21% damage", "+11 max health", "+1.7% damage reduction" } } },
@@ -894,7 +894,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Stormrage Pants", slot = "Legs", icon = "INV_Pants_06", bonus = { "+54 max health", "+1.4 health per second" } } },
-      { { name = "Stormrage Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+5% damage", "-6.1% cooldowns", "+9.9% movement speed" } } },
+      { { name = "Stormrage Boots", slot = "Feet", icon = "INV_Boots_08", bonus = { "+5% damage", "-6.1% cooldowns", "+20.9% movement speed" } } },
       { { name = "Stormrage Bracers", slot = "Wrist", icon = "INV_Bracer_03", bonus = { "-6.1% cooldowns", "+4.3% critical strike", "+6.7% area of effect" } } },
       { { name = "Stormrage Gloves", slot = "Hands", icon = "INV_Gauntlets_25", bonus = { "+5% damage", "+4.6% critical strike", "+14.7% critical damage" } } },
       { { name = "Staff of the Moon", slot = "Main Hand", icon = "INV_Weapon_Halberd_AhnQiraj", bonus = { "+29.4% damage", "+17 max health", "+2.5% damage reduction" } } },
@@ -908,7 +908,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Field Marshal's Pants", slot = "Legs", icon = "INV_Pants_06", horde = "Warlord's Pants", hordeIcon = "INV_Pants_06", bonus = { "+63 max health", "+1.7 health per second" } } },
-      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_08", horde = "Warlord's Boots", hordeIcon = "INV_Boots_08", bonus = { "+6.1% damage", "-7% cooldowns", "+11.4% movement speed" } } },
+      { { name = "Field Marshal's Boots", slot = "Feet", icon = "INV_Boots_08", horde = "Warlord's Boots", hordeIcon = "INV_Boots_08", bonus = { "+6.1% damage", "-7% cooldowns", "+24% movement speed" } } },
       { { name = "Field Marshal's Bracers", slot = "Wrist", icon = "INV_Bracer_02", horde = "Warlord's Bracers", hordeIcon = "INV_Bracer_02", bonus = { "-7% cooldowns", "+5% critical strike", "+8.1% area of effect" } } },
       { { name = "Field Marshal's Gloves", slot = "Hands", icon = "INV_Gauntlets_21", horde = "Warlord's Gloves", hordeIcon = "INV_Gauntlets_25", bonus = { "+6.1% damage", "+5.4% critical strike", "+16.8% critical damage" } } },
       { { name = "Grand Marshal's Stave", slot = "Main Hand", icon = "INV_Staff_14", horde = "High Warlord's War Staff", hordeIcon = "INV_Misc_Bone_ElfSkull_01", bonus = { "+33.6% damage", "+20 max health", "+3% damage reduction" } } },
@@ -922,7 +922,7 @@ Azerloot_Loot.drops = {
     },
     {
       { { name = "Dreamwalker Pants", slot = "Legs", icon = "INV_Pants_Mail_15", rarity = "Epic", bonus = { "+74 max health", "+1.9 health per second", "4.2% chance for an ability to strike twice" } } },
-      { { name = "Dreamwalker Boots", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+13.2% movement speed", "4.2% chance for an ability to strike twice" } } },
+      { { name = "Dreamwalker Boots", slot = "Feet", icon = "INV_Boots_Chain_05", rarity = "Epic", bonus = { "+7.1% damage", "-8% cooldowns", "+27.7% movement speed", "4.2% chance for an ability to strike twice" } } },
       { { name = "Dreamwalker Bracers", slot = "Wrist", icon = "INV_Bracer_02", rarity = "Epic", bonus = { "-8% cooldowns", "+5.8% critical strike", "+9.5% area of effect", "4.2% chance for an ability to strike twice" } } },
       { { name = "Dreamwalker Gloves", slot = "Hands", icon = "INV_Gauntlets_25", rarity = "Epic", bonus = { "+7.1% damage", "+6.2% critical strike", "+19.3% critical damage", "4.2% chance for an ability to strike twice" } } },
       { { name = "Atiesh, Greatstaff of the Guardian", slot = "Main Hand", icon = "INV_Staff_Medivh", rarity = "Legendary", bonus = { "+38.6% damage", "+24 max health", "+3.6% damage reduction", "+1 target to every ability" } } },
