@@ -9,7 +9,8 @@
 * 🔮 **Spells** – every class's spells; picked-up spells join the wishlist window and show their upgrades.
 * 🛠️ **Builds** – up to five builds per class, shareable as a short code, loadable at any time.
 * ⏳ **Chronicle** – your last 50 runs per class, your best run and personal bests kept for good.
-* 📋 **Wishlist window** – what you still need in this run, ticked off as it comes; sized to your liking and click-through when locked.
+* 📋 **Wishlist window** – what you still need in this run, ticked off as it comes, with the next boss and its timer or the living boss's health; sized to your liking and click-through when locked.
+* 🔔 **Azerwarn** – big warnings when a boss comes, turns or the game calls a stampede, a pack or a guardian, in the game's language; runes, magnets, caches and achievements in a smaller place of their own. Both can be moved and sized, with a sound of your choice (or none).
 * 🌍 English, Deutsch, Français, Español, Português.
 
 ## 📦 Installation
@@ -19,6 +20,7 @@
 1. Download the latest zip from [Releases](../../releases/latest).
 2. Unpack the folder into your AddOns folder, e.g. `C:\Git\wenilla\benilla-config\AddOns`. It must be named **`Azerloot`**, with `Azerloot.toc` directly inside it.
 3. Start the game. Open the book with the minimap button, `/azl` or a key binding.
+4. Shift-click the minimap button to move the wishlist window and both warning places; the mouse wheel sizes the warnings.
 
 **Updating by hand:** delete the old `Azerloot` folder, then unpack the new one. Your builds, wishlist, collection, chronicle and settings are kept.
 
@@ -27,7 +29,7 @@
 |---|---|
 | `/azl` | open or close the book |
 | `/azl tracker` | wishlist window on/off |
-| `/azl minimap` | minimap button on/off |
+| `/azl layout` | move the wishlist window and the warnings (as Shift-click on the minimap button) |
 | `/azl collection` | your collected boss pieces |
 | `/azl reset` | wishlist window back to its first place |
 
