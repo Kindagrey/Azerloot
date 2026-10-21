@@ -153,127 +153,154 @@ local function TurnText(ph)
   return ""
 end
 
--- ---------- the big words in the middle of the screen ----------
-local alert
-local function Alert(text, sub, icon, sound, low)
-  if not alert then
-    alert = CreateFrame("Button", "AzerlootBossAlert", UIParent)
-    alert:SetFrameStrata("HIGH")
-    alert:SetWidth(700); alert:SetHeight(80)
-    local ic = alert:CreateTexture(nil, "ARTWORK")
-    ic:SetWidth(42); ic:SetHeight(42)
-    alert.icon = ic
-    local t = alert:CreateFontString(nil, "OVERLAY")
-    t:SetFont("Fonts\\MORPHEUS.TTF", 28, "THICKOUTLINE")
-    t:SetTextColor(1, 0.55, 0.12)
-    Face(t, "head")
-    t:SetPoint("TOP", alert, "TOP", 24, 0)
-    alert.text = t
-    local s = alert:CreateFontString(nil, "OVERLAY")
-    s:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-    s:SetTextColor(1, 0.9, 0.65)
-    Face(s)
-    s:SetPoint("TOP", t, "BOTTOM", 0, -6)
-    s:SetWidth(520)   -- a long line wraps under the big words
-    alert.sub = s
-    alert.queue = {}
-    -- while it is being moved: a dark box shows where it sits
-    local box = alert:CreateTexture(nil, "BACKGROUND")
-    box:SetTexture(WHITE); box:SetVertexColor(0, 0, 0); box:SetAlpha(0.5); box:SetAllPoints(alert); box:Hide()
-    alert.box = box
-    alert:SetMovable(true); alert:EnableMouse(false)
-    alert:RegisterForDrag("LeftButton")
-    alert:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    alert:SetScript("OnDragStart", function() if W.moving then W.dragged = true; this:StartMoving() end end)
-    alert:SetScript("OnDragStop", function()
-      this:StopMovingOrSizing()
-      local l, r, t = this:GetLeft(), this:GetRight(), this:GetTop()
-      if l and r and t then DB().alertPos = { (l + r) / 2, t } end
-      W.Place()
-    end)
-    alert:SetScript("OnClick", function()
-      if W.dragged then W.dragged = false; return end
-      if arg1 == "RightButton" then DB().alertPos = nil; W.Place(); return end
-      W.MoveMode(false)
-    end)
-    alert:SetScript("OnUpdate", function()
-      if W.moving then return end
-      this.left = (this.left or 0) - (arg1 or 0)
-      -- words waiting behind these: they follow once these were read for 1.5 sec
-      if table.getn(this.queue) > 0 and this.left <= 2.5 then
-        local q = table.remove(this.queue, 1)
-        W.ShowAlert(q[1], q[2], q[3], q[4], q[5])
-        return
-      end
-      if this.left <= 0 then this:Hide(); return end
-      this:SetAlpha(math.min(1, this.left / 0.6))
-    end)
-  end
-  if W.moving then return end   -- (being moved: the example stays)
-  -- the small things (a rune, a magnet, a cache, an achievement) never keep the important
-  -- ones (a boss, a guardian, a wave) waiting: they give way, and are left out when busy
-  if alert:IsShown() and (alert.left or 0) > 2.5 then
-    if low then return end
-    if W.lowShown then W.ShowAlert(text, sub, icon, sound, low); return end
-    for i = table.getn(alert.queue), 1, -1 do
-      if alert.queue[i][5] then table.remove(alert.queue, i) end
-    end
-    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon, sound, low }) end
-    return
-  end
-  W.ShowAlert(text, sub, icon, sound, low)
-end
--- where the words stand: where the player put them, else high in the middle of the screen
-function W.Place()
-  if not alert then return end
-  local p = DB().alertPos
-  alert:ClearAllPoints()
+-- ---------- the words on the screen: two places ----------
+-- The big words (bosses, guardians, waves, mechanics, the warner's own) high in the middle;
+-- the small things (runes, magnets, caches, achievements) in a smaller place of their own,
+-- low in the middle. Each player can move both (Settings - Azerwarn - Move warnings).
+local alert   -- the big words' place (built on first use)
+local boxes = {}
+local BOX = {
+  main = { name = "AzerlootBossAlert", w = 700, h = 80, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos",
+    point = { "TOP", "TOP", 0, -150 } },
+  small = { name = "AzerlootSmallAlert", w = 460, h = 46, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos",
+    point = { "BOTTOM", "BOTTOM", 0, 190 } },
+}
+local Show
+local function Place(f)
+  local c = BOX[f.kind]
+  local p = DB()[c.pos]
+  f:ClearAllPoints()
   if type(p) == "table" and tonumber(p[1]) and tonumber(p[2]) then
-    alert:SetPoint("TOP", UIParent, "BOTTOMLEFT", p[1], p[2])
+    f:SetPoint("TOP", UIParent, "BOTTOMLEFT", p[1], p[2])
   else
-    alert:SetPoint("TOP", UIParent, "TOP", 0, -150)
+    f:SetPoint(c.point[1], UIParent, c.point[2], c.point[3], c.point[4])
   end
 end
--- each player puts the words where he likes (Settings - Azerwarn - Move warnings, or
--- /azl warnmove): they show as an example in a dark box to drag; a click ends it, a
--- right-click puts them back in their first place
-function W.MoveMode(on)
-  if on == nil then on = not W.moving end
-  if on then
-    Alert(" ")
-    W.moving = true
-    alert.queue = {}
-    alert.text:SetText("Azerwarn")
-    alert.sub:SetText(AzT("Drag to move. Click when done; right-click puts it back in its first place."))
-    alert.icon:Hide()
-    alert.box:Show()
-    alert:EnableMouse(true)
-    alert:SetAlpha(1); alert:Show()
-    W.Place()
-  elseif alert then
-    W.moving = false
-    alert.box:Hide()
-    alert:EnableMouse(false)
-    alert:Hide()
-  end
+local function Box(kind)
+  if boxes[kind] then return boxes[kind] end
+  local c = BOX[kind]
+  local f = CreateFrame("Button", c.name, UIParent)
+  f.kind = kind
+  f:SetFrameStrata("HIGH")
+  f:SetWidth(c.w); f:SetHeight(c.h)
+  local ic = f:CreateTexture(nil, "ARTWORK")
+  ic:SetWidth(c.icon); ic:SetHeight(c.icon)
+  f.icon = ic
+  local t = f:CreateFontString(nil, "OVERLAY")
+  t:SetFont("Fonts\\MORPHEUS.TTF", c.big, "THICKOUTLINE")
+  if kind == "small" then t:SetTextColor(1, 0.82, 0.3) else t:SetTextColor(1, 0.55, 0.12) end
+  Face(t, "head")
+  t:SetPoint("TOP", f, "TOP", math.floor(c.icon / 2) + 3, 0)
+  f.text = t
+  local s = f:CreateFontString(nil, "OVERLAY")
+  s:SetFont("Fonts\\FRIZQT__.TTF", c.small, "OUTLINE")
+  s:SetTextColor(1, 0.9, 0.65)
+  Face(s)
+  s:SetPoint("TOP", t, "BOTTOM", 0, -4)
+  s:SetWidth(c.wrap)   -- a long line wraps under the big words
+  f.sub = s
+  f.queue = {}
+  f.left = 0
+  -- while it is being moved: a dark box shows where it sits
+  local box = f:CreateTexture(nil, "BACKGROUND")
+  box:SetTexture(WHITE); box:SetVertexColor(0, 0, 0); box:SetAlpha(0.5); box:SetAllPoints(f); box:Hide()
+  f.box = box
+  f:SetMovable(true); f:EnableMouse(false)
+  f:RegisterForDrag("LeftButton")
+  f:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  f:SetScript("OnDragStart", function() if W.moving then W.dragged = true; this:StartMoving() end end)
+  f:SetScript("OnDragStop", function()
+    this:StopMovingOrSizing()
+    local l, r, tp = this:GetLeft(), this:GetRight(), this:GetTop()
+    if l and r and tp then DB()[BOX[this.kind].pos] = { (l + r) / 2, tp } end
+    Place(this)
+  end)
+  f:SetScript("OnClick", function()
+    if W.dragged then W.dragged = false; return end
+    if arg1 == "RightButton" then DB()[BOX[this.kind].pos] = nil; Place(this); return end
+    W.MoveMode(false)
+  end)
+  f:SetScript("OnUpdate", function()
+    if W.moving then return end
+    this.left = (this.left or 0) - (arg1 or 0)
+    -- words waiting behind these: they follow once these were read for 1.5 sec
+    if table.getn(this.queue) > 0 and this.left <= BOX[this.kind].dur - 1.5 then
+      local q = table.remove(this.queue, 1)
+      Show(this, q[1], q[2], q[3], q[4])
+      return
+    end
+    if this.left <= 0 then this:Hide(); return end
+    this:SetAlpha(math.min(1, this.left / 0.6))
+  end)
+  f:Hide()
+  boxes[kind] = f
+  if kind == "main" then alert = f end
+  return f
 end
--- (a sound only with a boss coming: the other words come quietly)
-function W.ShowAlert(text, sub, icon, sound, low)
-  alert.text:SetText(text or "")
-  alert.sub:SetText(sub or "")
-  W.Place()
-  alert.icon:ClearAllPoints()
-  alert.icon:SetPoint("RIGHT", alert.text, "LEFT", -10, 0)
-  if icon then alert.icon:SetTexture("Interface\\Icons\\" .. icon); alert.icon:Show() else alert.icon:Hide() end
-  alert.left = low and 2.5 or 4
-  W.lowShown = low and true or false
-  alert:SetAlpha(1)
-  alert:Show()
+W.Box = Box
+
+Show = function(f, text, sub, icon, sound)
+  f.text:SetText(text or "")
+  f.sub:SetText(sub or "")
+  Place(f)
+  f.icon:ClearAllPoints()
+  f.icon:SetPoint("RIGHT", f.text, "LEFT", -8, 0)
+  if icon then f.icon:SetTexture("Interface\\Icons\\" .. icon); f.icon:Show() else f.icon:Hide() end
+  f.left = BOX[f.kind].dur
+  f:SetAlpha(1)
+  f:Show()
   -- the raid warning's sound, played from its file: as a named interface sound the game cut
   -- it short in a busy fight
   if sound then
     local ok = PlaySoundFile and pcall(PlaySoundFile, "Sound\\Interface\\RaidWarning.wav")
     if not ok and PlaySound then pcall(PlaySound, "RaidWarning") end
+  end
+end
+
+-- words for the screen: the big place, or the small one (low: a rune, a magnet, a cache, an
+-- achievement); something said a moment ago is not covered at once, the new words wait their
+-- turn (a sound only with a boss coming or turning: the other words come quietly)
+local function Alert(text, sub, icon, sound, low)
+  local f = Box(low and "small" or "main")
+  if W.moving then return end   -- (being moved: the examples stay)
+  if f:IsShown() and (f.left or 0) > BOX[f.kind].dur - 1.5 then
+    if table.getn(f.queue) < (low and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }) end
+    return
+  end
+  Show(f, text, sub, icon, sound)
+end
+function W.ShowAlert(text, sub, icon, sound) Show(Box("main"), text, sub, icon, sound) end
+
+function W.Place()
+  for _, f in pairs(boxes) do Place(f) end
+end
+-- each player puts the words where he likes (Settings - Azerwarn - Move warnings, or
+-- /azl warnmove): both places show an example in a dark box to drag; a click ends it, a
+-- right-click puts that one back in its first place
+function W.MoveMode(on)
+  if on == nil then on = not W.moving end
+  W.dragged = false
+  if on then
+    W.moving = true
+    for _, kind in ipairs({ "main", "small" }) do
+      local f = Box(kind)
+      f.queue = {}
+      f.text:SetText("Azerwarn")
+      f.sub:SetText(kind == "main" and AzT("Drag to move. Click when done; right-click puts it back in its first place.")
+        or AzT("Runes, magnets, caches and achievements"))
+      f.icon:Hide()
+      f.box:Show()
+      f:EnableMouse(true)
+      f:SetAlpha(1); f:Show()
+      Place(f)
+    end
+  else
+    W.moving = false
+    for _, f in pairs(boxes) do
+      f.box:Hide()
+      f:EnableMouse(false)
+      f:Hide()
+    end
   end
 end
 W.Alert = Alert
