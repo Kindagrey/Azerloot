@@ -2550,8 +2550,9 @@ function B.TrackerHead(tr, W, y)
     -- yellow while little has come, turning green the closer the build is
     bl.xp.fill:SetVertexColor(1 - 0.75 * f, 0.82 + 0.03 * f, 0.1 + 0.1 * f)
     bl.xp:SetValue(f)
-    bl.xp.text:SetText(got .. "/" .. all .. " " .. AzT("collected"))
-    bl.bar.text:SetText(got .. "/" .. all .. " " .. AzT("collected"))
+    -- the count alone, in the bar's middle (a word after it ran out of a narrow bar)
+    bl.xp.text:SetText(got .. "/" .. all)
+    bl.bar.text:SetText(got .. "/" .. all)
     bl:Show()
     return y, b
   end
