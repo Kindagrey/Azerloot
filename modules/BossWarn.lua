@@ -86,7 +86,7 @@ end
 
 -- ---------- the big words in the middle of the screen ----------
 local alert
-local function Alert(text, sub, icon)
+local function Alert(text, sub, icon, sound)
   if not alert then
     alert = CreateFrame("Frame", "AzerlootBossAlert", UIParent)
     alert:SetFrameStrata("HIGH")
@@ -110,7 +110,7 @@ local function Alert(text, sub, icon)
       -- words waiting behind these: they follow once these were read for 1.5 sec
       if table.getn(this.queue) > 0 and this.left <= 2.5 then
         local q = table.remove(this.queue, 1)
-        W.ShowAlert(q[1], q[2], q[3])
+        W.ShowAlert(q[1], q[2], q[3], q[4])
         return
       end
       if this.left <= 0 then this:Hide(); return end
@@ -119,12 +119,13 @@ local function Alert(text, sub, icon)
   end
   -- something said a moment ago is not covered at once: the new words wait their turn
   if alert:IsShown() and (alert.left or 0) > 2.5 then
-    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon }) end
+    if table.getn(alert.queue) < 3 then table.insert(alert.queue, { text, sub, icon, sound }) end
     return
   end
-  W.ShowAlert(text, sub, icon)
+  W.ShowAlert(text, sub, icon, sound)
 end
-function W.ShowAlert(text, sub, icon)
+-- (a sound only with a boss coming: the other words come quietly)
+function W.ShowAlert(text, sub, icon, sound)
   alert.text:SetText(text or "")
   alert.sub:SetText(sub or "")
   -- right under the boss bar, wherever it has been put: the game's own banners (a boss or
@@ -139,7 +140,7 @@ function W.ShowAlert(text, sub, icon)
   alert.left = 4
   alert:SetAlpha(1)
   alert:Show()
-  if PlaySound then pcall(PlaySound, "RaidWarning") end
+  if sound and PlaySound then pcall(PlaySound, "RaidWarning") end
 end
 W.Alert = Alert
 
@@ -201,13 +202,23 @@ local function Emote(text, who)
 end
 W.Emote = Emote
 local emoteF = CreateFrame("Frame")
+W.eventF = emoteF
 emoteF:RegisterEvent("CHAT_MSG_RAID_BOSS_EMOTE")
 emoteF:RegisterEvent("PLAYER_LOGOUT")
+emoteF:RegisterEvent("CHAT_MSG_COMBAT_HOSTILE_DEATH")
 emoteF:SetScript("OnEvent", function()
   if event == "PLAYER_LOGOUT" then
     -- the banners' setting is the game's own and outlives the addon: given back on leaving
     -- (taken again on the next start), so the game never stays without them
     if DB().bannersTaken then Hud(true) end
+    return
+  end
+  if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
+    -- a boss down: the game's banner for it is off with the others, so the warner says it
+    if not W.On() or not DB().bannersTaken or type(arg1) ~= "string" then return end
+    local who = string.gsub(arg1, " dies%.$", "")
+    local b = Lookup(who)
+    if b then Alert(AzT("%s is defeated!", AzG(b.name)), nil, b.icon) end
     return
   end
   Emote(arg1, arg2)
@@ -410,6 +421,27 @@ function W.Update()
   end
   local okU, up = pcall(function() return AZS_GetUpcomingBosses and AZS_GetUpcomingBosses() end)
   up = okU and type(up) == "table" and up or {}
+  -- the game sends its schedule at a run's start and when it changes, not again after a
+  -- /reload: the last one sent is kept, and used until the game sends a new one
+  local okT, now = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() or 0 end)
+  now = okT and tonumber(now) or 0
+  local d = DB()
+  if AZS_SCHEDULE_UPDATED then
+    local keep = {}
+    for i = 1, table.getn(up) do
+      local x = up[i]
+      if tonumber(x.at) then table.insert(keep, { index = x.index, name = x.name, at = tonumber(x.at), final = x.final }) end
+    end
+    d.bossSched = { t = now, list = keep }
+  elseif type(d.bossSched) == "table" and type(d.bossSched.list) == "table" and now + 1 >= (tonumber(d.bossSched.t) or 0) then
+    up = {}
+    for i = 1, table.getn(d.bossSched.list) do
+      local x = d.bossSched.list[i]
+      if tonumber(x.at) and x.at > now then
+        table.insert(up, { index = x.index, name = x.name, at = x.at, left = x.at - now, final = x.final })
+      end
+    end
+  end
   local nb
   for i = 1, table.getn(up) do
     local x = up[i]
@@ -419,7 +451,7 @@ function W.Update()
     if nb.left <= 10 and nb.left > 0 and not warned[nb.index or nb.name] then
       warned[nb.index or nb.name] = true
       local b = Lookup(nb.name)
-      Alert(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon)
+      Alert(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon, true)
     end
     ShowNext(nb)
     bar:Show()
