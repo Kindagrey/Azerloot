@@ -311,23 +311,30 @@ function W.Build()
   info:SetTextColor(0.85, 0.8, 0.7)
   Face(info)
   bar.info = info
-  -- the health bar: a dark trough, the fill, the marks
-  local tr = bar:CreateTexture(nil, "BORDER")
-  tr:SetTexture(WHITE); tr:SetVertexColor(0.12, 0.08, 0.05); tr:SetAlpha(0.95)
-  tr:SetWidth(BAR_W); tr:SetHeight(14)
-  tr:SetPoint("TOPLEFT", bar, "TOPLEFT", 12, -46)
+  -- the health bar: the book's own bar (the builds' battle traits) in red, easing to each
+  -- new value; the marks where the boss turns lie over it
+  local tr
+  if AzlB and AzlB.XPBar then
+    tr = AzlB.XPBar(bar, BAR_W, 12, { 0.82, 0.13, 0.08 })
+  else
+    tr = CreateFrame("Frame", nil, bar)
+    tr:SetWidth(BAR_W); tr:SetHeight(12)
+    local bg = tr:CreateTexture(nil, "BORDER"); bg:SetTexture(WHITE); bg:SetVertexColor(0.12, 0.08, 0.05); bg:SetAllPoints(tr)
+    local fl = tr:CreateTexture(nil, "ARTWORK"); fl:SetTexture(WHITE); fl:SetVertexColor(0.72, 0.2, 0.14)
+    fl:SetPoint("TOPLEFT", tr, "TOPLEFT", 0, 0); fl:SetHeight(12)
+    tr.SetValue = function(self, v) fl:SetWidth(math.max(1, BAR_W * v)) end
+  end
+  tr:SetPoint("TOPLEFT", bar, "TOPLEFT", 12, -47)
   bar.trough = tr
-  local fill = bar:CreateTexture(nil, "ARTWORK")
-  fill:SetTexture(WHITE); fill:SetVertexColor(0.72, 0.2, 0.14)
-  fill:SetHeight(12)
-  fill:SetPoint("LEFT", tr, "LEFT", 1, 0)
-  bar.fill = fill
+  local mk = CreateFrame("Frame", nil, bar)
+  mk:SetAllPoints(bar)
+  mk:SetFrameLevel(tr:GetFrameLevel() + 3)
   bar.marks, bar.markText = {}, {}
   for k = 1, 4 do
-    local m = bar:CreateTexture(nil, "OVERLAY")
+    local m = mk:CreateTexture(nil, "OVERLAY")
     m:SetTexture(WHITE); m:SetVertexColor(1, 0.84, 0.35); m:SetWidth(2); m:SetHeight(20)
     m:Hide(); bar.marks[k] = m
-    local mt = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    local mt = mk:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     mt:SetTextColor(1, 0.84, 0.35); mt:Hide(); bar.markText[k] = mt
     Face(mt)
   end
@@ -378,8 +385,7 @@ local function ShowBoss(u, b)
   if hpm > 0 then info = info .. "  -  " .. Big(hp) .. " / " .. Big(hpm) end
   if u.enraged then info = info .. "  |cffff4020" .. AzT("Enraged") .. "|r" end
   bar.info:SetText(info)
-  bar.fill:SetWidth(math.max(1, (BAR_W - 2) * math.min(1, pct)))
-  bar.fill:Show()
+  bar.trough:SetValue(math.min(1, pct))
   local phases = (b and b.phases) or {}
   local nextTurn
   for k = 1, 4 do
@@ -412,7 +418,7 @@ local function ShowNext(nb)
   bar.icon:SetTexture("Interface\\Icons\\" .. ((b and b.icon) or "INV_Misc_QuestionMark"))
   bar.name:SetText(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)))
   bar.info:SetText(AzT("comes in %s", Clock(nb.left)))
-  bar.trough:Hide(); bar.fill:Hide(); bar.next:Hide()
+  bar.trough:Hide(); bar.next:Hide()
   for k = 1, 4 do bar.marks[k]:Hide(); bar.markText[k]:Hide() end
   bar:SetHeight(48)
 end

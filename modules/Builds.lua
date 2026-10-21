@@ -713,6 +713,8 @@ local function XPBar(parent, w, h, c)
   return f
 end
 
+B.XPBar = XPBar   -- (the boss warner's health bar is one of these, in red)
+
 -- a part of a build as an icon set into the page: left-click opens its page, right-click
 -- takes it out of the build; an empty one leads to the pages to fill it from
 local SLOT_ICON = {
