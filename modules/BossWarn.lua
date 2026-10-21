@@ -159,6 +159,7 @@ end
 function W.Banners()
   local d = DB()
   if W.On() then
+    W.MuteEmoteFrame()
     if not d.bannersTaken and HudShown() then d.bannersTaken = true; Hud(false)
     elseif d.bannersTaken and not W.hid then Hud(false) end   -- (given back on leaving)
     W.hid = true
@@ -166,6 +167,19 @@ function W.Banners()
     d.bannersTaken = nil; Hud(true)
   end
 end
+-- the game's interface writes each of these words a second time, in the middle of the screen
+-- (RaidBossEmoteFrame): quiet while the warner says them
+local function MuteEmoteFrame()
+  local f = RaidBossEmoteFrame
+  if type(f) ~= "table" or f.azlMuted or type(f.AddMessage) ~= "function" then return end
+  f.azlMuted = true
+  local orig = f.AddMessage
+  f.AddMessage = function(self, a, b, c, d, e)
+    if W.On() and DB().bannersTaken then return end
+    return orig(self, a, b, c, d, e)
+  end
+end
+W.MuteEmoteFrame = MuteEmoteFrame
 local function Emote(text, who)
   if not W.On() or not DB().bannersTaken or type(text) ~= "string" then return end
   if type(who) == "string" and who ~= "" then
@@ -179,7 +193,10 @@ local function Emote(text, who)
     arrived[k] = GetTime()
     Alert(text, b.yell and ("\"" .. AzG(b.yell) .. "\"") or nil, b.icon)
   else
-    Alert(text)
+    -- who sent it (a guardian, a pack), under the words when they do not name it
+    local sub
+    if type(who) == "string" and who ~= "" and not string.find(text, who, 1, true) then sub = who end
+    Alert(text, sub)
   end
 end
 W.Emote = Emote
