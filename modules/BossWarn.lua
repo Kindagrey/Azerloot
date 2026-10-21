@@ -359,8 +359,15 @@ function W.StartLog()
   if not logF then
     logF = CreateFrame("Frame")
     for i = 1, table.getn(LOG_EVENTS) do pcall(logF.RegisterEvent, logF, LOG_EVENTS[i]) end
+    -- and every other event that carries a sentence (the game's banners might come so)
+    local listed = {}
+    for i = 1, table.getn(LOG_EVENTS) do listed[LOG_EVENTS[i]] = true end
+    if logF.RegisterAllEvents then pcall(logF.RegisterAllEvents, logF) end
     logF:SetScript("OnEvent", function()
       if not DB().bossLogOn then return end
+      if not listed[event] then
+        if type(arg1) ~= "string" or not string.find(arg1, "%a %a") or string.len(arg1) > 200 then return end
+      end
       if event == "CHAT_MSG_ADDON" then
         -- the game's own lines: only the bosses' (the rest come every moment)
         if arg1 == "AZSUNITS" and type(arg2) == "string" then
