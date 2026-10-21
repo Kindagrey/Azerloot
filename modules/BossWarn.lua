@@ -51,6 +51,15 @@ local function Lookup(name)
 end
 W.Lookup = Lookup
 
+-- a text of the warner follows the book's reading face (Settings - Font), like the book's own
+local function Face(fs, role)
+  local f, size, fl = fs:GetFont()
+  if AZL and AZL.SetFace and type(f) == "string" and type(size) == "number" then
+    AZL.SetFace(fs, role or "body", f, size, type(fl) == "string" and fl or "")
+  end
+  return fs
+end
+
 local function Phase()
   local ok, ph = pcall(function() return AZS_GetPhase and AZS_GetPhase() end)
   return ok and ph or nil
@@ -97,11 +106,13 @@ local function Alert(text, sub, icon, sound)
     local t = alert:CreateFontString(nil, "OVERLAY")
     t:SetFont("Fonts\\MORPHEUS.TTF", 28, "THICKOUTLINE")
     t:SetTextColor(1, 0.55, 0.12)
+    Face(t, "head")
     t:SetPoint("TOP", alert, "TOP", 24, 0)
     alert.text = t
     local s = alert:CreateFontString(nil, "OVERLAY")
     s:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
     s:SetTextColor(1, 0.9, 0.65)
+    Face(s)
     s:SetPoint("TOP", t, "BOTTOM", 0, -6)
     s:SetWidth(520)   -- a long line wraps under the big words
     alert.sub = s
@@ -288,10 +299,12 @@ function W.Build()
   local nm = bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   nm:SetPoint("TOPLEFT", ic, "TOPRIGHT", 8, 1)
   nm:SetTextColor(1, 0.82, 0)
+  Face(nm, "head")
   bar.name = nm
   local info = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   info:SetPoint("TOPLEFT", nm, "BOTTOMLEFT", 0, -2)
   info:SetTextColor(0.85, 0.8, 0.7)
+  Face(info)
   bar.info = info
   -- the health bar: a dark trough, the fill, the marks
   local tr = bar:CreateTexture(nil, "BORDER")
@@ -311,11 +324,13 @@ function W.Build()
     m:Hide(); bar.marks[k] = m
     local mt = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     mt:SetTextColor(1, 0.84, 0.35); mt:Hide(); bar.markText[k] = mt
+    Face(mt)
   end
   local nx = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
   nx:SetPoint("TOPLEFT", tr, "BOTTOMLEFT", 0, -14)
   nx:SetWidth(BAR_W); nx:SetJustifyH("LEFT")
   nx:SetTextColor(1, 0.78, 0.47)
+  Face(nx)
   bar.next = nx
   bar:SetScript("OnEnter", function()
     if not this.boss then return end
