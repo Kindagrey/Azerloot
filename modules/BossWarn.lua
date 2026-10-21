@@ -160,9 +160,9 @@ end
 local alert   -- the big words' place (built on first use)
 local boxes = {}
 local BOX = {
-  main = { name = "AzerlootBossAlert", w = 700, h = 80, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos", size = "alertScale",
+  main = { name = "AzerlootBossAlert", w = 700, h = 92, big = 28, small = 15, icon = 42, wrap = 520, dur = 4, pos = "alertPos", size = "alertScale",
     point = { "TOP", "TOP", 0, -150 } },
-  small = { name = "AzerlootSmallAlert", w = 460, h = 46, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos", size = "smallScale",
+  small = { name = "AzerlootSmallAlert", w = 460, h = 58, big = 18, small = 12, icon = 26, wrap = 400, dur = 2.5, pos = "smallPos", size = "smallScale",
     point = { "BOTTOM", "BOTTOM", 0, 190 } },
 }
 local Show
@@ -189,7 +189,7 @@ local function Place(f)
 end
 -- while being moved: the example names the place's size
 local function MoveText(f)
-  f.text:SetText("Azerwarn  " .. math.floor(Size(f.kind) * 100 + 0.5) .. "%")
+  f.text:SetText(AzT(f.kind == "main" and "Boss warnings" or "Small notices") .. "  " .. math.floor(Size(f.kind) * 100 + 0.5) .. "%")
 end
 local function Box(kind)
   if boxes[kind] then return boxes[kind] end
@@ -319,8 +319,10 @@ function W.MoveMode(on)
       local f = Box(kind)
       f.queue = {}
       MoveText(f)
-      f.sub:SetText(kind == "main" and AzT("Drag to move, mouse wheel to resize. Click when done; right-click puts it back in its first place and size.")
-        or AzT("Runes, magnets, caches and achievements"))
+      -- what shows here, then (quieter) how to place it
+      f.sub:SetText(AzT(kind == "main" and "A boss coming and turning, its attacks, guardians, stampedes and packs"
+        or "Runes picked up, magnets, caches and achievements")
+        .. "\n|cffb3a68c" .. AzT("Drag: move · Mouse wheel: size · Click: done · Right-click: reset") .. "|r")
       f.icon:Hide()
       f.box:Show()
       f:EnableMouse(true)
