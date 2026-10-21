@@ -23,7 +23,10 @@ local function DB()
   if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
   return AzerlootDB
 end
-function W.On() return DB().bossWarn ~= false end
+-- two parts, each switched on its own in the settings (Azerwarn): the big words, and the bar
+function W.AlertsOn() local d = DB(); return d.bossWarn ~= false and d.bossAlerts ~= false end
+function W.BarOn() local d = DB(); return d.bossWarn ~= false and d.bossBar ~= false end
+function W.On() return W.AlertsOn() or W.BarOn() end
 
 -- ---------- the bosses of the book, found by the name the game gives them ----------
 local byName
@@ -170,8 +173,9 @@ end
 -- the warner on: the game's banners off (only when they were on: a player who switched them
 -- off in the game keeps them off); the warner off: given back
 function W.Banners()
+  if not AZS_SetHudShown then return end   -- (a game without the setting keeps its banners)
   local d = DB()
-  if W.On() then
+  if W.AlertsOn() then
     W.MuteEmoteFrame()
     if not d.bannersTaken and HudShown() then d.bannersTaken = true; Hud(false)
     elseif d.bannersTaken and not W.hid then Hud(false) end   -- (given back on leaving)
@@ -188,7 +192,7 @@ local function MuteEmoteFrame()
   f.azlMuted = true
   local orig = f.AddMessage
   f.AddMessage = function(self, a, b, c, d, e)
-    if W.On() and DB().bannersTaken then return end
+    if W.AlertsOn() and DB().bannersTaken then return end
     return orig(self, a, b, c, d, e)
   end
 end
@@ -212,7 +216,7 @@ local GUARD_SLAIN = {
   ["¡%s ha caído! Su guarida entrega su tesoro y su fuerza, y los demás guardianes se hacen más fuertes."] = true,
 }
 local function Emote(text, who)
-  if not W.On() or not DB().bannersTaken or type(text) ~= "string" then return end
+  if not W.AlertsOn() or not DB().bannersTaken or type(text) ~= "string" then return end
   if GUARD_SLAIN[text] then
     Alert(AzT("%s is defeated!", tostring(who)), AzT("Lair looted, the other guardians grow stronger."))
     return
@@ -259,7 +263,7 @@ emoteF:SetScript("OnEvent", function()
   end
   if event == "CHAT_MSG_COMBAT_HOSTILE_DEATH" then
     -- a boss down: the game's banner for it is off with the others, so the warner says it
-    if not W.On() or not DB().bannersTaken or type(arg1) ~= "string" then return end
+    if not W.AlertsOn() or not DB().bannersTaken or type(arg1) ~= "string" then return end
     local who = string.gsub(arg1, " dies%.$", "")
     local b = Lookup(who)
     if b then Alert(AzT("%s is defeated!", AzG(b.name)), nil, b.icon) end
@@ -413,6 +417,9 @@ local function ShowNext(nb)
 end
 
 -- ---------- every 0.2 sec ----------
+-- each part only while it is switched on
+local function Say(text, sub, icon, sound) if W.AlertsOn() then Alert(text, sub, icon, sound) end end
+local function ShowBar() if W.BarOn() then bar:Show() else bar:Hide() end end
 local seen = {}       -- per boss id: the turns already announced
 local warned = {}     -- per schedule index: the 10-second warning given
 local alive = {}      -- the boss ids seen alive, to announce one once
@@ -447,7 +454,7 @@ function W.Update()
       local k = string.lower(tostring(u.name))
       if not (arrived[k] and GetTime() - arrived[k] < 4) then
         arrived[k] = GetTime()
-        Alert(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), nil, b and b.icon)
+        Say(AzT("%s is here!", b and AzG(b.name) or tostring(u.name)), nil, b and b.icon)
       end
     end
     -- its turns: a word as it comes close (5% before), the big words when it happens
@@ -460,11 +467,11 @@ function W.Update()
       if pct <= p.pct and not s[k] then
         s[k] = true
         local icon = p.a and p.a.icon or (p.adds and "Ability_Warrior_BattleShout") or nil
-        Alert(AzT("%d%% health!", p.pct), TurnText(p) .. (p.a and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
+        Say(AzT("%d%% health!", p.pct), TurnText(p) .. (p.a and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
       end
     end
     ShowBoss(u, b)
-    bar:Show()
+    ShowBar()
     return
   end
   local okU, up = pcall(function() return AZS_GetUpcomingBosses and AZS_GetUpcomingBosses() end)
@@ -499,10 +506,10 @@ function W.Update()
     if nb.left <= 10 and nb.left > 0 and not warned[nb.index or nb.name] then
       warned[nb.index or nb.name] = true
       local b = Lookup(nb.name)
-      Alert(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon, true)
+      Say(AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)), nil, b and b.icon, true)
     end
     ShowNext(nb)
-    bar:Show()
+    ShowBar()
   else
     bar:Hide()
   end

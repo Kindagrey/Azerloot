@@ -2808,6 +2808,85 @@ local function ProgressBar(parent, w, h)
   return b
 end
 
+-- The setting "Azerwarn" (the boss warner): its row, and its two parts folding out to the right
+-- like the fonts, each ticked while on - the big words in the middle of the screen, and the
+-- bar with the boss's health and the marks where it turns.
+AZL_WARN_PARTS = {
+  { key = "bossAlerts", label = "Warnings",
+    tip = "Big words when a boss comes, when it turns and when the game calls a stampede, a pack or a guardian. The game's own banners make room for them." },
+  { key = "bossBar", label = "Boss bar",
+    tip = "The boss alive with its health and the marks where it turns, or the time until the next one." },
+}
+function AzlWarnMenu(sp, Panel, Row, SetCheck)
+  local wr = Row(sp, 152)
+  local wrt = wr:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  wrt:SetPoint("LEFT", wr, "LEFT", 4, 0)
+  wrt:SetText("Azerwarn")
+  local wra = wr:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  wra:SetPoint("RIGHT", wr, "RIGHT", -4, 0)
+  wra:SetText(">")
+  local ws = Panel(sp)
+  ws:SetWidth(182); ws:SetHeight(46 + table.getn(AZL_WARN_PARTS) * 19)
+  ws:SetHead("Azerwarn")
+  ws:SetPoint("TOPLEFT", sp, "TOPRIGHT", 4, 0)
+  ws.items = {}
+  local function DBw() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end return AzerlootDB end
+  for i = 1, table.getn(AZL_WARN_PARTS) do
+    local part = AZL_WARN_PARTS[i]
+    local o = Row(ws, 164)
+    o:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (i - 1) * 19)
+    local ck = o:CreateTexture(nil, "OVERLAY")
+    ck:SetWidth(14); ck:SetHeight(14); ck:SetPoint("LEFT", o, "LEFT", 2, 0)
+    SetCheck(ck)
+    o.check = ck
+    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    t:SetPoint("LEFT", o, "LEFT", 20, 0)
+    t:SetText(AzT(part.label))
+    o.label = t
+    o.key = part.key
+    o:SetScript("OnClick", function()
+      local d = DBw()
+      -- (the old single switch, off: both parts start off)
+      if d.bossWarn == false then d.bossWarn = nil; d.bossAlerts = false; d.bossBar = false end
+      d[this.key] = (d[this.key] == false)
+      ws:Update()
+      if AzlW and AzlW.Banners then AzlW.Banners() end
+      if AzlW and AzlW.Update then AzlW.Update() end
+    end)
+    o:SetScript("OnEnter", function()
+      local pt = AZL_WARN_PARTS[1]
+      for k = 1, table.getn(AZL_WARN_PARTS) do if AZL_WARN_PARTS[k].key == this.key then pt = AZL_WARN_PARTS[k] end end
+      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+      GameTooltip:AddLine(AzT(pt.label), 1, 0.82, 0)
+      GameTooltip:AddLine(AzT(pt.tip), 0.85, 0.85, 0.85, 1)
+      GameTooltip:Show()
+    end)
+    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    ws.items[i] = o
+  end
+  ws.Update = function(self)
+    local d = DBw()
+    for i = 1, table.getn(self.items) do
+      local on = d.bossWarn ~= false and d[self.items[i].key] ~= false
+      if on then self.items[i].check:Show() else self.items[i].check:Hide() end
+    end
+  end
+  -- as wide as its longest name needs
+  ws.Fit = function(self)
+    local need = 164
+    for i = 1, table.getn(self.items) do
+      local w = (self.items[i].label:GetStringWidth() or 0) + 28
+      if w > need then need = w end
+    end
+    need = math.ceil(need)
+    self:SetWidth(need + 18)
+    for i = 1, table.getn(self.items) do self.items[i]:SetWidth(need) end
+    self.div:SetWidth(need + 2)
+  end
+  ws:Hide()
+  return wr, wrt, wra, ws
+end
+
 -- The settings, built apart from the book so neither function grows too big for the game's
 -- Lua (it allows a function only so many outside names).
 local function BuildSettings(search)
@@ -2990,7 +3069,7 @@ local function BuildSettings(search)
     end
   end
   lsub:Hide()
-  local function OpenLangs() sub:Hide(); lsub:Update(); lsub:Show() end
+  local function OpenLangs() sub:Hide(); sp.warnMenu:Hide(); lsub:Update(); lsub:Show() end
   lr:SetScript("OnEnter", OpenLangs)
   lr:SetScript("OnClick", function() if lsub:IsVisible() then lsub:Hide() else OpenLangs() end end)
   -- switches: a name and its state, On in green or Off in grey; a click flips it
@@ -3008,7 +3087,7 @@ local function BuildSettings(search)
     end
     o:SetScript("OnClick", function() set(not get()); this:Update() end)
     o:SetScript("OnEnter", function()
-      sub:Hide(); lsub:Hide()
+      sub:Hide(); lsub:Hide(); sp.warnMenu:Hide()
       GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
       GameTooltip:AddLine(AzT(label), 1, 0.82, 0)
       GameTooltip:AddLine(AzT(tip), 0.85, 0.85, 0.85, 1)
@@ -3028,9 +3107,6 @@ local function BuildSettings(search)
     Switch(3, "Minimap button", function() return not DB().minimapHidden end,
       function(on) Azerloot_MinimapButton(on) end,
       "The button at the minimap. Click it to open the book."),
-    Switch(4, "Boss warner", function() return DB().bossWarn ~= false end,
-      function(on) DB().bossWarn = on; if AzlW and AzlW.Update then AzlW.Update() end end,
-      "In a run: the boss alive with its health and the marks where it turns, or the time until the next one; big words when one comes and when it turns.")
   }
   -- in two groups: the book (font, language, minimap button, size), then under a gold line
   -- the wishlist window (shown, spells, size, see-through, back to its place)
@@ -3038,8 +3114,13 @@ local function BuildSettings(search)
   SW[3]:ClearAllPoints(); SW[3]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 2 * 19)
   SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
   SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 6 * 19 - 16)
-  -- the boss warner on its own, under a second gold line
-  SW[4]:ClearAllPoints(); SW[4]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 12 * 19 - 6 - 32)
+  -- the boss warner (Azerwarn) on its own, under a second gold line; its parts fold out
+  local wr, wrt, wra, wsub = AzlWarnMenu(sp, Panel, Row, SetCheck)
+  sp.warnRow, sp.warnMenu = wr, wsub
+  wr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 12 * 19 - 6 - 32)
+  local function OpenWarn() sub:Hide(); lsub:Hide(); wsub:Update(); wsub:Show(); wsub:Fit() end
+  wr:SetScript("OnEnter", OpenWarn)
+  wr:SetScript("OnClick", function() if wsub:IsVisible() then wsub:Hide() else OpenWarn() end end)
   local dv3 = sp:CreateTexture(nil, "ARTWORK"); dv3:SetTexture(MEDIA .. "divider_gold.tga")
   dv3:SetHeight(12); dv3:SetPoint("TOP", sp, "TOP", 0, -38 - 12 * 19 - 6 - 15)
   sp.div3 = dv3
@@ -3166,19 +3247,19 @@ local function BuildSettings(search)
     GameTooltip:Show()
   end)
   rs:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  local function OpenFonts() lsub:Hide(); sub:Update(); sub:Show() end
+  local function OpenFonts() lsub:Hide(); wsub:Hide(); sub:Update(); sub:Show() end
   fr:SetScript("OnEnter", OpenFonts)
   fr:SetScript("OnClick", function() if sub:IsVisible() then sub:Hide() else OpenFonts() end end)
   -- both close on their own a moment after the mouse leaves them
   sp:SetScript("OnUpdate", function()
-    if MouseIsOver and (MouseIsOver(this) or MouseIsOver(gear) or (sub:IsVisible() and MouseIsOver(sub)) or (lsub:IsVisible() and MouseIsOver(lsub))) then
+    if MouseIsOver and (MouseIsOver(this) or MouseIsOver(gear) or (sub:IsVisible() and MouseIsOver(sub)) or (lsub:IsVisible() and MouseIsOver(lsub)) or (wsub:IsVisible() and MouseIsOver(wsub))) then
       this.away = 0; return
     end
     this.away = (this.away or 0) + (arg1 or 0)
     if this.away > 1.5 then this:Hide() end
   end)
   -- as wide as its longest line needs (a long language), never narrower than before
-  sp.lines = { { fr, frt, fra }, { lr, lrt, lra }, { rs, rst } }
+  sp.lines = { { fr, frt, fra }, { lr, lrt, lra }, { rs, rst }, { wr, wrt, wra } }
   for i = 1, table.getn(sp.switches) do
     local o = sp.switches[i]
     table.insert(sp.lines, { o, o.label, o.value })
@@ -3209,7 +3290,7 @@ local function BuildSettings(search)
   gear:SetScript("OnClick", function()
     GameTooltip:Hide()
     if sp:IsVisible() then sp:Hide(); return end
-    sub:Hide(); lsub:Hide(); sp.away = 0
+    sub:Hide(); lsub:Hide(); wsub:Hide(); sp.away = 0
     for i = 1, table.getn(sp.switches) do sp.switches[i]:Update() end
     local a = (type(AzerlootDB) == "table" and AzerlootDB.trackerAlpha) or 0.35
     sp.opacity:SetValue(a); sp.opacity:Show_(a)
