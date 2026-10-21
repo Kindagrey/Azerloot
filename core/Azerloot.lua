@@ -1966,6 +1966,8 @@ end
 function AzlDangerName(a)
   if a.phases then return AzT("When it is wounded") end
   if a.kind == "adds" then return AzT("Calls for help") end
+  -- (the things a boss puts around itself have no spell's name of their own)
+  if a.kind == "eggs" or a.kind == "heal_wards" or a.kind == "shield_totems" then return AzT(a.name) end
   return AzName(a.name)
 end
 
@@ -1978,8 +1980,9 @@ function AzlDangerText(a, short)
     for k = 1, table.getn(a.phases) do
       local ph, what = a.phases[k], nil
       if ph.adds then what = AzT("Calls in %s helpers.", ph.adds)
-      elseif ph.a and short then what = AzT("New attack, %s.", AzName(ph.a.name))
-      elseif ph.a then what = AzT("New attack, %s: %s", AzName(ph.a.name), AzlDangerText(ph.a)) end
+      elseif ph.a and ph.a.kind == "stance" then what = AzlStanceText(ph.a, short)
+      elseif ph.a and short then what = AzT("New attack, %s.", AzlDangerName(ph.a))
+      elseif ph.a then what = AzT("New attack, %s: %s", AzlDangerName(ph.a), AzlDangerText(ph.a)) end
       table.insert(lines, AzT("%d%% health: %s", ph.pct, what or "?"))
     end
     return table.concat(lines, "\n")
@@ -2012,8 +2015,78 @@ function AzlDangerText(a, short)
   elseif k == "rows" then return AzT("%s rows of %s yd circles roll near you, one every %s sec, from %s sec on.", p[1], N(p[2]), N(p[3]), N(p[4]))
   elseif k == "combo_out" then return AzT("Strikes within %s yd, %s sec later %s to %s yd around it: move away, then back in.", N(p[1]), N(p[2]), N(p[3]), N(p[4]))
   elseif k == "combo_in" then return AzT("Strikes %s to %s yd around it, %s sec later within %s yd: stay close, then move away.", N(p[1]), N(p[2]), N(p[3]), N(p[4]))
+  elseif k == "seq" then return AzlSeqText(a)
+  elseif k == "stance" then return AzlStanceText(a, short)
+  end
+  return AzlDangerText2(a)
+end
+
+-- the mechanics the game added later (knockbacks, eggs, wards, tethers, ...)
+function AzlDangerText2(a)
+  local p, N, k = a.p or {}, AzlNum, a.kind
+  if k == "knock" then return AzT("Stomps within %s yd %s sec later and throws you %s yd out: walk back in.", N(p[1]), N(p[2]), N(p[3]))
+  elseif k == "eggs" then return AzT("Lays %s eggs %s yd around itself: destroy them, or they hatch into enemies after %s sec.", p[1], N(p[2]), N(p[3]))
+  elseif k == "heal_wards" then
+    if p[1] == 1 then return AzT("Puts a healing ward %s yd from itself; it slowly mends it until you destroy it.", N(p[2])) end
+    return AzT("Puts %s healing wards %s yd around itself; they slowly mend it until you destroy them.", p[1], N(p[2]))
+  elseif k == "shield_totems" then return AzT("Raises %s protectors %s yd around itself; while they stand, it takes only a quarter of the damage.", p[1], N(p[2]))
+  elseif k == "shield" then return AzT("Shields itself for %s sec.", N(p[1]))
+  elseif k == "orbs" then
+    if p[1] == 1 then return AzT("An orb of %s yd rolls after you for %s sec, slower than you run: keep moving.", N(p[2]), N(p[3])) end
+    return AzT("%s orbs of %s yd roll after you for %s sec, slower than you run: keep moving.", p[1], N(p[2]), N(p[3]))
+  elseif k == "tether" then return AzT("A tether drains you every half second for up to %s sec: get %s yd away once to break it.", N(p[2]), N(p[1]))
+  elseif k == "gaze" then return AzT("A %s yd blue ring settles under you: do not move until it fades, %s sec later.", N(p[1]), N(p[2]))
+  elseif k == "waves" then return AzT("%s shockwaves roll out from it, one every %s sec from %s sec on: step across each just after it goes off.", p[1], N(p[3]), N(p[2]))
+  elseif k == "burn" then return AzT("%s sec later everything beyond %s yd around you burns for %s sec: stay inside.", N(p[2]), N(p[1]), N(p[3]))
+  elseif k == "lanes" then return AzT("%s lanes of %s yd go off in turns, %s times, every %s sec from %s sec on: stand in the safe ones.", p[1], N(p[2]), p[5], N(p[4]), N(p[3]))
+  elseif k == "bomb" then return AzT("A %s yd bomb rides on you and goes off %s sec later: carry it into the horde, it blasts every enemy around it.", N(p[1]), N(p[2]))
+  elseif k == "meteors" then return AzT("%s meteors of %s yd land near you %s sec later; each brings a new enemy.", p[1], N(p[2]), N(p[3]))
+  elseif k == "crystals" then return AzT("%s crystals of %s yd appear %s yd away: stand in one for %s sec as it fills to break the shield; then it takes 50%% more damage for %s sec.", p[1], N(p[2]), N(p[3]), N(p[4]), N(p[5]))
+  elseif k == "root" then return AzT("Roots you for %s sec.", N(p[1]))
+  elseif k == "vanish" then return AzT("Vanishes and strikes from behind you.")
+  elseif k == "blink" then return AzT("Blinks behind you.")
   end
   return ""
+end
+
+-- an attack in steps: a strike close by, then a ring (or the other way round), as before;
+-- one move a few times over; else each step in turn
+function AzlSeqText(a)
+  local st, gap = a.steps or {}, (a.p or {})[1] or 0
+  local n = table.getn(st)
+  if n == 2 and st[1].kind == "nova" and st[2].kind == "ring" then
+    return AzlDangerText({ kind = "combo_out", p = { st[1].p[1], gap, st[2].p[1], st[2].p[2] } })
+  end
+  if n == 2 and st[1].kind == "ring" and st[2].kind == "nova" then
+    return AzlDangerText({ kind = "combo_in", p = { st[1].p[1], st[1].p[2], gap, st[2].p[1] } })
+  end
+  local same = n > 1
+  for i = 2, n do if st[i].kind ~= st[1].kind or AzlDangerText(st[i]) ~= AzlDangerText(st[1]) then same = false end end
+  if same then return AzT("%s times in a row, %s sec apart: %s", n, AzlNum(gap), AzlDangerText(st[1])) end
+  local out = {}
+  for i = 1, n do
+    local t = AzlDangerText(st[i])
+    if t ~= "" then
+      if table.getn(out) > 0 then t = AzT("Then:") .. " " .. t end
+      table.insert(out, t)
+    end
+  end
+  return table.concat(out, " ")
+end
+
+-- a new stance: its attacks by name (short), or each with what it does
+function AzlStanceText(a, short)
+  local names, full = {}, {}
+  for i = 1, table.getn(a.steps or {}) do
+    local x = a.steps[i]
+    if x.kind == "adds" then table.insert(names, AzT("helpers"))
+    else
+      table.insert(names, AzlDangerName(x))
+      table.insert(full, AzlDangerName(x) .. ": " .. AzlDangerText(x))
+    end
+  end
+  if short then return AzT("New stance: %s.", table.concat(names, ", ")) end
+  return AzT("New stance: %s.", table.concat(names, ", ")) .. " " .. table.concat(full, " ")
 end
 
 -- a danger's words cut to the room left: whole sentences from the end first

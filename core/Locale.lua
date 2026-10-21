@@ -77,14 +77,14 @@ function AzNoteGameLang(lg)
   if OK[lg] then AzerlootDB.autoLang = lg else AzerlootDB.autoLang = "en" end
 end
 
-function AzT(s, a, b, c, d)
+function AzT(s, a, b, c, d, e, f)
   local lg = AzLang()
   local t = s
   if lg ~= "en" then
     if Azerloot_UI and Azerloot_UI[lg] and Azerloot_UI[lg][s] then t = Azerloot_UI[lg][s]
     elseif a == nil then t = AzG(s) end   -- a word the game itself has (a slot, a category)
   end
-  if a ~= nil then return string.format(t, a, b, c, d) end
+  if a ~= nil then return string.format(t, a, b, c, d, e, f) end
   return t
 end
 

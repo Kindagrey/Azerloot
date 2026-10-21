@@ -445,10 +445,13 @@ local function CloseBosses()
     for b = 1, table.getn(zones[z].bosses) do
       local ab = zones[z].bosses[b].abilities or {}
       local close = false
-      for a = 1, table.getn(ab) do
-        local k = ab[a].kind
-        if k == "nova" or k == "ring" or k == "spin" or k == "combo_out" or k == "combo_in" then close = true end
+      -- (an attack made of steps counts by its steps)
+      local function Look(x)
+        local k = x.kind
+        if k == "nova" or k == "ring" or k == "spin" or k == "knock" or k == "waves" then close = true end
+        for s = 1, table.getn(x.steps or {}) do Look(x.steps[s]) end
       end
+      for a = 1, table.getn(ab) do Look(ab[a]) end
       if close then n = n + 1 end
     end
   end

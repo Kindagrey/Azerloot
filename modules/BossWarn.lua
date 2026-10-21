@@ -92,7 +92,8 @@ end
 -- a wounded boss's turn, as one short line
 local function TurnText(ph)
   if ph.adds then return AzT("Calls in %s helpers.", ph.adds) end
-  if ph.a then return AzT("New attack, %s.", AzName(ph.a.name)) end
+  if ph.a and ph.a.kind == "stance" and AzlStanceText then return AzlStanceText(ph.a, true) end
+  if ph.a then return AzT("New attack, %s.", AzlDangerName(ph.a)) end
   return ""
 end
 
@@ -467,7 +468,7 @@ function W.Update()
       if pct <= p.pct and not s[k] then
         s[k] = true
         local icon = p.a and p.a.icon or (p.adds and "Ability_Warrior_BattleShout") or nil
-        Say(AzT("%d%% health!", p.pct), TurnText(p) .. (p.a and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
+        Say(AzT("%d%% health!", p.pct), TurnText(p) .. ((p.a and p.a.kind ~= "stance") and ("  " .. First(AzlDangerText(p.a))) or ""), icon)
       end
     end
     ShowBoss(u, b)
