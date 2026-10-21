@@ -153,7 +153,12 @@ function W.ShowAlert(text, sub, icon, sound)
   alert.left = 4
   alert:SetAlpha(1)
   alert:Show()
-  if sound and PlaySound then pcall(PlaySound, "RaidWarning") end
+  -- the raid warning's sound, played from its file: as a named interface sound the game cut
+  -- it short in a busy fight
+  if sound then
+    local ok = PlaySoundFile and pcall(PlaySoundFile, "Sound\\Interface\\RaidWarning.wav")
+    if not ok and PlaySound then pcall(PlaySound, "RaidWarning") end
+  end
 end
 W.Alert = Alert
 
