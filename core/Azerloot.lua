@@ -2870,7 +2870,7 @@ local function BuildSettings(search)
     return o
   end
   local sp = Panel(gear)
-  sp:SetWidth(170); sp:SetHeight(298)
+  sp:SetWidth(170); sp:SetHeight(338)
   -- sits right on the bar, its right edge in line with the book's corner
   sp:SetPoint("BOTTOMRIGHT", gear, "TOPRIGHT", 46, 8)
   sp:SetHead(AzT("Settings"))
@@ -3028,6 +3028,9 @@ local function BuildSettings(search)
     Switch(3, "Minimap button", function() return not DB().minimapHidden end,
       function(on) Azerloot_MinimapButton(on) end,
       "The button at the minimap. Click it to open the book."),
+    Switch(4, "Boss warner", function() return DB().bossWarn ~= false end,
+      function(on) DB().bossWarn = on; if AzlW and AzlW.Update then AzlW.Update() end end,
+      "In a run: the boss alive with its health and the marks where it turns, or the time until the next one; big words when one comes and when it turns.")
   }
   -- in two groups: the book (font, language, minimap button, size), then under a gold line
   -- the wishlist window (shown, spells, size, see-through, back to its place)
@@ -3035,6 +3038,11 @@ local function BuildSettings(search)
   SW[3]:ClearAllPoints(); SW[3]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 2 * 19)
   SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
   SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 6 * 19 - 16)
+  -- the boss warner on its own, under a second gold line
+  SW[4]:ClearAllPoints(); SW[4]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 12 * 19 - 6 - 32)
+  local dv3 = sp:CreateTexture(nil, "ARTWORK"); dv3:SetTexture(MEDIA .. "divider_gold.tga")
+  dv3:SetHeight(12); dv3:SetPoint("TOP", sp, "TOP", 0, -38 - 12 * 19 - 6 - 15)
+  sp.div3 = dv3
   local dv2 = sp:CreateTexture(nil, "ARTWORK"); dv2:SetTexture(MEDIA .. "divider_gold.tga")
   dv2:SetHeight(12); dv2:SetPoint("TOP", sp, "TOP", 0, -38 - 5 * 19 - 1)
   sp.div2 = dv2
@@ -3194,6 +3202,7 @@ local function BuildSettings(search)
     for i = 1, table.getn(self.sliders) do self.sliders[i][1]:SetWidth(need - 8) end
     self.div:SetWidth(need + 2)
     if self.div2 then self.div2:SetWidth(need + 2) end
+    if self.div3 then self.div3:SetWidth(need + 2) end
   end
   sp:SetScript("OnHide", function() if not (MouseIsOver and MouseIsOver(gear)) then gear:Lit(false) end end)
   sp:Hide()
@@ -6165,6 +6174,7 @@ SLASH_AZERLOOT1 = "/azerloot"
 SLASH_AZERLOOT2 = "/azl"
 SlashCmdList["AZERLOOT"] = function(msg)
   msg = string.lower(msg or "")
+  if AzlW and AzlW.Slash and AzlW.Slash(msg) then return end
   if msg == "worn" then
     -- what the game reports in the jewelry slots, to see why a piece does or does not tick
     for i = 1, table.getn(SLOTS) do
