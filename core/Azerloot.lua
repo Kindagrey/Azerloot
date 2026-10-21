@@ -1,4 +1,4 @@
--- Azerloot 2.2.0 - Azeroth Survivors (benilla client, Lua 5.0) by Kindagrey
+-- Azerloot 2.2.1 - Azeroth Survivors (benilla client, Lua 5.0) by Kindagrey
 -- A book-style compendium: every ring, trinket and amulet a run can offer with its value
 -- at every rarity, each class's spells and their legendary amulets, a search, and a
 -- wishlist that also lives in a small see-through window on your screen. The Loot chapter
@@ -4900,8 +4900,8 @@ local function BuildTracker()
     tracker:StopMovingOrSizing()
     AzlPinTracker()
   end)
-  -- an older version scaled the window; it is now sized by width and height instead
-  if TrackerDB().trackerScale then TrackerDB().trackerScale = nil; tracker:SetScale(1) end
+  -- the size set in the settings (Wishlist size), kept over a /reload and a new run
+  -- (an older version threw it away here each time the window was built)
   -- a place saved under another resolution or UI scale may lie off the screen now: then
   -- the window starts again at its first place (so does a size taller than the screen)
   -- (checked a few seconds later: right at login the screen's size is not settled yet, and a
