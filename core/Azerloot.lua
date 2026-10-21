@@ -5068,10 +5068,19 @@ function AzlFitTracker()
   if type(p) == "table" and type(p[3]) ~= "number" and type(p[2]) == "number" then fromTop = p[2] - sh end
   local room = sh + fromTop - 8          -- from the window's top to the screen's bottom
   local base = tonumber(TrackerDB().trackerScale) or 1
-  local want = math.max(0.45, math.min(base, room / h))
   local cur = tracker:GetScale()
   if type(cur) ~= "number" or cur <= 0 then cur = 1 end
-  if math.abs(want - cur) > 0.02 then
+  -- (a step either way changes how the letters fall, and with them the window's length a
+  -- little: so it shrinks only when it does not fit, a bit more than needed, and grows back
+  -- only with clearly more room; else it swung between two sizes for ever)
+  local fit, want = room / h, nil
+  if cur > base + 0.005 then want = math.min(base, fit * 0.97)
+  elseif fit < cur - 0.005 then want = fit * 0.97
+  elseif cur < base - 0.005 and fit > cur + 0.08 then want = math.min(base, fit * 0.97)
+  end
+  if not want then return end
+  want = math.max(0.45, math.min(base, want))
+  if math.abs(want - cur) > 0.005 then
     tracker:SetScale(want)
     AzlAnchorTracker()
   end
