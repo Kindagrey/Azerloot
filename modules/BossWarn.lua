@@ -367,8 +367,10 @@ function W.MoveMode(on)
       f.queue = {}
       MoveText(f)
       -- what shows here, then (quieter) how to place it
-      f.sub:SetText(AzT(kind == "main" and "A boss coming and turning, its attacks, guardians, stampedes and packs"
-        or "Runes picked up, magnets, caches and achievements"))
+      f.sub:SetText(AzT(kind == "main" and "A boss coming and turning, its attacks, guardians, stampedes and packs."
+        or "Runes picked up, magnets, caches and achievements."))
+      -- (on one line where it fits: the example uses the box's whole width)
+      f.sub:SetWidth(BOX[kind].w - 40); f.hint:SetWidth(BOX[kind].w - 40)
       f.hint:SetText(AzT("Drag: move · Mouse wheel: size · Click: done · Right-click: reset"))
       f.hint:Show()
       f.icon:Hide()
@@ -383,6 +385,7 @@ function W.MoveMode(on)
     for _, f in pairs(boxes) do
       f.box:Hide()
       f.hint:Hide()
+      f.sub:SetWidth(BOX[f.kind].wrap)
       f:EnableMouse(false)
       f:EnableMouseWheel(false)
       f:Hide()
