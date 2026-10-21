@@ -203,7 +203,8 @@ local function Box(kind)
   f.icon = ic
   local t = f:CreateFontString(nil, "OVERLAY")
   t:SetFont("Fonts\\MORPHEUS.TTF", c.big, "THICKOUTLINE")
-  if kind == "small" then t:SetTextColor(1, 0.82, 0.3) else t:SetTextColor(1, 0.55, 0.12) end
+  -- danger in the raid warning's red; the good things (a rune, a magnet, a cache) in green
+  if kind == "small" then t:SetTextColor(0.35, 1, 0.35) else t:SetTextColor(1, 0.18, 0.12) end
   Face(t, "head")
   t:SetPoint("TOP", f, "TOP", math.floor(c.icon / 2) + 3, 0)
   f.text = t
