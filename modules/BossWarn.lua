@@ -177,7 +177,6 @@ W.SOUNDS = {
   { key = "off", label = "Off" },
   -- soft
   { key = "whisper", label = "Whisper", file = "Sound\\Interface\\iTellMessage.wav" },
-  { key = "softping", label = "Soft ping", file = "Sound\\Interface\\igTextPopupPing02.wav" },
   { key = "friend", label = "Friend online", file = "Sound\\Interface\\FriendJoin.wav" },
   { key = "quest", label = "Quest update", file = "Sound\\Interface\\iQuestUpdate.wav" },
   { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
