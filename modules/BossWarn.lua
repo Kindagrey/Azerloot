@@ -81,10 +81,11 @@ function W.NoteLang(name)
 end
 
 -- a text of the warner follows the book's reading face (Settings - Font), like the book's own
-local function Face(fs, role)
+-- (group "warn": the warnings' own face, Settings - Azerwarn - Font)
+local function Face(fs, role, group)
   local f, size, fl = fs:GetFont()
   if AZL and AZL.SetFace and type(f) == "string" and type(size) == "number" then
-    AZL.SetFace(fs, role or "body", f, size, type(fl) == "string" and fl or "")
+    AZL.SetFace(fs, role or "body", f, size, type(fl) == "string" and fl or "", group)
   end
   return fs
 end
@@ -250,13 +251,13 @@ local function Box(kind)
   if kind == "small" then t:SetTextColor(0.35, 1, 0.35)
   elseif kind == "mid" then t:SetTextColor(1, 0.55, 0.12)
   else t:SetTextColor(1, 0.18, 0.12) end
-  Face(t, "head")
+  Face(t, "head", "warn")
   t:SetPoint("TOP", f, "TOP", math.floor(c.icon / 2) + 3, 0)
   f.text = t
   local s = f:CreateFontString(nil, "OVERLAY")
   s:SetFont("Fonts\\FRIZQT__.TTF", c.small, "OUTLINE")
   s:SetTextColor(1, 0.9, 0.65)
-  Face(s)
+  Face(s, nil, "warn")
   s:SetPoint("TOP", t, "BOTTOM", 0, -4)
   s:SetWidth(c.wrap)   -- a long line wraps under the big words
   f.sub = s
@@ -267,7 +268,7 @@ local function Box(kind)
   local hint = f:CreateFontString(nil, "OVERLAY")
   hint:SetFont("Fonts\\FRIZQT__.TTF", c.small, "OUTLINE")
   hint:SetTextColor(0.7, 0.65, 0.55)
-  Face(hint)
+  Face(hint, nil, "warn")
   hint:SetPoint("TOP", s, "BOTTOM", 0, -6)
   hint:SetWidth(c.wrap)
   hint:Hide()

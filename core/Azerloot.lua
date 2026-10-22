@@ -2563,8 +2563,12 @@ local function FaceInfo(key)
   return FACES[1]
 end
 
-local function FaceKey()
+-- (group "warn": the warner's own pick, Settings - Azerwarn - Font, when it is not "book")
+local function FaceKey(group)
   local k = type(AzerlootDB) == "table" and AzerlootDB.font or "classic"
+  if group == "warn" and type(AzerlootDB) == "table" and AzerlootDB.warnFont and AzerlootDB.warnFont ~= "book" then
+    k = AzerlootDB.warnFont
+  end
   local f = FaceInfo(k)
   if faceBroken[f.key] then return "classic" end
   return f.key
@@ -2603,7 +2607,7 @@ local function FaceScale(face, classic)
 end
 
 local function ApplyFace(fs, e)
-  local pick = FaceInfo(FaceKey())
+  local pick = FaceInfo(FaceKey(e.group))
   local face = pick.body and ((e.role == "head") and pick.head or pick.body)
   local bump = e.bump or 0
   if face then
@@ -2615,8 +2619,8 @@ local function ApplyFace(fs, e)
 end
 
 -- notes a string with its role and classic face and size, and draws it in the picked face
-local function SetFace(fs, role, face, size, flags)
-  local e = { role = role, face = face, size = size, flags = flags or "" }
+local function SetFace(fs, role, face, size, flags, group)
+  local e = { role = role, face = face, size = size, flags = flags or "", group = group }
   fontReg[fs] = e
   ApplyFace(fs, e)
   return fs
@@ -2911,7 +2915,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
   wra:SetPoint("RIGHT", wr, "RIGHT", -4, 0)
   wra:SetText(">")
   local ws = Panel(sp)
-  ws:SetWidth(182); ws:SetHeight(46 + (table.getn(AZL_WARN_PARTS) + 2) * 19)
+  ws:SetWidth(182); ws:SetHeight(46 + (table.getn(AZL_WARN_PARTS) + 3) * 19)
   ws:SetHead("Azerwarn")
   ws:SetPoint("TOPLEFT", wr, "TOPRIGHT", 13, 8)   -- level with its row
   ws.items = {}
@@ -2980,6 +2984,44 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     o:SetScript("OnLeave", function() GameTooltip:Hide() end)
     ws.sounds[i] = o
   end
+  -- the warnings' own face: like the book's (the default), or one of the book's faces; a
+  -- click gives the next one and shows an example warning in it
+  local fo = Row(ws, 164)
+  fo:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (table.getn(AZL_WARN_PARTS) + table.getn(SOUND_ROWS)) * 19)
+  local fov = fo:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  fov:SetPoint("RIGHT", fo, "RIGHT", -4, 0)
+  local fot = fo:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+  fot:SetPoint("LEFT", fo, "LEFT", 4, 0)
+  fot:SetText(AzT("Font"))
+  fo.label, fo.value = fot, fov
+  fo:SetScript("OnClick", function()
+    local d = DBw()
+    local keys = { "book" }
+    for k = 1, table.getn(AZL.Faces) do table.insert(keys, AZL.Faces[k].key) end
+    local cur, n = d.warnFont or "book", 1
+    for k = 1, table.getn(keys) do if keys[k] == cur then n = k end end
+    -- the next one the game can draw (one it cannot is passed over)
+    for step = 1, table.getn(keys) do
+      local idx = n + step
+      while idx > table.getn(keys) do idx = idx - table.getn(keys) end
+      local nk = keys[idx]
+      d.warnFont = nk
+      AZL.ApplyFaces()
+      if nk == "book" or nk == "classic" or AZL.FaceKey("warn") == nk then break end
+    end
+    ws:Update(); ws:Fit()
+    if AzlW and AzlW.ShowAlert and not AzlW.moving then
+      AzlW.ShowAlert(AzT("%s in 10 sec.", "Hogger"), this.value:GetText(), "Ability_Hunter_Pet_Hyena")
+    end
+  end)
+  fo:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    GameTooltip:AddLine(AzT("Font"), 1, 0.82, 0)
+    GameTooltip:AddLine(AzT("The warnings' own font. Like the book follows the book's font; any other changes the warnings only. Click for the next one, an example shows at once."), 0.85, 0.85, 0.85, 1)
+    GameTooltip:Show()
+  end)
+  fo:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  ws.fontRow = fo
   ws.Update = function(self)
     local d = DBw()
     for i = 1, table.getn(self.items) do
@@ -2987,6 +3029,12 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
       if on then v:SetText(AzT("On")); v:SetTextColor(0.3, 1, 0.3)
       else v:SetText(AzT("Off")); v:SetTextColor(1, 0.3, 0.25) end
     end
+    -- the warnings' face by its name, in gold
+    local wf = d.warnFont or "book"
+    local wl = "Like the book"
+    local faces = (AZL and AZL.Faces) or {}
+    for k = 1, table.getn(faces) do if faces[k].key == wf then wl = faces[k].label end end
+    self.fontRow.value:SetText(AzT(wl)); self.fontRow.value:SetTextColor(1, 0.82, 0)
     -- a sound by its name in gold, Off in red
     for i = 1, table.getn(self.sounds) do
       local o = self.sounds[i]
@@ -3001,6 +3049,7 @@ function AzlWarnMenu(sp, Panel, Row, SetCheck)
     local all = {}
     for i = 1, table.getn(self.items) do table.insert(all, self.items[i]) end
     for i = 1, table.getn(self.sounds) do table.insert(all, self.sounds[i]) end
+    table.insert(all, self.fontRow)
     for i = 1, table.getn(all) do
       local w = (all[i].label:GetStringWidth() or 0) + 8 + (all[i].value:GetStringWidth() or 0) + 14
       if w > need then need = w end
@@ -6668,7 +6717,8 @@ AZL = {
   Frame = function() return frame end, OnPage = function(f) OnPage(f) end,
   Font = Font, Tex = Tex, Heading = Heading, Engraved = Engraved, Carved = Carved, Highlight = Highlight,
   DropShadow = DropShadow, SetIcon = SetIcon, SetFace = SetFace, FadeIn = FadeIn, Go = Go, Print = Print, Hex = Hex,
-  OpenSearchHit = OpenSearchHit,
+  OpenSearchHit = OpenSearchHit, Faces = FACES, ApplyFaces = function() ApplyAllFaces() end,
+  FaceKey = function(g) return FaceKey(g) end,
   Wish = Wish, WishKey = WishKey, ClassInfo = ClassInfo, PlayerClass = PlayerClass, ItemEntries = ItemEntries,
   ClassEntries = ClassEntries, SpellEntries = SpellEntries, IsFound = IsFound, KnowsSpell = KnowsSpell,
   SpellDesc = SpellDesc, EntryTitle = EntryTitle, EntrySections = EntrySections, AutoSpells = AutoSpells,
