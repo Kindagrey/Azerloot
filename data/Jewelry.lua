@@ -308,8 +308,8 @@ Azerloot_Data.classes = {
       amulet = "Pendant of the Plague", effects = { "Drain Life: +3 targets", "Drain Life: +90% damage", "Enemies that die with Drain Life on them explode for 20% of their max health" } },
     { key = "fear", name = "Fear", icon = "Spell_Shadow_Possession",
       amulet = "Eye of the Splitting Sky", effects = { "Fear: +1 target", "Fear: +20% damage", "Fear's hits leap to 2 more enemies for 30%" } },
-    { key = "soul_fire", name = "Soul Fire", icon = "Spell_Fire_Fireball02",
-      amulet = "Charm of the Fated Hour", effects = { "Soul Fire: +60% damage", "Soul Fire: +100% proc rate" } },
+    { key = "soul_fire", name = "Soulfire", icon = "Spell_Fire_Fireball02",
+      amulet = "Charm of the Fated Hour", effects = { "Soulfire: +60% damage", "Soulfire: +100% proc rate" } },
     -- new in the game's 0.104: its amulet's rank-1 numbers are not known yet, so its page
     -- names what grows and how far it goes at rank 10 (the game's 0.105 notes)
     { key = "demonic_empowerment", name = "Demonic Empowerment", icon = "Spell_Nature_RemoveCurse",

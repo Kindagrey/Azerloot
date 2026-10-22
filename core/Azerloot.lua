@@ -705,7 +705,7 @@ end
 -- a spell newer than the game's own spell table: its words from the game's text, with its
 -- numbers from the game's spell list (cooldown 25 sec)
 AZL_SPELL_TEXT = {
-  demonic_empowerment = "Your demons deal 30% more damage and attack 15% faster for 8 sec. Cast once enemies are within 30 yd and a demon fights for you.",
+  demonic_empowerment = "Your demons deal 30% more damage for 8 sec. Cast once enemies are within 30 yd and a demon fights for you.",
 }
 local function SpellDesc(key, force)
   local id = SPELL_ID[key]
