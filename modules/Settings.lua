@@ -767,6 +767,8 @@ BUILD.tracker = function(f)
   f.rowFlash = cf:CreateTexture(nil, "BORDER"); f.rowFlash:SetTexture(MEDIA .. "glow.tga"); f.rowFlash:SetBlendMode("ADD")
   f.rowFlash:SetVertexColor(0.4, 1, 0.4); f.rowFlash:SetWidth(150); f.rowFlash:SetHeight(30); f.rowFlash:SetAlpha(0)
   f.mode, f.onWant, f.spellOn = false, true, true
+  f.rise = Text(cf, "body", 9, { 0.5, 1, 0.4 }); f.rise:SetShadowColor(0, 0, 0, 1); f.rise:SetShadowOffset(1, -1); f.rise:SetAlpha(0)
+  f.shownGain, f.bonusText = false, "+90% damage"
   f.off = OffMark(f)
 end
 BUILD.reset = function(f)
@@ -921,7 +923,13 @@ DRAW.tracker = function(f, def)
   if f.mode == "trackerScale" or f.mode == "trackerAlpha" then
     f.tag:SetText(f.mode == "trackerScale" and Pct(V("trackerScale")) or Pct(V("trackerAlpha")))
   end
-  if V("tracker") then f.off:Hide() else f.off:Show() end
+  if V("tracker") and not (f.mode == "spellTracker" and not f.spellOn) then f.off:Hide() else f.off:Show() end
+  -- (back to the full bonus when another setting is shown)
+  if f.mode ~= "spellTracker" then
+    local R = f.mini.rows[table.getn(f.mini.rows)]
+    if R and R.bonus then R.bonus:SetText(f.bonusText); R.bonus:SetTextColor(0.3, 1, 0.3) end
+    f.shownGain = false
+  end
 end
 DRAW.reset = function(f, def) f.mini:Draw(true, 0.35, 0.6, false) end
 DRAW.arrange = function(f, def)
@@ -1444,8 +1452,8 @@ function ST.Tick(e)
     f.alCur = Toward(f.alCur, al, e, mode == "trackerAlpha" and 30 or 8)
     -- the spell row
     if mode == "spellTracker" then
-      local c = Mod(T, 4.6)
-      if f.spellOn then m.spellK = Ease((c - 1.2) / 0.45) * (1 - Ease((c - 4.1) / 0.4))
+      local c = Mod(T, 6.4)
+      if f.spellOn then m.spellK = Ease((c - 0.3) / 0.45) * (1 - Ease((c - 5.8) / 0.45))
       else m.spellK = 0 end
     else
       m.spellK = Toward(m.spellK, m.spellWant or 1, e, 8)
@@ -1510,25 +1518,42 @@ function ST.Tick(e)
     end
     f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", ptx, pty); f.pointer:SetAlpha(ptA)
     f.grip:ClearAllPoints(); f.grip:SetPoint("BOTTOMRIGHT", f, "TOPLEFT", px + mw - 1, py - mh + 1); f.grip:SetAlpha(gripA)
-    -- Spell tracker: the icon flies in from the right to the window's last line
+    -- Spell tracker: a spell picked up joins the list with a green light, then grows as it
+    -- does in a run: three times its bonus climbs (+30%, +60%, +90%), its icon flares gold,
+    -- and the gain rises from the line
     local flyA, glowA, rowA = 0, 0, 0
-    if mode == "spellTracker" then
-      local c = Mod(T, 4.6)
-      local fk = Ease((c - 0.3) / 0.9)
-      local sx, sy = (f:GetWidth() or 258) - 30, -70
-      if type(sx) ~= "number" then sx = 228 end
-      local tx, ty = px + 13 * f.scCur, py - ((m.hOff or 50) - 0.5) * f.scCur
-      f.fly:ClearAllPoints(); f.fly:SetPoint("CENTER", f, "TOPLEFT", sx + (tx - sx) * fk, sy + (ty - sy) * fk + 18 * math.sin(fk * 3.1416))
-      if f.spellOn then
-        flyA = math.min(Ease((c - 0.2) / 0.2), 1 - Ease((c - 1.15) / 0.2))
-        local r = c - 1.2
-        rowA = (r > 0 and r < 0.9) and 0.6 * math.sin(r / 0.9 * 3.1416) or 0
-      else
-        -- not tracked: it never reaches the list, it fades on the way
-        flyA = math.min(Ease((c - 0.2) / 0.2), 1 - Ease((c - 0.7) / 0.35))
+    local R = m.rows[table.getn(m.rows)]
+    if mode == "spellTracker" and R and R.bonus then
+      local c = Mod(T, 6.4)
+      local step = 1
+      for k, at in ipairs({ 1.6, 2.9, 4.2 }) do if c >= at then step = k end end
+      local gain = 30 * step
+      if f.shownGain ~= gain then
+        f.shownGain = gain
+        R.bonus:SetText((string.gsub(f.bonusText or "+90% damage", "%d+", tostring(gain), 1)))
       end
-      glowA = flyA * 0.6
-      f.rowFlash:ClearAllPoints(); f.rowFlash:SetPoint("LEFT", f, "TOPLEFT", px - 6, ty - 3)
+      local since = 99
+      for _, at in ipairs({ 1.6, 2.9, 4.2 }) do if c >= at and c - at < since then since = c - at end end
+      if f.spellOn then
+        local r = c - 0.3
+        rowA = (r > 0 and r < 0.9) and 0.55 * math.sin(r / 0.9 * 3.1416) or 0
+        if since < 0.7 then
+          glowA = 0.8 * math.sin(since / 0.7 * 3.1416)
+          local g = 1 - since / 0.7
+          R.bonus:SetTextColor(0.3 + 0.6 * g, 1, 0.3 + 0.5 * g)
+          f.rise:SetText("+30%"); f.rise:SetAlpha(1 - Ease(since / 0.7))
+          f.rise:ClearAllPoints(); f.rise:SetPoint("LEFT", R.bonus, "RIGHT", 6, 2 + 14 * Ease(since / 0.7))
+        else
+          R.bonus:SetTextColor(0.3, 1, 0.3); f.rise:SetAlpha(0)
+        end
+      else
+        f.rise:SetAlpha(0)
+      end
+      f.flyGlow:ClearAllPoints(); f.flyGlow:SetPoint("CENTER", R.icon, "CENTER", 0, 0)
+      f.flyGlow:SetVertexColor(1, 0.8, 0.3)
+      f.rowFlash:ClearAllPoints(); f.rowFlash:SetPoint("LEFT", R.icon, "LEFT", -10, -4)
+    else
+      if f.rise then f.rise:SetAlpha(0) end
     end
     f.fly:SetAlpha(flyA); f.flyGlow:SetAlpha(glowA); f.rowFlash:SetAlpha(rowA)
   elseif pv == "reset" then
