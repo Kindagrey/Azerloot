@@ -918,7 +918,7 @@ function C.FxSet(mode)
   if mode == "blood" then
     F.word:SetTextColor(0.98, 0.92, 0.80); F.word:SetShadowColor(0.15, 0, 0, 1)
   else
-    F.word:SetShadowColor(1, 0.95, 0.8, 0.55)
+    F.word:SetShadowColor(0, 0, 0, 0)
   end
   F.word:SetShadowOffset(1, -1)
 end

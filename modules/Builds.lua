@@ -1034,9 +1034,9 @@ function B.MakeDoll(P)
     r.Lit = function(self, on) for i = 1, 3 do if on then self.lit[i]:Show() else self.lit[i]:Hide() end end end
     local lb = Z.Font(r, "GameFontNormal", Z.INK, 12)
     lb:SetPoint("LEFT", r, "LEFT", 4, 0); lb:SetText(AzT(STATS[k][1]))
-    lb:SetShadowColor(1, 0.95, 0.8, 0.45); lb:SetShadowOffset(1, -1)
+    lb:SetShadowColor(0, 0, 0, 0); lb:SetShadowOffset(1, -1)
     local v = Z.Font(r, "GameFontNormal", Z.INK, 13)
-    v:SetShadowColor(1, 0.96, 0.85, 0.6); v:SetShadowOffset(1, -1)
+    v:SetShadowColor(0, 0, 0, 0); v:SetShadowOffset(1, -1)
     v:SetPoint("RIGHT", r, "RIGHT", -4, 0)
     r.value = v
     r.stat = STATS[k]
@@ -1159,7 +1159,7 @@ function B.MakePane()
   nm:SetFontObject(GameFontNormalLarge)
   nm:SetFont(Z.HEAD_FONT, 21)
   nm:SetTextColor(Z.INK[1], Z.INK[2], Z.INK[3])
-  nm:SetShadowColor(1, 0.95, 0.8, 0.55); nm:SetShadowOffset(1, -1)
+  nm:SetShadowColor(0, 0, 0, 0); nm:SetShadowOffset(1, -1)
   local function SaveName(box)
     local b = B.Get(AZL.PlayerClass(), B.sel or 0)
     local s = string.gsub(box:GetText() or "", "^%s+", "")
@@ -1434,7 +1434,7 @@ function B.MakePane()
     if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -339)
     else l:SetPoint("TOPLEFT", R.lines[k - 1], "BOTTOMLEFT", 0, -2) end
     l:SetWidth(318); l:SetJustifyH("LEFT")
-    l:SetShadowColor(1, 0.95, 0.8, 0.45); l:SetShadowOffset(1, -1)
+    l:SetShadowColor(0, 0, 0, 0); l:SetShadowOffset(1, -1)
     R.lines[k] = l
   end
 

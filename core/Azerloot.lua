@@ -1520,7 +1520,7 @@ local function DrawDetail()
     d.name:SetTextColor(0.2, 0.82, 0.05)
     d.name:SetShadowColor(0.02, 0.14, 0, 1); d.name:SetShadowOffset(1, -1)
   else
-    d.name:SetShadowColor(1, 0.95, 0.8, 0.55); d.name:SetShadowOffset(1, -1)
+    d.name:SetShadowColor(0, 0, 0, 0); d.name:SetShadowOffset(1, -1)
   end
   d.sub:SetText(sub)
   -- icon, name and line below centred together on the page
@@ -1604,7 +1604,7 @@ local function DrawDetail()
           if lines[i][2] == INK_GOOD then
             l:SetShadowColor(0.02, 0.14, 0, 1)        -- bright green with a dark edge
           else
-            l:SetShadowColor(1, 0.95, 0.8, 0.55)      -- dark ink pressed into the paper
+            l:SetShadowColor(0, 0, 0, 0)      -- dark ink, no light rim
           end
           l:ClearAllPoints()
           if lines[i][3] then
@@ -2670,9 +2670,9 @@ FitHeading = function(fs, text, size, width)
   end
 end
 
--- dark ink pressed into the paper: a faint light edge under each letter
+-- dark ink on the paper: no shadow, a light edge showed as a white rim on the darker parchment
 local function Engraved(f)
-  f:SetShadowColor(1, 0.95, 0.8, 0.55); f:SetShadowOffset(1, -1)
+  f:SetShadowColor(0, 0, 0, 0); f:SetShadowOffset(1, -1)
   return f
 end
 
