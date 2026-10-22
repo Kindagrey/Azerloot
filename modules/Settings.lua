@@ -1167,7 +1167,11 @@ end
 
 function ST.Run(def)
   Click("igMainMenuOptionCheckBoxOn")
-  if def.closes then ST.Close() end
+  if def.closes then
+    ST.Close()
+    -- (arranging needs the screen: the book behind the settings closes too)
+    if AzerlootFrame and AzerlootFrame:IsShown() then AzerlootFrame:Hide() end
+  end
   if def.run then def.run() end
   ST.Update()
 end
