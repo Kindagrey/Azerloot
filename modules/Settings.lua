@@ -879,6 +879,9 @@ function ST.Build()
   F:SetWidth(W); F:SetHeight(H)
   F:SetScale(1.1)
   F:SetFrameStrata("FULLSCREEN_DIALOG")
+  -- its level set before any of its parts are made: they are made a step above it, and a
+  -- level set later would leave them under the window's own wood
+  F:SetFrameLevel(40)
   F:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
   F:EnableMouse(true); F:SetMovable(true)
   if F.SetToplevel then F:SetToplevel(true) end
@@ -1048,9 +1051,7 @@ function ST.Open(tab)
   end
   F:SetAlpha(0)
   F:Show()
-  -- above the wishlist window (the same layer, and itself raised when clicked)
-  local tr = getglobal and getglobal("AzerlootTracker")
-  if tr and tr.GetFrameLevel then F:SetFrameLevel(math.max(F:GetFrameLevel() or 1, (tr:GetFrameLevel() or 1) + 10)) end
+  -- above the wishlist window (the same layer): raised by the game, its parts with it
   if F.Raise then F:Raise() end
   Click("igMainMenuOpen")
   ST.ShowTab(tab or DB().settingsTab or "book")
