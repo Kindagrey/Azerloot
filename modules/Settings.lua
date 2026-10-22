@@ -737,12 +737,13 @@ BUILD.arrange = function(f)
     Edge(b, 0, c, 1)
     return b
   end
-  f.boxes = { Box(-14, 130, { 1, 0.18, 0.12 }), Box(-40, 100, { 1, 0.55, 0.12 }), Box(-96, 80, { 0.35, 1, 0.35 }) }
+  f.boxes = { Box(-14, 130, { 1, 0.18, 0.12 }), Box(-40, 100, { 1, 0.55, 0.12 }), Box(-82, 80, { 0.35, 1, 0.35 }) }
   f.mini = MiniTracker(f); f.mini:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8 / 0.55, 24 / 0.55); f.mini:Draw(false, 0.35, 0.55, false)
   local cf = CreateFrame("Frame", nil, f); cf:SetAllPoints(f); cf:SetFrameLevel(f:GetFrameLevel() + 4)
   f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(20); f.pointer:SetHeight(20); f.pointer:SetAlpha(0)
-  f.boxY, f.boxW = { -14, -40, -96 }, { 130, 100, 80 }
-  f.hint = Text(f, "body", 10, LIGHT); f.hint:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -118); f.hint:SetWidth(240); f.hint:SetJustifyH("RIGHT")
+  f.boxY, f.boxW = { -14, -40, -82 }, { 130, 100, 80 }
+  -- (at the foot, right of the small window: a long one wraps upwards, inside the box)
+  f.hint = Text(f, "body", 10, LIGHT); f.hint:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 5); f.hint:SetWidth(150); f.hint:SetJustifyH("RIGHT")
   f.hint:SetShadowColor(0, 0, 0, 1); f.hint:SetShadowOffset(1, -1)
 end
 BUILD.warnings = function(f)
