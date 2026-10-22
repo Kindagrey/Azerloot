@@ -1347,7 +1347,8 @@ function ST.Tick(e)
     m:SetBackdropColor(0, 0, 0, f.alCur); m:SetBackdropBorderColor(0.8, 0.62, 0.28, math.min(1, f.alCur + 0.4))
     local inX = -40 * (1 - Ease(T / 0.5))
     local dx, dy = 0, 0
-    if f.lockFree then dx, dy = 18 * math.sin(T * 1.3), 7 * math.sin(T * 2.6) end
+    -- (only right and down from its place, so it never leaves the box)
+    if f.lockFree then dx, dy = 16 + 16 * math.sin(T * 1.3), -5 + 5 * math.sin(T * 2.6) end
     m:ClearAllPoints(); m:SetPoint("TOPLEFT", f, "TOPLEFT", (14 + inX + dx) / f.scCur, (-14 + dy) / f.scCur)
     m:SetAlpha(Ease(T / 0.5) * (1 - 0.75 * offK))
     m:Shine(T)
