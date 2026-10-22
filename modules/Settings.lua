@@ -789,11 +789,11 @@ BUILD.arrange = function(f)
     b.edges = Edge(b, 0, c, 1)
     return b
   end
-  f.boxes = { Box(-14, 130, { 1, 0.18, 0.12 }), Box(-40, 100, { 1, 0.55, 0.12 }), Box(-82, 80, { 0.35, 1, 0.35 }) }
+  f.boxes = { Box(-12, 130, { 1, 0.18, 0.12 }), Box(-52, 100, { 1, 0.55, 0.12 }), Box(-84, 80, { 0.35, 1, 0.35 }) }
   f.mini = MiniTracker(f); f.mini:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8 / 0.55, 24 / 0.55); f.mini:Draw(false, 0.35, 0.55, false)
   local cf = CreateFrame("Frame", nil, f); cf:SetAllPoints(f); cf:SetFrameLevel(f:GetFrameLevel() + 4)
   f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(20); f.pointer:SetHeight(20); f.pointer:SetAlpha(0)
-  f.boxY, f.boxW = { -14, -40, -82 }, { 130, 100, 80 }
+  f.boxY, f.boxW = { -12, -52, -84 }, { 130, 100, 80 }
   -- (at the foot, right of the small window: a long one wraps upwards, inside the box)
   f.hint = Text(f, "body", 10, LIGHT); f.hint:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 5); f.hint:SetWidth(150); f.hint:SetJustifyH("RIGHT")
   f.hint:SetShadowColor(0, 0, 0, 1); f.hint:SetShadowOffset(1, -1)
@@ -1609,7 +1609,8 @@ function ST.Tick(e)
     local move = Ease((c - 1.5) / 0.9) - Ease((c - 3.9) / 0.9)
     local grow = Ease((c - 2.6) / 0.4) - Ease((c - 3.5) / 0.4)
     local b1 = f.boxes[1]
-    b1:ClearAllPoints(); b1:SetPoint("TOP", f, "TOP", 50 - 70 * move, -14 - 10 * move)
+    -- (sideways only, and the pointer hangs above the orange one, so they never meet)
+    b1:ClearAllPoints(); b1:SetPoint("TOP", f, "TOP", 50 - 60 * move, -12)
     b1:SetWidth(130 * (1 + 0.18 * grow)); b1:SetHeight(18 * (1 + 0.18 * grow))
     f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", b1, "CENTER", 4, -2)
     f.pointer:SetAlpha(Ease((c - 1.1) / 0.3) * math.max(0, math.min(1, (5.0 - c) / 0.4)))
