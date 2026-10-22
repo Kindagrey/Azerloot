@@ -14,7 +14,7 @@ local MEDIA = "Interface\\AddOns\\Azerloot\\media\\textures\\"
 local WHITE = MEDIA .. "white.tga"
 local FRIZ = "Fonts\\FRIZQT__.TTF"
 local MORPH = "Fonts\\MORPHEUS.TTF"
-local W, H = 740, 470          -- the window, in its own units
+local W, H = 740, 520          -- the window, in its own units
 local LIST_W, ROW_H = 384, 30  -- the parchment's rows
 local BRASS = { 0.77, 0.59, 0.24 }
 local INK = { 0.2, 0.1, 0.02 }
@@ -232,14 +232,10 @@ ST.TABS = {
           if AZL and AZL.ApplyFaces then AZL.ApplyFaces() end
           if v ~= "book" and v ~= "classic" and AZL and AZL.FaceKey and AZL.FaceKey("warn") ~= v then DB().warnFont = "book" end
         end },
-    } },
-    { label = "Windows", rows = {
       { key = "arrangeWarn", kind = "action", label = "Arrange windows", button = "Arrange", preview = "arrange", closes = true,
         desc = "Move the wishlist window and the three warning places where you like them; the mouse wheel sizes the warnings. Shift-click on the minimap button does the same.",
         run = function() if Azerloot_LayoutMode then Azerloot_LayoutMode(true) end end },
     } },
-  } },
-  { key = "look", label = "Colours & sounds", sections = {
     { label = "Colours", rows = {
       { key = "warnColorMain", kind = "choice", label = "Boss warnings", preview = "warnings", colour = "main",
         desc = "The colour of the big words when a boss comes, turns or falls.",
