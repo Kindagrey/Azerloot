@@ -1235,7 +1235,7 @@ function ST.Build()
   local emt = Tex(em, MEDIA .. "emblem_book.tga", "ARTWORK"); emt:SetAllPoints(em)
   local title = Text(F, "head", 21, GOLD)
   title:SetShadowColor(0, 0, 0, 1); title:SetShadowOffset(1, -1)
-  title:SetPoint("LEFT", bar, "LEFT", 58, 1)
+  title:SetPoint("CENTER", bar, "CENTER", 0, 1)   -- (in the middle of the banner)
   title:SetText(AzT("Settings"))
   F.title = title
   local close = CreateFrame("Button", nil, F, "UIPanelCloseButton")
