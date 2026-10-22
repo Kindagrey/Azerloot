@@ -416,11 +416,11 @@ local function MakeRow(parent)
   r.value = Text(r, "body", 12, INK)
   r.value:SetPoint("CENTER", r, "RIGHT", -90, 2)
   r.value:SetWidth(150); r.value:SetJustifyH("CENTER")
-  -- a colour's little square before its name (for the warnings' colours)
-  r.swEdge = r:CreateTexture(nil, "ARTWORK"); r.swEdge:SetTexture(WHITE); r.swEdge:SetVertexColor(0.15, 0.08, 0.02)
-  r.swEdge:SetWidth(12); r.swEdge:SetHeight(12); r.swEdge:Hide()
-  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetTexture(WHITE)
-  r.swatch:SetWidth(10); r.swatch:SetHeight(10); r.swatch:SetPoint("CENTER", r.swEdge, "CENTER", 0, 0); r.swatch:Hide()
+  -- a colour's little gem before its name, softly glowing in it (for the warnings' colours)
+  r.swEdge = r:CreateTexture(nil, "ARTWORK"); r.swEdge:SetTexture(MEDIA .. "glow.tga"); r.swEdge:SetBlendMode("ADD")
+  r.swEdge:SetWidth(30); r.swEdge:SetHeight(18); r.swEdge:Hide()
+  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetTexture(MEDIA .. "gem_white.tga")
+  r.swatch:SetWidth(16); r.swatch:SetHeight(16); r.swatch:SetPoint("CENTER", r.swEdge, "CENTER", 0, 0); r.swatch:Hide()
   -- a value just changed lights up for a moment
   local fl = r:CreateTexture(nil, "ARTWORK"); fl:SetTexture(MEDIA .. "glow.tga"); fl:SetBlendMode("ADD")
   fl:SetVertexColor(1, 0.75, 0.3); fl:SetWidth(176); fl:SetHeight(30); fl:SetPoint("CENTER", r.value, "CENTER", 0, -1); fl:SetAlpha(0)
@@ -1136,8 +1136,10 @@ function ST.Update()
         if sw then
           local w = r.value:GetStringWidth() or 60
           if type(w) ~= "number" then w = 60 end
-          r.swEdge:ClearAllPoints(); r.swEdge:SetPoint("CENTER", r.value, "CENTER", -(w / 2 + 10), 0)
-          r.swatch:SetVertexColor(sw[1], sw[2], sw[3]); r.swEdge:Show(); r.swatch:Show()
+          r.swEdge:ClearAllPoints(); r.swEdge:SetPoint("CENTER", r.value, "CENTER", -(w / 2 + 12), 1)
+          r.swatch:SetVertexColor(sw[1], sw[2], sw[3]); r.swEdge:SetVertexColor(sw[1], sw[2], sw[3])
+          r.swEdge:SetAlpha(sel and 0.7 or 0.4)
+          r.swEdge:Show(); r.swatch:Show()
         else
           r.swEdge:Hide(); r.swatch:Hide()
         end
@@ -1157,6 +1159,14 @@ function ST.Update()
           if def.kind == "toggle" then n, i = 2, Current(def) and 2 or 1
           else local k, o = OptIndex(def, Current(def)); n, i = table.getn(o), k end
           SegMarks(r, n, i)
+          -- a colour's marks: each in its own colour, the chosen one full, a palette to read
+          if def.colour then
+            local _, o = OptIndex(def, Current(def))
+            for k = 1, math.min(n, 9) do
+              local m, c = r.marks[k], o[k] and o[k].color
+              if m and c then m:SetVertexColor(c[1], c[2], c[3]); m:SetAlpha(k == i and 1 or 0.55) end
+            end
+          end
         end
       end
     end
