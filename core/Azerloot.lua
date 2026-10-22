@@ -4582,22 +4582,74 @@ AzlFitState = {}   -- (the lines and the room when it was last made smaller)
 -- the client: right after a change the client tells the height of the text before it, and a
 -- window refreshed every second then took one height, then the other, for ever. Each line of
 -- the text is measured on its own, unwrapped, and counted as the lines it wraps into.
+-- How many lines a text takes at a width. First a careful guess, word by word with the same
+-- face; then, a frame later, the line count the game really drew is read off the text itself
+-- and kept (per text and width), and the window is laid out once more if the guess was off.
+-- (A guess alone left a gap under a name that just fits on one line.)
+AzlLines = {}
 function AzlTextHeight(fs, width)
   local m = AzlFitState.m
   if not m then m = UIParent:CreateFontString(nil, "OVERLAY"); m:Hide(); AzlFitState.m = m end
   local face, size, flags = fs:GetFont()
   size = tonumber(size) or 10
   if face then m:SetFont(face, size, flags) end
+  local room = math.max(40, width)
+  local key = (fs:GetText() or "") .. "|" .. math.floor(room + 0.5) .. "|" .. size
+  local known = AzlLines[key]
+  if known then return known * (size + 3) end
   local n, text, at = 0, (fs:GetText() or "") .. "\n", 1
   while true do
     local nl = string.find(text, "\n", at, true)
     if not nl then break end
     local line = string.sub(text, at, nl - 1)
     m:SetText((line ~= "") and line or " ")
-    n = n + math.max(1, math.ceil((m:GetStringWidth() or 0) / math.max(40, width) + 0.05))
+    if (m:GetStringWidth() or 0) <= room then
+      n = n + 1
+    else
+      local lines, cur, i = 1, "", 1
+      while i <= string.len(line) do
+        local sp = string.find(line, " ", i, true)
+        local word = sp and string.sub(line, i, sp - 1) or string.sub(line, i)
+        local try = (cur == "") and word or (cur .. " " .. word)
+        m:SetText(try)
+        if cur ~= "" and (m:GetStringWidth() or 0) > room then lines = lines + 1; cur = word
+        else cur = try end
+        if not sp then break end
+        i = sp + 1
+      end
+      n = n + lines
+    end
     at = nl + 1
   end
-  return math.max(1, n) * (size + 3)
+  n = math.max(1, n)
+  -- to be checked against what the game draws, once it has drawn it
+  local q = AzlFitState.check or {}
+  AzlFitState.check = q
+  table.insert(q, { fs = fs, key = key, size = size, guess = n })
+  if not AzlFitState.checker then
+    local c = CreateFrame("Frame")
+    c:SetScript("OnUpdate", function()
+      local list = AzlFitState.check
+      if not list or table.getn(list) == 0 then return end
+      -- (the first frame after: drawn by now)
+      AzlFitState.waited = (AzlFitState.waited or 0) + 1
+      if AzlFitState.waited < 2 then return end
+      AzlFitState.check, AzlFitState.waited = {}, 0
+      local off = false
+      for i = 1, table.getn(list) do
+        local it = list[i]
+        local h = it.fs.GetHeight and it.fs:GetHeight()
+        if not AzlLines[it.key] and type(h) == "number" and h > 0 and it.fs:IsVisible() then
+          local real = math.max(1, math.floor(h / it.size + 0.25))
+          AzlLines[it.key] = real
+          if real ~= it.guess then off = true end
+        end
+      end
+      if off and RefreshTracker then RefreshTracker() end
+    end)
+    AzlFitState.checker = c
+  end
+  return n * (size + 3)
 end
 function AzlFitTracker()
   if not tracker or (tracker.grip and tracker.grip.sizing) then return end
