@@ -3787,15 +3787,21 @@ local function Build()
     end
   end
   search.typing = false
-  -- a click anywhere else (the bar, a page, the world) lets go of the box: the cursor goes,
-  -- and an empty box says "Search" again
-  local function Watch()
-    if not this.typing then return end
-    local down = IsMouseButtonDown and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
-    if down and not (MouseIsOver and MouseIsOver(this)) then this:ClearFocus() end
+  search:SetScript("OnEditFocusGained", function() this.typing = true; HintLook() end)
+  search:SetScript("OnEditFocusLost", function() this.typing = false; HintLook() end)
+  -- a click anywhere else lets go of the box: the cursor goes, and an empty box says "Search"
+  -- again. (The game has no way to ask for the mouse buttons, so the places that can be
+  -- clicked tell it: the book itself, its bar and pages, and the world around it.)
+  local function LetGo() if search.typing then search:ClearFocus() end end
+  frame:SetScript("OnMouseDown", LetGo)
+  if WorldFrame and WorldFrame.GetScript and WorldFrame.SetScript then
+    local before = WorldFrame:GetScript("OnMouseDown")
+    WorldFrame:SetScript("OnMouseDown", function()
+      LetGo()
+      if before then before() end
+    end)
   end
-  search:SetScript("OnEditFocusGained", function() this.typing = true; this:SetScript("OnUpdate", Watch); HintLook() end)
-  search:SetScript("OnEditFocusLost", function() this.typing = false; this:SetScript("OnUpdate", nil); HintLook() end)
+  AzlSearchLetGo = LetGo   -- (for other parts of the book that catch clicks)
   search.HintLook = HintLook
   -- closing: a gold cross in the gear's own style beside it, lit the same way under the mouse
   local close = CreateFrame("Button", nil, frame)
