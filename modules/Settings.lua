@@ -1131,8 +1131,8 @@ function ST.Update()
           if AZL and AZL.SetFace then AZL.SetFace(r.value, "body", FRIZ, 10, "") else r.value:SetFont(FRIZ, 10) end
         end
         r.value:SetTextColor(vc[1], vc[2], vc[3])
-        local sw
-        if def.kind == "choice" then local k, o = OptIndex(def, Current(def)); sw = o[k] and o[k].color end
+        -- (colours show in the marks under the value alone: kept plain)
+        local sw = false
         if sw then
           local w = r.value:GetStringWidth() or 60
           if type(w) ~= "number" then w = 60 end
