@@ -15,7 +15,6 @@ locales\JewelryNames.lua
 locales\Tooltips.lua
 data\Jewelry.lua
 data\BossLoot.lua
-core\Spark.lua
 core\Azerloot.lua
 modules\Builds.lua
 modules\Chronicle.lua
