@@ -3787,8 +3787,15 @@ local function Build()
     end
   end
   search.typing = false
-  search:SetScript("OnEditFocusGained", function() this.typing = true; HintLook() end)
-  search:SetScript("OnEditFocusLost", function() this.typing = false; HintLook() end)
+  -- a click anywhere else (the bar, a page, the world) lets go of the box: the cursor goes,
+  -- and an empty box says "Search" again
+  local function Watch()
+    if not this.typing then return end
+    local down = IsMouseButtonDown and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
+    if down and not (MouseIsOver and MouseIsOver(this)) then this:ClearFocus() end
+  end
+  search:SetScript("OnEditFocusGained", function() this.typing = true; this:SetScript("OnUpdate", Watch); HintLook() end)
+  search:SetScript("OnEditFocusLost", function() this.typing = false; this:SetScript("OnUpdate", nil); HintLook() end)
   search.HintLook = HintLook
   -- closing: a gold cross in the gear's own style beside it, lit the same way under the mouse
   local close = CreateFrame("Button", nil, frame)
