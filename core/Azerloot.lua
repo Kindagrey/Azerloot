@@ -3402,7 +3402,7 @@ local function BuildTitle(Strip)
   name:SetText("Azerloot")
   -- a warm light breathes behind the whole word, and a glowing contour traces every letter
   local nglow = P:CreateTexture(nil, "BORDER")
-  nglow:SetTexture(GLOW); nglow:SetBlendMode("ADD"); nglow:SetVertexColor(1, 0.72, 0.15)
+  nglow:SetTexture(GLOW); nglow:SetBlendMode("ADD"); nglow:SetVertexColor(1, 0.62, 0.18)
   nglow:SetPoint("TOPLEFT", name, "TOPLEFT", -34, 16)
   nglow:SetPoint("BOTTOMRIGHT", name, "BOTTOMRIGHT", 34, -16)
   local rim = {}
@@ -3410,7 +3410,7 @@ local function BuildTitle(Strip)
     local ang, r = (i - 1) * math.pi / 8, (math.floor(i / 2) * 2 == i) and 2.5 or 1.5
     local f = P:CreateFontString(nil, "BORDER")
     f:SetPoint("CENTER", name, "CENTER", math.cos(ang) * r, math.sin(ang) * r)
-    f:SetTextColor(1, 0.82, 0)   -- the glowing contour in the gold of the bar's own title
+    f:SetTextColor(1, 0.66, 0.2)
     rim[i] = f
   end
   local pulse = CreateFrame("Frame", nil, P)
