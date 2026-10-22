@@ -2946,7 +2946,7 @@ local function BuildSettings(search)
   gear.glow = gg
   gear:SetScript("OnClick", function()
     GameTooltip:Hide()
-    if AzlSettings then AzlSettings.Toggle() end
+    if AzlSettings then AzlSettings.Toggle(nil, "book") end   -- (fixed over the book)
   end)
   gear:SetScript("OnEnter", function()
     this:Lit(true)

@@ -1197,8 +1197,18 @@ function ST.Build()
   if F.SetToplevel then F:SetToplevel(true) end
   if F.SetClampedToScreen then F:SetClampedToScreen(true) end
   F:RegisterForDrag("LeftButton")
-  F:SetScript("OnDragStart", function() this:StartMoving() end)
-  F:SetScript("OnDragStop", function() this:StopMovingOrSizing() end)
+  -- (moved only when opened on its own, from the minimap or /azl settings; opened from the
+  -- book it stays where it stands, over the book; its own place is kept for next time)
+  F:SetScript("OnDragStart", function() if ST.movable then this:StartMoving() end end)
+  F:SetScript("OnDragStop", function()
+    this:StopMovingOrSizing()
+    if ST.movable then
+      local x, y = this:GetCenter()
+      local ux, uy = UIParent:GetCenter()
+      local s = (this:GetEffectiveScale() or 1) / (UIParent:GetEffectiveScale() or 1)
+      if x and ux then DB().settingsPos = { x * s - ux, y * s - uy } end
+    end
+  end)
   table.insert(UISpecialFrames, "AzerlootSettings")
   -- a soft shadow under it, the dark wood, a gold frame with the book's brass corners below
   local sh = Tex(F, MEDIA .. "shadow.tga", "BACKGROUND"); sh:SetVertexColor(0, 0, 0); sh:SetAlpha(0.75)
@@ -1318,15 +1328,19 @@ function ST.Build()
 end
 
 -- ---------- opening and closing ----------
+-- behind the settings opened from the book: the book steps back into a soft dark, deepest
+-- around the window and fading out past the book's edges (no hard edge to it); the chapter
+-- tabs dim with it; a click there closes the settings
 local function Veil()
   local book = AZL and AZL.Frame and AZL.Frame()
   if not book then return nil end
   if not ST.veil then
     local v = CreateFrame("Button", nil, book)
-    v:SetAllPoints(book)
+    v:SetPoint("TOPLEFT", book, "TOPLEFT", -70, 50)
+    v:SetPoint("BOTTOMRIGHT", book, "BOTTOMRIGHT", 70, -50)
     v:SetFrameLevel((book:GetFrameLevel() or 1) + 80)
     v:EnableMouse(true)
-    local t = v:CreateTexture(nil, "OVERLAY"); t:SetTexture(WHITE); t:SetVertexColor(0, 0, 0); t:SetAllPoints(v)
+    local t = v:CreateTexture(nil, "OVERLAY"); t:SetTexture(MEDIA .. "veil_soft.tga"); t:SetAllPoints(v)
     v.tex = t
     v:SetScript("OnClick", function() ST.Close() end)
     v:Hide()
@@ -1334,30 +1348,51 @@ local function Veil()
   end
   return ST.veil
 end
+-- the book's chapter tabs, dimmed (and kept from the mouse) while the settings are open
+local function DimTabs(on)
+  local tabs = AZL and AZL.ui and AZL.ui.tabs
+  if type(tabs) ~= "table" then return end
+  for i = 1, table.getn(tabs) do
+    local t = tabs[i]
+    if t and t.SetAlpha then
+      t:SetAlpha(on and 0.45 or 1)
+      if t.EnableMouse then t:EnableMouse(not on) end
+    end
+  end
+end
+local VEIL_A = 0.8   -- how dark the book goes at the deepest
 
-function ST.Open(tab)
+function ST.Open(tab, from)
   local F = ST.Build()
   ST.pending = {}
   ST.open = true
   ST.fade = 0
   local book = AZL and AZL.Frame and AZL.Frame()
   F:ClearAllPoints()
-  if book and book:IsVisible() then
-    -- in front of the book, which steps back into the dark
+  if from == "book" and book and book:IsVisible() then
+    -- in front of the book, which steps back into the dark; fixed in its place
     local x, y = book:GetCenter()
     local s = (book:GetEffectiveScale() or 1) / (F:GetEffectiveScale() or 1)
     if x and y then F:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x * s, y * s) else F:SetPoint("CENTER", UIParent, "CENTER", 0, 20) end
     local v = Veil()
-    if v then v.tex:SetAlpha(0); v:Show() end
-    ST.withBook = true
+    if v then v:SetAlpha(0); v:Show() end
+    DimTabs(true)
+    ST.withBook, ST.movable = true, false
     -- (Escape closes the settings alone meanwhile: the book leaves the list of windows it
     -- closes until they are gone)
     for i = table.getn(UISpecialFrames), 1, -1 do
       if UISpecialFrames[i] == "AzerlootFrame" then table.remove(UISpecialFrames, i) end
     end
   else
-    F:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
-    ST.withBook = false
+    -- on its own: where the player put it last (or the middle), free to move
+    local p = DB().settingsPos
+    if type(p) == "table" and tonumber(p[1]) and tonumber(p[2]) then
+      local s = (UIParent:GetEffectiveScale() or 1) / (F:GetEffectiveScale() or 1)
+      F:SetPoint("CENTER", UIParent, "CENTER", p[1] * s, p[2] * s)
+    else
+      F:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+    end
+    ST.withBook, ST.movable = false, true
   end
   F:SetAlpha(0)
   F:Show()
@@ -1380,13 +1415,15 @@ function ST.OnHide()
   -- values waiting for a reload are let go; the book comes forward again
   ST.pending = {}
   if ST.veil then ST.veil:Hide() end
+  DimTabs(false)
   local back = false
   for i = 1, table.getn(UISpecialFrames) do if UISpecialFrames[i] == "AzerlootFrame" then back = true end end
   if not back then table.insert(UISpecialFrames, "AzerlootFrame") end
   if PlaySound then pcall(PlaySound, "igMainMenuClose") end
 end
-function ST.Toggle(tab)
-  if ST.frame and ST.frame:IsShown() then ST.Close() else ST.Open(tab) end
+-- from: "book" when the book's own gear opens them (fixed over the book), else free
+function ST.Toggle(tab, from)
+  if ST.frame and ST.frame:IsShown() then ST.Close() else ST.Open(tab, from) end
 end
 function ST.IsOpen() return (ST.frame and ST.open and ST.frame:IsShown()) and true or false end
 
@@ -1396,7 +1433,7 @@ function ST.Tick(e)
   if ST.fade and ST.fade < 1 then
     ST.fade = math.min(1, ST.fade + e / 0.18)
     ST.frame:SetAlpha(ST.fade)
-    if ST.veil and ST.veil:IsShown() then ST.veil.tex:SetAlpha(0.62 * ST.fade) end
+    if ST.veil and ST.veil:IsShown() then ST.veil:SetAlpha(VEIL_A * ST.fade) end
   end
   -- the value just changed: its light fading
   if ST.flashRow and ST.flashT then
