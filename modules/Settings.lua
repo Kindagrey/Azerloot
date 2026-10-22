@@ -1223,6 +1223,7 @@ function ST.Build()
   local em = CreateFrame("Frame", nil, F); em:SetWidth(58); em:SetHeight(58); em:SetPoint("TOPLEFT", F, "TOPLEFT", 6, -3)
   em:SetFrameLevel(F:GetFrameLevel() + 3)
   local emt = Tex(em, MEDIA .. "emblem_book.tga", "ARTWORK"); emt:SetAllPoints(em)
+  if AzlSpark then AzlSpark(emt, em, 1.2) end
   local title = Text(F, "head", 21, GOLD)
   title:SetShadowColor(0, 0, 0, 1); title:SetShadowOffset(1, -1)
   title:SetPoint("LEFT", bar, "LEFT", 58, 1)
