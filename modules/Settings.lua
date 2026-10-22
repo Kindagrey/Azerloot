@@ -1245,14 +1245,14 @@ function ST.Build()
   close:SetPoint("RIGHT", bar, "RIGHT", -44, 0)   -- (on the red band, clear of the gold end)
   close:SetFrameLevel(F:GetFrameLevel() + 4)
   local ct = Tex(close, MEDIA .. "close.tga", "ARTWORK"); ct:SetAllPoints(close)
-  local cd = Tex(close, MEDIA .. "btn_disc.tga", "BORDER"); cd:SetWidth(29); cd:SetHeight(29); cd:SetPoint("CENTER", close, "CENTER", 0, 0)
+  local cd = Tex(close, MEDIA .. "btn_disc.tga", "BORDER"); cd:SetWidth(24); cd:SetHeight(24); cd:SetPoint("CENTER", close, "CENTER", 0, 0); cd:Hide()
   local cg = close:CreateTexture(nil, "BACKGROUND")
   cg:SetTexture(MEDIA .. "glow.tga"); cg:SetBlendMode("ADD"); cg:SetVertexColor(1, 0.72, 0.15)
   cg:SetPoint("TOPLEFT", close, "TOPLEFT", -14, 12); cg:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 14, -12)
   cg:Hide()
-  close:SetScript("OnEnter", function() cg:Show(); ct:SetVertexColor(1, 1, 0.8) end)
-  close:SetScript("OnLeave", function() cg:Hide(); ct:SetVertexColor(1, 1, 1) end)
-  close:SetScript("OnClick", function() cg:Hide(); ST.Close() end)
+  close:SetScript("OnEnter", function() cg:Show(); cd:Show(); ct:SetVertexColor(1, 1, 0.8) end)
+  close:SetScript("OnLeave", function() cg:Hide(); cd:Hide(); ct:SetVertexColor(1, 1, 1) end)
+  close:SetScript("OnClick", function() cg:Hide(); cd:Hide(); ST.Close() end)
   -- the tabs: words in a row, a fine line under all of them
   F.tabs = {}
   local tx = 34

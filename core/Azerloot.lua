@@ -2936,15 +2936,15 @@ local function BuildSettings(search)
   gear:SetWidth(19); gear:SetHeight(19)
   gear:SetPoint("LEFT", search, "RIGHT", 10, 0)
   local gt = Tex(gear, "gear.tga", "ARTWORK"); gt:SetAllPoints(gear)
-  -- on a small dark medallion with a gold rim, so it stands out on the red band
-  local gd = Tex(gear, "btn_disc.tga", "BORDER"); gd:SetWidth(29); gd:SetHeight(29); gd:SetPoint("CENTER", gear, "CENTER", 0, 0)
+  -- under the mouse it sits on a small dark medallion with a gold rim (inside the bar's band)
+  local gd = Tex(gear, "btn_disc.tga", "BORDER"); gd:SetWidth(24); gd:SetHeight(24); gd:SetPoint("CENTER", gear, "CENTER", 0, 0); gd:Hide()
   -- lit like the path and the title while the mouse is on it
   local gg = gear:CreateTexture(nil, "BACKGROUND")
   gg:SetTexture(GLOW); gg:SetBlendMode("ADD"); gg:SetVertexColor(1, 0.72, 0.15)
   gg:SetPoint("TOPLEFT", gear, "TOPLEFT", -14, 12); gg:SetPoint("BOTTOMRIGHT", gear, "BOTTOMRIGHT", 14, -12)
   gg:Hide()
   gear.Lit = function(self, on)
-    if on then gg:Show(); gt:SetVertexColor(1, 1, 0.8) else gg:Hide(); gt:SetVertexColor(1, 1, 1) end
+    if on then gg:Show(); gd:Show(); gt:SetVertexColor(1, 1, 0.8) else gg:Hide(); gd:Hide(); gt:SetVertexColor(1, 1, 1) end
   end
   gear.glow = gg
   gear:SetScript("OnClick", function()
@@ -3765,16 +3765,16 @@ local function Build()
   close:SetPoint("LEFT", search, "RIGHT", 43, 0)
   do
     local ct = Tex(close, "close.tga", "ARTWORK"); ct:SetAllPoints(close)
-    local cd = Tex(close, "btn_disc.tga", "BORDER"); cd:SetWidth(29); cd:SetHeight(29); cd:SetPoint("CENTER", close, "CENTER", 0, 0)
+    local cd = Tex(close, "btn_disc.tga", "BORDER"); cd:SetWidth(24); cd:SetHeight(24); cd:SetPoint("CENTER", close, "CENTER", 0, 0); cd:Hide()
     local cg = close:CreateTexture(nil, "BACKGROUND")
     cg:SetTexture(GLOW); cg:SetBlendMode("ADD"); cg:SetVertexColor(1, 0.72, 0.15)
     cg:SetPoint("TOPLEFT", close, "TOPLEFT", -14, 12); cg:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 14, -12)
     cg:Hide()
-    close:SetScript("OnEnter", function() cg:Show(); ct:SetVertexColor(1, 1, 0.8) end)
-    close:SetScript("OnLeave", function() cg:Hide(); ct:SetVertexColor(1, 1, 1) end)
+    close:SetScript("OnEnter", function() cg:Show(); cd:Show(); ct:SetVertexColor(1, 1, 0.8) end)
+    close:SetScript("OnLeave", function() cg:Hide(); cd:Hide(); ct:SetVertexColor(1, 1, 1) end)
     close:SetScript("OnMouseDown", function() ct:SetPoint("TOPLEFT", close, "TOPLEFT", 1, -1); ct:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 1, -1) end)
     close:SetScript("OnMouseUp", function() ct:ClearAllPoints(); ct:SetAllPoints(close) end)
-    close:SetScript("OnClick", function() cg:Hide(); frame:Hide() end)
+    close:SetScript("OnClick", function() cg:Hide(); cd:Hide(); frame:Hide() end)
   end
   ui.close = close
 
