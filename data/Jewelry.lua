@@ -314,7 +314,7 @@ Azerloot_Data.classes = {
     -- new in the game's 0.104: its amulet's rank-1 numbers are not known yet, so its page
     -- names what grows and how far it goes at rank 10 (the game's 0.105 notes)
     { key = "demonic_empowerment", name = "Demonic Empowerment", icon = "Spell_Nature_RemoveCurse",
-      amulet = "The Legionlord's Medallion", effects = { "Demonic Empowerment: +100% duration", "Demonic Empowerment: +60% demon damage", "Demonic Empowerment: -35% cooldown", "Demonic Empowerment: +100% strength" } },
+      amulet = "The Legionlord's Medallion", effects = { "Demonic Empowerment: +100% duration", "Demonic Empowerment: -35% cooldown", "Demonic Empowerment: +100% strength" } },
   } },
   { key = "druid", name = "Druid", color = "FF7D0A", spells = {
     { key = "wrath", name = "Wrath", icon = "Spell_Nature_AbolishMagic",
