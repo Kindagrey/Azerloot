@@ -3397,9 +3397,7 @@ local function BuildTitle(Strip)
   em:SetWidth(104); em:SetHeight(104)
   em:SetPoint("TOP", ui.left, "TOP", 0, -4)
   DropShadow(P, em, 3, -5, 10, 0.6, "shadow.tga")
-  -- in the gold of the bar's own title, with its warm breathing light; a dark contour keeps it
-  -- clear on the parchment
-  local name = Carved(Heading(Font(P, "GameFontNormalLarge", { 1, 0.82, 0 }), 32))
+  local name = Engraved(Heading(Font(P, "GameFontNormalLarge", INK), 32))
   name:SetPoint("TOP", em, "BOTTOM", 0, -6)
   name:SetText("Azerloot")
   -- a warm light breathes behind the whole word, and a glowing contour traces every letter
@@ -3412,18 +3410,18 @@ local function BuildTitle(Strip)
     local ang, r = (i - 1) * math.pi / 8, (math.floor(i / 2) * 2 == i) and 2.5 or 1.5
     local f = P:CreateFontString(nil, "BORDER")
     f:SetPoint("CENTER", name, "CENTER", math.cos(ang) * r, math.sin(ang) * r)
-    f:SetTextColor(0.24, 0.11, 0.02)
+    f:SetTextColor(1, 0.72, 0.15)   -- the glowing contour in the gold of the bar's own title
     rim[i] = f
   end
   local pulse = CreateFrame("Frame", nil, P)
   pulse:SetScript("OnUpdate", function()
     local a = 0.5 + 0.5 * math.sin(GetTime() * 2.2)
-    nglow:SetAlpha(0.4 + 0.3 * a)
+    nglow:SetAlpha(0.35 + 0.35 * a)
     local face, size, flags = name:GetFont()
     for i = 1, 16 do
       local f = rim[i]
       if face and (f.face ~= face or f.size ~= size) then f:SetFont(face, size, flags); f.face, f.size = face, size; f:SetText("Azerloot") end
-      f:SetAlpha(math.floor(i / 2) * 2 == i and 0.35 or 0.8)
+      f:SetAlpha((math.floor(i / 2) * 2 == i and 0.25 or 0.55) * (0.25 + 0.75 * a))
     end
   end)
   local sub = Engraved(Font(P, "GameFontNormal", INK_SOFT, 13))
