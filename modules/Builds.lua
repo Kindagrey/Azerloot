@@ -127,6 +127,34 @@ function B.StripStart()
   end
 end
 
+-- Star of Mystaria was an amulet until the game's update of 22 October and is a trinket now:
+-- a build that wore it as its amulet wears it as a trinket (if a trinket place is free)
+function B.MoveStar(items)
+  local star, nt, twice = nil, 0, false
+  for n = 1, table.getn(items) do
+    local rec = items[n]
+    if rec.kind == "Amulets" and rec.id == "Star of Mystaria" then star = n
+    elseif rec.kind == "Trinkets" then
+      nt = nt + 1
+      if rec.id == "Star of Mystaria" then twice = true end
+    end
+  end
+  if not star then return end
+  if nt < MAX.Trinkets and not twice then items[star].kind = "Trinkets"
+  else table.remove(items, star) end
+end
+function B.MigrateStar()
+  if type(AzerlootDB) ~= "table" or type(AzerlootDB.builds) ~= "table" then return end
+  for cls, t in pairs(AzerlootDB.builds) do
+    if type(t) == "table" and type(t.list) == "table" then
+      for i = 1, NBUILDS do
+        local b = t.list[i]
+        if type(b) == "table" and type(b.items) == "table" then B.MoveStar(b.items) end
+      end
+    end
+  end
+end
+
 -- a new build in the first free place; its number
 function B.NewAt(cls, i)
   local t = B.All(cls)
@@ -544,6 +572,26 @@ local function Idx(list, name)
   return nil
 end
 local function Clean(s) return (string.gsub(s or "", "[~|%c]", "")) end
+-- the amulets' numbers in a code stay as they were when codes began (Star of Mystaria, once
+-- the second, is a trinket now); amulets added since follow on after them
+local OLD_AMULETS = { "Mark of Fordring", "Star of Mystaria", "Talvash's Enhancing Necklace",
+  "Pristine Enchanted South Seas Kelp", "Prestor's Talisman of Connivery", "Animated Chain Necklace",
+  "Woven Ivy Necklace", "Amulet of the Darkmoon", "Jeklik's Opaline Talisman", "The Eye of Hakkar",
+  "Medallion of Steadfast Might", "Choker of Enlightenment", "Amulet of Vek'nilash",
+  "Pendant of the Fallen Dragon", "Malice Stone Pendant", "Onyxia Tooth Pendant", "Choker of the Fire Lord" }
+local function AmuletNames()
+  local out, old = {}, {}
+  for i = 1, table.getn(OLD_AMULETS) do out[i] = OLD_AMULETS[i]; old[OLD_AMULETS[i]] = true end
+  local D = AZL.D
+  for i = 1, table.getn(D.amulets) do
+    if not old[D.amulets[i].name] then table.insert(out, D.amulets[i].name) end
+  end
+  return out
+end
+local function NameIdx(list, name)
+  for i = 1, table.getn(list) do if list[i] == name then return i end end
+  return nil
+end
 function B.Encode(cls, b)
   local D = AZL.D
   local parts = {}
@@ -554,7 +602,7 @@ function B.Encode(cls, b)
     elseif rec.kind == "Legendary" then code = "L." .. rec.id
     elseif rec.kind == "Rings" then code = Idx(D.rings, rec.id) and ("R." .. Idx(D.rings, rec.id))
     elseif rec.kind == "Trinkets" then code = Idx(D.trinkets, rec.id) and ("T." .. Idx(D.trinkets, rec.id))
-    elseif rec.kind == "Amulets" then code = Idx(D.amulets, rec.id) and ("A." .. Idx(D.amulets, rec.id)) end
+    elseif rec.kind == "Amulets" and Idx(D.amulets, rec.id) then code = "A." .. NameIdx(AmuletNames(), rec.id) end
     if code then table.insert(parts, code) end
   end
   return "AZL2~" .. cls .. "~" .. Clean(b.name) .. "~" .. (tonumber(b.spec) or 1) .. "~" .. Clean(b.note) .. "~" .. table.concat(parts, ",")
@@ -575,7 +623,11 @@ function B.Decode(code)
     elseif t == "L" then rec = { kind = "Legendary", id = id }
     elseif t == "R" and D.rings[tonumber(id) or 0] then rec = { kind = "Rings", id = D.rings[tonumber(id)].name }
     elseif t == "T" and D.trinkets[tonumber(id) or 0] then rec = { kind = "Trinkets", id = D.trinkets[tonumber(id)].name }
-    elseif t == "A" and D.amulets[tonumber(id) or 0] then rec = { kind = "Amulets", id = D.amulets[tonumber(id)].name } end
+    elseif t == "A" then
+      local nm = AmuletNames()[tonumber(id) or 0]
+      if nm == "Star of Mystaria" then rec = { kind = "Trinkets", id = nm }
+      elseif nm and Idx(D.amulets, nm) then rec = { kind = "Amulets", id = nm } end
+    end
     if rec and B.Entry(cls, rec) and not B.Has(b, RecKey(rec)) and not IsStart(cls, rec) then
       local sl = Slot(rec.kind)
       if count[sl] < MAX[sl] then count[sl] = count[sl] + 1; table.insert(b.items, rec) end
@@ -2573,4 +2625,5 @@ starter:SetScript("OnEvent", function()
   B.Migrate()
   B.MigrateSpecs()
   B.StripStart()
+  B.MigrateStar()
 end)

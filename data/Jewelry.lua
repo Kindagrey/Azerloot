@@ -73,13 +73,15 @@ Azerloot_Data.trinkets = {
   { name = "Major Soulstone", icon = "INV_Misc_Orb_04", cat = "Lives",
     values = { "+1 return to life at half health (2 at most)", "+1 return to life at half health (2 at most)", "+1 return to life at half health (2 at most)", "+2 return to life at half health (2 at most)", "+2 return to life at half health (2 at most)" },
     again = "Picked again, it refills its lives; it holds 2 at most." },
+  -- (an amulet until the game's update of 22 October; old shared codes still find it)
+  { name = "Star of Mystaria", icon = "INV_Enchant_EssenceMagicLarge", cat = "Damage reduction and health",
+    values = { "+21% max health, +3.4% damage reduction", "+28% max health, +4.4% damage reduction", "+33% max health, +5.3% damage reduction", "+40% max health, +6.4% damage reduction", "+48% max health, +7.6% damage reduction" },
+    again = "Picked again, it keeps growing, by a little less each time up to +50% max health, +8% damage reduction and by less and less past it." },
 }
 
 Azerloot_Data.amulets = {
   { name = "Mark of Fordring", icon = "INV_Jewelry_Talisman_07", rarity = "Common",
     effects = { "+15% damage" } },
-  { name = "Star of Mystaria", icon = "INV_Jewelry_Talisman_08", rarity = "Common",
-    effects = { "+25% max health", "+4% damage reduction" } },
   { name = "Talvash's Enhancing Necklace", icon = "INV_Jewelry_Necklace_02", rarity = "Common",
     effects = { "-10% cooldowns" } },
   { name = "Pristine Enchanted South Seas Kelp", icon = "INV_Jewelry_Necklace_26", rarity = "Common",
