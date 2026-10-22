@@ -1195,16 +1195,17 @@ local function EntryTitle(entry)
   return AzG(it.amulet), { 1, 0.5, 0 }, AzT("Legendary amulet - remakes %s", AzG(it.name))
 end
 
--- rising steps after a section's title, from common to legendary; hovering them tells
+-- a small white gem after a section's title; hovering it tells
 -- what the section means. `tip` nil hides them.
 function AzlSectionGems(h, tip)
   if type(h.gems) ~= "table" then
-    -- five steps in the rarities' colours, rising: the rarer, the stronger
+    -- one small white gem
     local f = CreateFrame("Frame", nil, h)
-    f:SetWidth(32); f:SetHeight(16)
+    f:SetWidth(12); f:SetHeight(12)
     local t = f:CreateTexture(nil, "OVERLAY")
-    t:SetTexture(MEDIA .. "rarity_steps.tga")
-    t:SetAllPoints(f)
+    t:SetTexture(MEDIA .. "gem_white.tga")
+    t:SetWidth(11); t:SetHeight(11)
+    t:SetPoint("CENTER", f, "CENTER", 0, 0)
     f.t = t
     f:EnableMouse(true)
     f:SetScript("OnEnter", function()
@@ -1221,7 +1222,7 @@ function AzlSectionGems(h, tip)
   f.tip = tip
   if not tip then f:Hide(); return end
   f:ClearAllPoints()
-  f:SetPoint("LEFT", h, "LEFT", 38 + (h.title:GetStringWidth() or 80) + 6, 1)
+  f:SetPoint("LEFT", h, "LEFT", 38 + (h.title:GetStringWidth() or 80) + 7, 0)
   f:Show()
 end
 -- the "?" after a jewel's section titles: what the section means
@@ -1563,7 +1564,7 @@ local function DrawDetail()
       else
         for en, tx in pairs(AZL_SECTION_HELP) do if AzT(en) == secs[s][1] then helpText = tx end end
       end
-      -- "A new one, by rarity": rising steps in the rarities' colours instead of the "?"
+      -- "A new one, by rarity": a small white gem instead of the "?"
       local gems = (secs[s][1] == AzT("A new one, by rarity")) and helpText
       AzlSectionGems(h, gems and { secs[s][1], AzT(helpText) } or nil)
       if gems then helpText = nil end
