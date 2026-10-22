@@ -219,10 +219,10 @@ ST.TABS = {
         end },
     } },
     { label = "Sounds", rows = {
-      { key = "soundSoon", kind = "choice", label = "Boss in 10 sec.", preview = "sound", sound = "soon",
+      { key = "soundSoon", kind = "choice", label = "Boss appears in 10 sec.", preview = "sound", sound = "soon",
         desc = "Played with the warning that a boss comes in 10 seconds.",
         options = SoundChoices, get = function() return SoundGet("soon") end, set = function(v) SoundSet("soon", v) end },
-      { key = "soundTurn", kind = "choice", label = "Boss phase", preview = "sound", sound = "turn",
+      { key = "soundTurn", kind = "choice", label = "Phase change", preview = "sound", sound = "turn",
         desc = "Played when a boss turns: a new phase or a new attack once wounded.",
         options = SoundChoices, get = function() return SoundGet("turn") end, set = function(v) SoundSet("turn", v) end },
     } },
