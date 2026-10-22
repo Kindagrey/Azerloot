@@ -1157,14 +1157,6 @@ function ST.Update()
           if def.kind == "toggle" then n, i = 2, Current(def) and 2 or 1
           else local k, o = OptIndex(def, Current(def)); n, i = table.getn(o), k end
           SegMarks(r, n, i)
-          -- a colour's marks: each in its own colour, the chosen one full, a palette to read
-          if def.colour then
-            local _, o = OptIndex(def, Current(def))
-            for k = 1, math.min(n, 9) do
-              local m, c = r.marks[k], o[k] and o[k].color
-              if m and c then m:SetVertexColor(c[1], c[2], c[3]); m:SetAlpha(k == i and 1 or 0.55) end
-            end
-          end
         end
       end
     end
