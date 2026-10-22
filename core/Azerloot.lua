@@ -3410,7 +3410,7 @@ local function BuildTitle(Strip)
     local ang, r = (i - 1) * math.pi / 8, (math.floor(i / 2) * 2 == i) and 2.5 or 1.5
     local f = P:CreateFontString(nil, "BORDER")
     f:SetPoint("CENTER", name, "CENTER", math.cos(ang) * r, math.sin(ang) * r)
-    f:SetTextColor(1, 0.72, 0.15)   -- the glowing contour in the gold of the bar's own title
+    f:SetTextColor(1, 0.82, 0)   -- the glowing contour in the gold of the bar's own title
     rim[i] = f
   end
   local pulse = CreateFrame("Frame", nil, P)
