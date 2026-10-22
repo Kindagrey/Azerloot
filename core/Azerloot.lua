@@ -3189,15 +3189,15 @@ local function BuildBossView(Strip)
       end
     end
   end)
-  -- the picked attack, set off as a note in the margin: a faint darker band of paper with an
-  -- arcane violet edge on its left (Azerloot's own colour), the name in violet ink over a
-  -- violet line that fades out, how often it comes on the right, and what it does below
-  local VIOLET = { 0.55, 0.2, 0.8 }
+  -- the picked attack, set off as a note in the margin: a faint darker band of paper with a
+  -- blood-red edge on its left, the name in red ink over a red line that fades out, how often
+  -- it comes on the right, and what it does below
+  local VIOLET = { 0.72, 0.1, 0.05 }   -- (the name stayed: it was violet once)
   B.dbg = ui.bossView:CreateTexture(nil, "BACKGROUND"); B.dbg:SetTexture(WHITE)
   B.dbg:SetVertexColor(0.42, 0.22, 0.05); B.dbg:SetAlpha(0.13); B.dbg:SetWidth(318)
   B.dbar = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dbar:SetTexture(WHITE)
   B.dbar:SetVertexColor(VIOLET[1], VIOLET[2], VIOLET[3]); B.dbar:SetAlpha(0.85); B.dbar:SetWidth(3)
-  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", { 0.42, 0.12, 0.62 }), 16))
+  B.dname = Engraved(Heading(Font(ui.bossView, "GameFontNormal", { 0.62, 0.06, 0.03 }), 16))
   B.dline = ui.bossView:CreateTexture(nil, "ARTWORK"); B.dline:SetTexture(WHITE)
   B.dline:SetHeight(1); B.dline:SetWidth(300)
   B.dline:SetGradientAlpha("HORIZONTAL", VIOLET[1], VIOLET[2], VIOLET[3], 0.8, VIOLET[1], VIOLET[2], VIOLET[3], 0)
