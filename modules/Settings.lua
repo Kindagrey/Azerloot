@@ -893,8 +893,8 @@ function ST.Build()
   -- a soft shadow under it, the dark wood, a gold frame with the book's brass corners below
   local sh = Tex(F, MEDIA .. "shadow.tga", "BACKGROUND"); sh:SetVertexColor(0, 0, 0); sh:SetAlpha(0.75)
   sh:SetPoint("TOPLEFT", F, "TOPLEFT", -26, 20); sh:SetPoint("BOTTOMRIGHT", F, "BOTTOMRIGHT", 26, -32)
-  local wood = Tex(F, MEDIA .. "card.tga", "BACKGROUND"); wood:SetAllPoints(F)
-  local dim = F:CreateTexture(nil, "BACKGROUND"); dim:SetTexture(WHITE); dim:SetVertexColor(0, 0, 0); dim:SetAlpha(0.22); dim:SetAllPoints(F)
+  local wood = Tex(F, MEDIA .. "leather.tga", "BACKGROUND"); wood:SetAllPoints(F)
+  local dim = F:CreateTexture(nil, "BACKGROUND"); dim:SetTexture(WHITE); dim:SetVertexColor(0, 0, 0); dim:SetAlpha(0.16); dim:SetAllPoints(F)
   Edge(F, 0, BRASS, 1, 2)
   Edge(F, 5, { 0.47, 0.33, 0.12 }, 1, 1)
   local cl, cr, ct, cb = 19 / 1024, 99 / 1024, 11 / 512, 91 / 512
