@@ -919,7 +919,7 @@ DRAW.tracker = function(f, def)
   if f.mode == "trackerScale" or f.mode == "trackerAlpha" then
     f.tag:SetText(f.mode == "trackerScale" and Pct(V("trackerScale")) or Pct(V("trackerAlpha")))
   end
-  if V("tracker") and not (f.mode == "spellTracker" and not f.spellOn) then f.off:Hide() else f.off:Show() end
+  if V("tracker") then f.off:Hide() else f.off:Show() end
   -- (back to the full bonus when another setting is shown)
   if f.mode ~= "spellTracker" then
     local R = f.mini.rows[table.getn(f.mini.rows)]
@@ -1542,11 +1542,36 @@ function ST.Tick(e)
         else
           R.bonus:SetTextColor(0.3, 1, 0.3); f.rise:SetAlpha(0)
         end
+        f.flyGlow:ClearAllPoints(); f.flyGlow:SetPoint("CENTER", R.icon, "CENTER", 0, 0)
+        f.flyGlow:SetVertexColor(1, 0.8, 0.3)
       else
+        -- not tracked: a spell is learned (it flares up at the right), heads for the list,
+        -- knocks against the window, which flashes red and keeps it out, and fades away
         f.rise:SetAlpha(0)
+        local W = f:GetWidth() or 258
+        if type(W) ~= "number" or W <= 0 then W = 258 end
+        local sx, sy = W - 34, py - mh / 2
+        local edge = px + mw + 12
+        local x = sx
+        local go = Ease((c - 1.0) / 0.6)
+        x = sx + (edge - sx) * go
+        local hit = c - 1.6
+        if hit > 0 then x = edge + 26 * math.sin(math.min(1, hit / 0.5) * 1.5708) end
+        f.fly:ClearAllPoints(); f.fly:SetPoint("CENTER", f, "TOPLEFT", x, sy + 3 * math.sin(T * 4))
+        flyA = math.min(Ease((c - 0.3) / 0.3), 1 - Ease((c - 2.3) / 0.5))
+        local pop = c - 0.3
+        glowA = (pop > 0 and pop < 0.7) and 0.9 * math.sin(pop / 0.7 * 3.1416) or 0
+        f.flyGlow:ClearAllPoints(); f.flyGlow:SetPoint("CENTER", f.fly, "CENTER", 0, 0)
+        f.flyGlow:SetVertexColor(1, 0.8, 0.3)
+        if hit > 0 and hit < 0.6 then
+          local k = math.sin(hit / 0.6 * 3.1416)
+          m:SetBackdropBorderColor(0.8 + 0.2 * k, 0.62 - 0.4 * k, 0.28 - 0.15 * k, 1)
+          if hit < 0.15 then
+            local nx = (math.sin(T * 60) * 1.2) / f.scCur
+            m:ClearAllPoints(); m:SetPoint("TOPLEFT", f, "TOPLEFT", px / f.scCur + nx, py / f.scCur)
+          end
+        end
       end
-      f.flyGlow:ClearAllPoints(); f.flyGlow:SetPoint("CENTER", R.icon, "CENTER", 0, 0)
-      f.flyGlow:SetVertexColor(1, 0.8, 0.3)
       f.rowFlash:ClearAllPoints(); f.rowFlash:SetPoint("LEFT", R.icon, "LEFT", -10, -4)
     else
       if f.rise then f.rise:SetAlpha(0) end
