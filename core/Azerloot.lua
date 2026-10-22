@@ -1195,22 +1195,17 @@ local function EntryTitle(entry)
   return AzG(it.amulet), { 1, 0.5, 0 }, AzT("Legendary amulet - remakes %s", AzG(it.name))
 end
 
--- five small gems after a section's title, from common to legendary; hovering them tells
+-- rising steps after a section's title, from common to legendary; hovering them tells
 -- what the section means. `tip` nil hides them.
 function AzlSectionGems(h, tip)
   if type(h.gems) ~= "table" then
+    -- five steps in the rarities' colours, rising: the rarer, the stronger
     local f = CreateFrame("Frame", nil, h)
-    f:SetWidth(5 * 12); f:SetHeight(12)
-    f.t = {}
-    for k = 1, 5 do
-      local t = f:CreateTexture(nil, "OVERLAY")
-      t:SetTexture(MEDIA .. "gem_white.tga")
-      t:SetWidth(11); t:SetHeight(11)
-      t:SetPoint("LEFT", f, "LEFT", (k - 1) * 12, 0)
-      local c = RARITY_COLOR[RARITY[k]]
-      t:SetVertexColor(c[1], c[2], c[3])
-      f.t[k] = t
-    end
+    f:SetWidth(32); f:SetHeight(16)
+    local t = f:CreateTexture(nil, "OVERLAY")
+    t:SetTexture(MEDIA .. "rarity_steps.tga")
+    t:SetAllPoints(f)
+    f.t = t
     f:EnableMouse(true)
     f:SetScript("OnEnter", function()
       if not this.tip then return end
@@ -1226,7 +1221,7 @@ function AzlSectionGems(h, tip)
   f.tip = tip
   if not tip then f:Hide(); return end
   f:ClearAllPoints()
-  f:SetPoint("LEFT", h, "LEFT", 38 + (h.title:GetStringWidth() or 80) + 7, 0)
+  f:SetPoint("LEFT", h, "LEFT", 38 + (h.title:GetStringWidth() or 80) + 6, 1)
   f:Show()
 end
 -- the "?" after a jewel's section titles: what the section means
@@ -1568,7 +1563,7 @@ local function DrawDetail()
       else
         for en, tx in pairs(AZL_SECTION_HELP) do if AzT(en) == secs[s][1] then helpText = tx end end
       end
-      -- "A new one, by rarity": five small gems in the rarities' colours instead of the "?"
+      -- "A new one, by rarity": rising steps in the rarities' colours instead of the "?"
       local gems = (secs[s][1] == AzT("A new one, by rarity")) and helpText
       AzlSectionGems(h, gems and { secs[s][1], AzT(helpText) } or nil)
       if gems then helpText = nil end
