@@ -379,7 +379,7 @@ function W.MoveMode(on)
       MoveText(f)
       -- what shows here, then (quieter) how to place it
       f.sub:SetText(AzT((kind == "main" and "A boss coming and turning, its attacks and its defeat.")
-        or (kind == "mid" and "Guardians approaching or slain, swarms, stampedes and walls of foes.")
+        or (kind == "mid" and "Guardians coming, waking or slain, lairs filling, swarms, stampedes and walls of foes.")
         or "Runes picked up, magnets, caches and achievements."))
       -- (on one line where it fits: the example uses the box's whole width)
       f.sub:SetWidth(BOX[kind].w - 40); f.hint:SetWidth(BOX[kind].w - 40)
@@ -508,7 +508,13 @@ if AZS_RegisterBannerHandler then
   W.banners = pcall(AZS_RegisterBannerHandler, function(b) W.OnBanner(b) end) and true or false
 end
 
+-- (and a guardian taking its lair again)
 local MID_TEXTS = {
+  ["%s claims its lair once more."] = true,
+  ["%s beansprucht seinen Hort erneut."] = true,
+  ["%s reprend son antre."] = true,
+  ["%s reclama su guarida una vez más."] = true,
+  ["%s toma o covil de volta."] = true,
   ["%s approaches!"] = true,
   ["%s approche !"] = true,
   ["%s naht!"] = true,
@@ -726,7 +732,13 @@ function W.Fill()
     bar.info:SetText(Clock(nb.left))
     W.leftAt, W.left = GetTime(), nb.left
     local sn = W.ShortName(b)
-    W.FitName(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)), sn and AzT("Next boss: %s", sn))
+    if not nb.name then
+      -- (endless: the next boss's name is not told)
+      bar.icon:SetTexture("Interface\\Icons\\INV_Misc_Bone_HumanSkull_01")
+      W.FitName(AzT("Next boss"), nil)
+    else
+      W.FitName(AzT("Next boss: %s", b and AzG(b.name) or tostring(nb.name)), sn and AzT("Next boss: %s", sn))
+    end
   end
 end
 
@@ -860,15 +872,47 @@ end
 local seen = {}       -- per boss id: the turns already announced
 local warned = {}     -- per schedule index: the 10-second warning given
 local alive = {}      -- the boss ids seen alive, to announce one once
+-- ---------- the guardians' lairs (the game's AZS_LAIRS) ----------
+-- In the orange place: a guardian waking up, and an empty lair about to fill (10 sec.). What
+-- is already so when first seen (a run joined late, a /reload) is not told.
+W.lairSeen, W.lairWarn = {}, {}
+local function LairSay(t) if W.AlertsOn() then Alert(t, nil, nil, nil, "mid") end end
+function W.Lairs()
+  local ok, lairs = pcall(function() return (AZS_GetLairs and AZS_GetLairs()) or AZS_LAIRS end)
+  if not ok or type(lairs) ~= "table" then return end
+  for i = 1, table.getn(lairs) do
+    local l = lairs[i]
+    local key = l.index or i
+    local st, left, name = l.state, tonumber(l.left), l.name
+    local prev = W.lairSeen[key]
+    W.lairSeen[key] = st
+    if type(name) == "string" and name ~= "" then
+      if prev and prev ~= "awake" and st == "awake" then
+        LairSay(G(function() return AzT("%s awakens!", name) end))
+      end
+      if st == "empty" and left and left > 0 and left <= 10 then
+        if not W.lairWarn[key] then
+          W.lairWarn[key] = true
+          if prev then LairSay(G(function() return AzT("%s takes its lair in 10 sec.", name) end)) end
+        end
+      elseif st ~= "empty" or (left and left > 10) then
+        W.lairWarn[key] = nil
+      end
+    end
+  end
+end
+
 function W.Update()
   local ph = Phase()
   local running = ph == "playing" or ph == "ready" or ph == "paused" or ph == "choosing"
   if not running then
     SetMode(nil, {})
     seen, warned, alive = {}, {}, {}
+    W.lairSeen, W.lairWarn = {}, {}
     return
   end
   if not W.On() then SetMode(nil, {}); return end
+  W.Lairs()
   local okB, bosses = pcall(function() return AZS_GetBosses and AZS_GetBosses() end)
   bosses = okB and type(bosses) == "table" and bosses or {}
   if table.getn(bosses) > 0 then
@@ -945,11 +989,22 @@ function W.Update()
     W.NoteLang(x.name)
     if tonumber(x.left) and (not nb or x.left < nb.left) then nb = x end
   end
+  -- endless mode: no schedule, the bosses come back on a timer (the game's AZSRUN: nb seconds,
+  -- nbn its name, empty there); told as a boss to come, by how many have come so far
+  if not nb and type(AZS_RUN) == "table" and tonumber(AZS_RUN.endl) == 1 and tonumber(AZS_RUN.nb) and AZS_RUN.nb >= 0 then
+    local nm = AZS_RUN.nbn
+    if nm == "" then nm = nil end
+    nb = { index = "endless" .. tostring(AZS_RUN.bs or ""), name = nm, left = AZS_RUN.nb, endless = true }
+  end
   if nb then
     if nb.left <= 10 and nb.left > 0 and not warned[nb.index or nb.name] then
       warned[nb.index or nb.name] = true
       local b = Lookup(nb.name)
-      Say(G(function() return AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)) end), nil, b and b.icon, "soon")
+      if nb.name then
+        Say(G(function() return AzT("%s in 10 sec.", b and AzG(b.name) or tostring(nb.name)) end), nil, b and b.icon, "soon")
+      else
+        Say(G(function() return AzT("A boss in 10 sec.") end), nil, nil, "soon")
+      end
     end
     SetMode("next", { nb = nb })
   else
