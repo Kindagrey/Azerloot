@@ -10,7 +10,7 @@
 * 🛠️ **Builds** – up to five builds per class, shareable as a short code, loadable at any time.
 * ⏳ **Chronicle** – your last 50 runs per class, your best run and personal bests kept for good.
 * 📋 **Wishlist window** – what you still need in this run, ticked off as it comes, with the next boss and its timer or the living boss's health; sized to your liking and click-through when locked.
-* 🔔 **Azerwarn** – warnings in the game's language, in three places: the boss in red (coming, turning, its attacks, its defeat), guardians and waves in orange (a guardian coming or slain, swarms, stampedes, walls of foes), runes, magnets, caches and achievements in green. Each can be moved and sized, with a sound of your choice (or none).
+* 🔔 **Azerwarn** – warnings in the game's language, in three places: the boss in red (coming, turning, its attacks, its defeat), guardians and waves in orange (a guardian coming or slain, swarms, stampedes, walls of foes), runes, magnets, caches and achievements in green. Each can be moved, sized and given a colour of your own, with a sound of your choice (or none).
 * 🌍 English, Deutsch, Français, Español, Português.
 
 ## 📦 Installation

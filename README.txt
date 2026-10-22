@@ -81,11 +81,12 @@ through it to the game; its headings still fold. Taking parts of a loaded build 
 the wishlist unloads the build ("Load into wishlist" brings it back whole).
 
 Search (top bar): rings, trinkets, amulets, boss loot, bosses, zones and pages.
-Settings (gear in the top bar, or a right-click on the minimap button): a window in three
+Settings (gear in the top bar, or a right-click on the minimap button): a window in four
 tabs, each setting with a live preview beside it. Book: font, language (English, Deutsch,
 Français, Español, Português or Auto) and size. Wishlist: the window on/off, locked, its
 size and opacity, the spell tracker, back to its first place. Azerwarn: warnings, the boss
-line, the warnings' font, the two sounds. A language takes effect with a reload.
+line, the warnings' font. Colours & sounds: a colour for each of the three warning places,
+and the two sounds. A language takes effect with a reload.
 
 
 FILES

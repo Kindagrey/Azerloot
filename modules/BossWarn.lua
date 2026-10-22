@@ -170,6 +170,32 @@ local BOX = {
     point = { "BOTTOM", "BOTTOM", 0, 190 } },
 }
 local Show
+-- the colours a player can give each of the three places (Settings - Azerwarn); first the
+-- ones they had from the start: red for bosses, orange for guardians and waves, green for the rest
+W.COLORS = {
+  { key = "red", label = "Red", c = { 1, 0.18, 0.12 } },
+  { key = "orange", label = "Orange", c = { 1, 0.55, 0.12 } },
+  { key = "yellow", label = "Yellow", c = { 1, 0.88, 0.2 } },
+  { key = "green", label = "Green", c = { 0.35, 1, 0.35 } },
+  { key = "teal", label = "Turquoise", c = { 0.25, 0.95, 0.85 } },
+  { key = "blue", label = "Blue", c = { 0.4, 0.68, 1 } },
+  { key = "purple", label = "Purple", c = { 0.78, 0.5, 1 } },
+  { key = "pink", label = "Pink", c = { 1, 0.5, 0.78 } },
+  { key = "white", label = "White", c = { 1, 1, 1 } },
+}
+W.COLOR_KEY = { main = "warnColorMain", mid = "warnColorMid", small = "warnColorSmall" }
+W.COLOR_FIRST = { main = "red", mid = "orange", small = "green" }
+-- a place's colour: the key the player chose (or its first one), and its r, g, b
+function W.ColourKey(kind)
+  local k = DB()[W.COLOR_KEY[kind] or ""]
+  for i = 1, table.getn(W.COLORS) do if W.COLORS[i].key == k then return k end end
+  return W.COLOR_FIRST[kind] or "red"
+end
+function W.ColourOf(key)
+  for i = 1, table.getn(W.COLORS) do if W.COLORS[i].key == key then return W.COLORS[i].c end end
+  return W.COLORS[1].c
+end
+function W.Colour(kind) return W.ColourOf(W.ColourKey(kind)) end
 -- the sounds a player can pick for a boss in 10 seconds and for a boss's turn (Settings -
 -- Azerwarn); played from their files: as named interface sounds the game cut them short in
 -- a busy fight. The first is none at all.
@@ -240,6 +266,13 @@ local function Place(f)
     f:SetPoint(c.point[1], UIParent, c.point[2], c.point[3] / sc, c.point[4] / sc)
   end
 end
+-- a colour chosen in the settings: the places that exist take it at once
+function W.ApplyColours()
+  for kind in pairs(BOX) do
+    local f = boxes[kind]
+    if f and f.text then local c = W.Colour(kind); f.text:SetTextColor(c[1], c[2], c[3]) end
+  end
+end
 -- while being moved: the example names the place's size
 local function MoveText(f)
   local title = (f.kind == "main" and "Boss warnings") or (f.kind == "mid" and "Guardians and waves") or "Small notices"
@@ -257,11 +290,10 @@ local function Box(kind)
   f.icon = ic
   local t = f:CreateFontString(nil, "OVERLAY")
   t:SetFont("Fonts\\MORPHEUS.TTF", c.big, "THICKOUTLINE")
-  -- danger in the raid warning's red; the good things (a rune, a magnet, a cache) in green
-  -- (guardians and waves between them, in orange)
-  if kind == "small" then t:SetTextColor(0.35, 1, 0.35)
-  elseif kind == "mid" then t:SetTextColor(1, 0.55, 0.12)
-  else t:SetTextColor(1, 0.18, 0.12) end
+  -- in the colour the player gave the place (danger red, guardians orange, the good things
+  -- green, unless they chose others)
+  local col = W.Colour(kind)
+  t:SetTextColor(col[1], col[2], col[3])
   Face(t, "head", "warn")
   t:SetPoint("TOP", f, "TOP", math.floor(c.icon / 2) + 3, 0)
   f.text = t

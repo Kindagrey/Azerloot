@@ -108,6 +108,18 @@ local function SoundChoices()
   for i = 1, table.getn(s) do table.insert(out, { value = s[i].key, label = s[i].label }) end
   return out
 end
+-- the three places' colours (Azerwarn keeps the list; the previews draw in them too)
+local function ColourChoices()
+  local out = {}
+  local c = (AzlW and AzlW.COLORS) or {}
+  for i = 1, table.getn(c) do table.insert(out, { value = c[i].key, label = c[i].label, color = c[i].c }) end
+  return out
+end
+local function ColourGet(kind) return (AzlW and AzlW.ColourKey and AzlW.ColourKey(kind)) or "red" end
+local function ColourSet(kind, key)
+  if AzlW and AzlW.COLOR_KEY then DB()[AzlW.COLOR_KEY[kind]] = key end
+  if AzlW and AzlW.ApplyColours then AzlW.ApplyColours() end
+end
 local function SoundGet(what)
   local sd = AzlW and AzlW.SoundPick and AzlW.SoundPick(what)
   return sd and sd.key or "raid"
@@ -221,6 +233,24 @@ ST.TABS = {
           if v ~= "book" and v ~= "classic" and AZL and AZL.FaceKey and AZL.FaceKey("warn") ~= v then DB().warnFont = "book" end
         end },
     } },
+    { label = "Windows", rows = {
+      { key = "arrangeWarn", kind = "action", label = "Arrange windows", button = "Arrange", preview = "arrange", closes = true,
+        desc = "Move the wishlist window and the three warning places where you like them; the mouse wheel sizes the warnings. Shift-click on the minimap button does the same.",
+        run = function() if Azerloot_LayoutMode then Azerloot_LayoutMode(true) end end },
+    } },
+  } },
+  { key = "look", label = "Colours & sounds", sections = {
+    { label = "Colours", rows = {
+      { key = "warnColorMain", kind = "choice", label = "Boss warnings", preview = "warnings", colour = "main",
+        desc = "The colour of the big words when a boss comes, turns or falls.",
+        options = ColourChoices, get = function() return ColourGet("main") end, set = function(v) ColourSet("main", v) end },
+      { key = "warnColorMid", kind = "choice", label = "Guardians and waves", preview = "warnings", colour = "mid",
+        desc = "The colour of guardians, swarms, stampedes and walls of foes.",
+        options = ColourChoices, get = function() return ColourGet("mid") end, set = function(v) ColourSet("mid", v) end },
+      { key = "warnColorSmall", kind = "choice", label = "Small notices", preview = "warnings", colour = "small",
+        desc = "The colour of runes, magnets, caches and achievements.",
+        options = ColourChoices, get = function() return ColourGet("small") end, set = function(v) ColourSet("small", v) end },
+    } },
     { label = "Sounds", rows = {
       { key = "soundSoon", kind = "choice", label = "Boss appears in 10 sec.", preview = "sound", sound = "soon",
         desc = "Played with the warning that a boss comes in 10 seconds.",
@@ -228,11 +258,6 @@ ST.TABS = {
       { key = "soundTurn", kind = "choice", label = "Phase change", preview = "sound", sound = "turn",
         desc = "Played when a boss turns: a new phase or a new attack once wounded.",
         options = SoundChoices, get = function() return SoundGet("turn") end, set = function(v) SoundSet("turn", v) end },
-    } },
-    { label = "Windows", rows = {
-      { key = "arrangeWarn", kind = "action", label = "Arrange windows", button = "Arrange", preview = "arrange", closes = true,
-        desc = "Move the wishlist window and the three warning places where you like them; the mouse wheel sizes the warnings. Shift-click on the minimap button does the same.",
-        run = function() if Azerloot_LayoutMode then Azerloot_LayoutMode(true) end end },
     } },
   } },
 }
@@ -247,6 +272,12 @@ local function OptIndex(def, v)
   local o = def.options()
   for i = 1, table.getn(o) do if o[i].value == v then return i, o end end
   return 1, o
+end
+local function ColourOfKind(kind, def)
+  -- (the row being changed shows the colour it would get)
+  if def and def.colour == kind and AzlW and AzlW.ColourOf then return AzlW.ColourOf(Current(def)) end
+  if AzlW and AzlW.Colour then return AzlW.Colour(kind) end
+  return (kind == "small" and { 0.35, 1, 0.35 }) or (kind == "mid" and { 1, 0.55, 0.12 }) or { 1, 0.18, 0.12 }
 end
 function ST.ValueText(def)
   local v = Current(def)
@@ -388,6 +419,11 @@ local function MakeRow(parent)
   r.value = Text(r, "body", 12, INK)
   r.value:SetPoint("CENTER", r, "RIGHT", -90, 2)
   r.value:SetWidth(150); r.value:SetJustifyH("CENTER")
+  -- a colour's little square before its name (for the warnings' colours)
+  r.swEdge = r:CreateTexture(nil, "ARTWORK"); r.swEdge:SetTexture(WHITE); r.swEdge:SetVertexColor(0.15, 0.08, 0.02)
+  r.swEdge:SetWidth(12); r.swEdge:SetHeight(12); r.swEdge:Hide()
+  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetTexture(WHITE)
+  r.swatch:SetWidth(10); r.swatch:SetHeight(10); r.swatch:SetPoint("CENTER", r.swEdge, "CENTER", 0, 0); r.swatch:Hide()
   -- a value just changed lights up for a moment
   local fl = r:CreateTexture(nil, "ARTWORK"); fl:SetTexture(MEDIA .. "glow.tga"); fl:SetBlendMode("ADD")
   fl:SetVertexColor(1, 0.75, 0.3); fl:SetWidth(176); fl:SetHeight(30); fl:SetPoint("CENTER", r.value, "CENTER", 0, -1); fl:SetAlpha(0)
@@ -712,8 +748,25 @@ BUILD.tracker = function(f)
   bd.word:Hide(); bd:Hide()
   f.badge = bd
   local cf = CreateFrame("Frame", nil, f); cf:SetAllPoints(f); cf:SetFrameLevel(f:GetFrameLevel() + 4)
-  f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(22); f.pointer:SetHeight(22); f.pointer:Hide()
+  f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(22); f.pointer:SetHeight(22); f.pointer:SetAlpha(0)
   f.dx, f.dy, f.lockView, f.lockFree = 0, 0, false, false
+  -- where the window would be at 100% (Size) or when it is off (Window): a fine gold frame
+  local ol = CreateFrame("Frame", nil, f); ol:SetFrameLevel(f:GetFrameLevel() + 1); ol:SetWidth(117); ol:SetHeight(60)
+  ol.edges = Edge(ol, 0, GOLD, 0.8)
+  ol.tag = Text(ol, "body", 9, GOLD); ol.tag:SetPoint("BOTTOMLEFT", ol, "TOPLEFT", 0, 2); ol.tag:SetShadowColor(0, 0, 0, 1); ol.tag:SetShadowOffset(1, -1)
+  ol:SetAlpha(0)
+  f.outline = ol
+  -- a number by the window: its size or how dark it is, counting as it changes
+  f.tag = Text(cf, "head", 16, GOLD); f.tag:SetShadowColor(0, 0, 0, 1); f.tag:SetShadowOffset(1, -1); f.tag:SetAlpha(0)
+  -- the size grip at the window's corner, taken by the pointer
+  f.grip = Tex(cf, MEDIA .. "grip.tga", "ARTWORK"); f.grip:SetWidth(14); f.grip:SetHeight(14); f.grip:SetAlpha(0)
+  -- a spell picked up in the run: its icon flies into the window
+  f.fly = Tex(cf, "Interface\\Icons\\Spell_Nature_StarFall", "ARTWORK"); f.fly:SetWidth(20); f.fly:SetHeight(20); f.fly:SetAlpha(0)
+  f.flyGlow = cf:CreateTexture(nil, "BORDER"); f.flyGlow:SetTexture(MEDIA .. "glow.tga"); f.flyGlow:SetBlendMode("ADD")
+  f.flyGlow:SetVertexColor(0.4, 1, 0.4); f.flyGlow:SetWidth(46); f.flyGlow:SetHeight(46); f.flyGlow:SetPoint("CENTER", f.fly, "CENTER", 0, 0); f.flyGlow:SetAlpha(0)
+  f.rowFlash = cf:CreateTexture(nil, "BORDER"); f.rowFlash:SetTexture(MEDIA .. "glow.tga"); f.rowFlash:SetBlendMode("ADD")
+  f.rowFlash:SetVertexColor(0.4, 1, 0.4); f.rowFlash:SetWidth(150); f.rowFlash:SetHeight(30); f.rowFlash:SetAlpha(0)
+  f.mode, f.onWant, f.spellOn = false, true, true
   f.off = OffMark(f)
 end
 BUILD.reset = function(f)
@@ -734,7 +787,7 @@ BUILD.arrange = function(f)
   local function Box(y, w, c)
     local b = CreateFrame("Frame", nil, f); b:SetWidth(w); b:SetHeight(18); b:SetPoint("TOP", f, "TOP", 50, y)
     local bg = b:CreateTexture(nil, "BACKGROUND"); bg:SetTexture(WHITE); bg:SetVertexColor(0, 0, 0); bg:SetAlpha(0.5); bg:SetAllPoints(b)
-    Edge(b, 0, c, 1)
+    b.edges = Edge(b, 0, c, 1)
     return b
   end
   f.boxes = { Box(-14, 130, { 1, 0.18, 0.12 }), Box(-40, 100, { 1, 0.55, 0.12 }), Box(-82, 80, { 0.35, 1, 0.35 }) }
@@ -754,6 +807,7 @@ BUILD.warnings = function(f)
   -- a red flare behind the boss warning as it comes
   f.flare = f:CreateTexture(nil, "BORDER"); f.flare:SetTexture(MEDIA .. "glow.tga"); f.flare:SetBlendMode("ADD")
   f.flare:SetVertexColor(1, 0.25, 0.1); f.flare:SetWidth(230); f.flare:SetHeight(60); f.flare:SetPoint("CENTER", f.main, "CENTER", 0, 0); f.flare:SetAlpha(0)
+  f.focus = false
   f.off = OffMark(f)
 end
 BUILD.bossline = function(f)
@@ -857,14 +911,28 @@ DRAW.tracker = function(f, def)
       bd.lock:SetVertexColor(0.75, 0.75, 0.75); bd.lock:SetAlpha(0.6); bd.glow:SetAlpha(0); bd.ring:SetVertexColor(0.6, 0.6, 0.6)
       bd.word:SetText(AzT("Free to move")); bd.word:SetTextColor(0.85, 0.85, 0.85)
     end
-    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60, -14 - 6); f.pointer:Show()
   else
-    bd:Hide(); bd.word:Hide(); f.pointer:Hide()
+    bd:Hide(); bd.word:Hide()
+  end
+  f.mode = def and def.key or false
+  f.onWant, f.spellOn = V("tracker") and true or false, V("spellTracker") and true or false
+  -- (the spell tracker's own show sets the spell row itself)
+  if f.mode == "spellTracker" then f.mini.spellWant = f.spellOn and 1 or 0 end
+  if f.mode == "trackerScale" or f.mode == "trackerAlpha" then
+    f.tag:SetText(f.mode == "trackerScale" and Pct(V("trackerScale")) or Pct(V("trackerAlpha")))
   end
   if V("tracker") then f.off:Hide() else f.off:Show() end
 end
 DRAW.reset = function(f, def) f.mini:Draw(true, 0.35, 0.6, false) end
-DRAW.arrange = function(f, def) f.hint:SetText(AzT("Shift-click: move the wishlist and the warnings")) end
+DRAW.arrange = function(f, def)
+  f.hint:SetText(AzT("Shift-click: move the wishlist and the warnings"))
+  -- the three places' edges in their colours
+  local kinds = { "main", "mid", "small" }
+  for i = 1, 3 do
+    local c = ColourOfKind(kinds[i])
+    for _, t in ipairs(f.boxes[i].edges) do t:SetVertexColor(c[1], c[2], c[3]) end
+  end
+end
 DRAW.warnings = function(f, def)
   local key = DB().warnFont or "book"
   if def.key == "warnFont" then key = Current(def) end
@@ -875,6 +943,11 @@ DRAW.warnings = function(f, def)
   FitFont(f.main, head, 20, room, AzT("%s in 10 sec.", AzG and AzG("Hogger") or "Hogger"))
   FitFont(f.mid, head, 15, room, AzG and AzG("A wall of foes closes in!") or "A wall of foes closes in!")
   FitFont(f.small, head, 12, room, AzT("%s picked up!", AzG and AzG("Restoration Rune") or "Restoration Rune"))
+  -- in the colours the player gave them; a colour being chosen puts its line forward
+  local c1, c2, c3 = ColourOfKind("main", def), ColourOfKind("mid", def), ColourOfKind("small", def)
+  f.main:SetTextColor(c1[1], c1[2], c1[3]); f.mid:SetTextColor(c2[1], c2[2], c2[3]); f.small:SetTextColor(c3[1], c3[2], c3[3])
+  f.flare:SetVertexColor(c1[1], c1[2] * 0.6 + 0.1, c1[3] * 0.6 + 0.05)
+  f.focus = def.colour or false
   local on = WarnGet("bossAlerts")
   if def.key == "bossAlerts" then on = Current(def) end
   if on then f.off:Hide() else f.off:Show() end
@@ -895,6 +968,7 @@ DRAW.sound = function(f, def)
   local room = (f:GetWidth() or 258) - 20
   if type(room) ~= "number" or room <= 0 then room = 238 end
   FitFont(f.word, head, 18, room, text)
+  local wc = ColourOfKind("main"); f.word:SetTextColor(wc[1], wc[2], wc[3])
   f.word:SetAlpha(off and 0.35 or 0.9)
 end
 
@@ -1033,7 +1107,7 @@ function ST.Update()
       r.label:SetWidth(room)
       if sel then r.band:Show(); r.bandFrame:Show() else r.band:Hide(); r.bandFrame:Hide() end
       if def.kind == "action" then
-        r.value:Hide(); r.prev:Hide(); r.next:Hide()
+        r.value:Hide(); r.prev:Hide(); r.next:Hide(); r.swEdge:Hide(); r.swatch:Hide()
         for _, m in pairs(r.marks) do m:Hide() end
         HideRangeBar(r)
         r.action.text:SetText(AzT(def.button or "OK")); r.action:Show()
@@ -1051,6 +1125,16 @@ function ST.Update()
           if AZL and AZL.SetFace then AZL.SetFace(r.value, "body", FRIZ, 10, "") else r.value:SetFont(FRIZ, 10) end
         end
         r.value:SetTextColor(vc[1], vc[2], vc[3])
+        local sw
+        if def.kind == "choice" then local k, o = OptIndex(def, Current(def)); sw = o[k] and o[k].color end
+        if sw then
+          local w = r.value:GetStringWidth() or 60
+          if type(w) ~= "number" then w = 60 end
+          r.swEdge:ClearAllPoints(); r.swEdge:SetPoint("CENTER", r.value, "CENTER", -(w / 2 + 10), 0)
+          r.swatch:SetVertexColor(sw[1], sw[2], sw[3]); r.swEdge:Show(); r.swatch:Show()
+        else
+          r.swEdge:Hide(); r.swatch:Hide()
+        end
         -- the arrows: dark ink on the page, gold on the chosen row, bright under the mouse
         for _, a in ipairs({ r.prev, r.next }) do
           if a.lit then a.tex:SetVertexColor(1, 1, 0.75); a.tex:SetAlpha(1)
@@ -1337,12 +1421,31 @@ function ST.Tick(e)
     f.pct:SetText(Pct(f.cur))
     f.frame100:SetAlpha(0.4 + 0.3 * math.sin(T * 2.2))
   elseif pv == "tracker" then
-    -- the window slides in, takes its size and darkness smoothly, its rows catch the light;
-    -- free (Locked: Off) the pointer drags it about
-    f.scCur = Toward(f.scCur, f.scWant or 0.75, e, 8)
-    f.alCur = Toward(f.alCur, f.alWant or 0.35, e, 8)
+    -- one small window, a different little show for each setting, all looping:
+    --   Window: there with its rows catching the light, or gone with only its place outlined
+    --   Size: from 100% (its gold outline) the pointer pulls the corner out to the size chosen
+    --   Opacity: its background darkens from clear to the darkness chosen, the number with it
+    --   Spell tracker: a spell's icon flies in and its line slides into the list (or fades away)
+    --   Locked: the pointer pulls at it in vain (On) or drags it about (Off)
     local m = f.mini
-    m.spellK = Toward(m.spellK, m.spellWant or 1, e, 8)
+    local mode = f.mode
+    local sc100 = 0.75
+    local scW, alW = f.scWant or 0.75, f.alWant or 0.35
+    local c4 = Mod(T, 4.4)
+    local swing = Ease((c4 - 0.7) / 0.9) - Ease((c4 - 3.2) / 0.8)   -- 0 .. 1 .. 0 in a loop
+    local sc, al = scW, alW
+    if mode == "trackerScale" then sc = sc100 + (scW - sc100) * swing
+    elseif mode == "trackerAlpha" then al = alW * swing end
+    f.scCur = Toward(f.scCur, sc, e, mode == "trackerScale" and 30 or 8)
+    f.alCur = Toward(f.alCur, al, e, mode == "trackerAlpha" and 30 or 8)
+    -- the spell row
+    if mode == "spellTracker" then
+      local c = Mod(T, 4.6)
+      if f.spellOn then m.spellK = Ease((c - 1.2) / 0.45) * (1 - Ease((c - 4.1) / 0.4))
+      else m.spellK = 0 end
+    else
+      m.spellK = Toward(m.spellK, m.spellWant or 1, e, 8)
+    end
     m:Layout()
     m:SetScale(f.scCur)
     m:SetBackdropColor(0, 0, 0, f.alCur); m:SetBackdropBorderColor(0.8, 0.62, 0.28, math.min(1, f.alCur + 0.4))
@@ -1350,16 +1453,80 @@ function ST.Tick(e)
     local dx, dy = 0, 0
     -- (only right and down from its place, so it never leaves the box)
     if f.lockFree then dx, dy = 16 + 16 * math.sin(T * 1.3), -5 + 5 * math.sin(T * 2.6) end
-    m:ClearAllPoints(); m:SetPoint("TOPLEFT", f, "TOPLEFT", (14 + inX + dx) / f.scCur, (-14 + dy) / f.scCur)
-    m:SetAlpha(Ease(T / 0.5) * (1 - 0.75 * offK))
+    -- locked: the pointer pulls, the window does not follow (a tiny shudder), the lock flares
+    local tug = 0
+    if f.lockView and not f.lockFree then
+      local c = Mod(T, 3)
+      tug = Ease((c - 0.6) / 0.35) - Ease((c - 1.5) / 0.3)
+    end
+    local shake = (tug > 0.85) and math.sin(T * 45) * 0.8 or 0
+    local px, py = 14 + inX + dx + shake, -14 + dy
+    m:ClearAllPoints(); m:SetPoint("TOPLEFT", f, "TOPLEFT", px / f.scCur, py / f.scCur)
+    local mw, mh = 156 * f.scCur, (m:GetHeight() or 80) * f.scCur
+    if type(mh) ~= "number" then mh = 60 end
+    -- Window: off, the window fades away and its place stays outlined
+    local winA = 1
+    if mode == "tracker" then
+      f.winK = Toward(f.winK, f.onWant and 1 or 0, e, 6)
+      winA = f.winK
+    end
+    m:SetAlpha(Ease(T / 0.5) * winA)
     m:Shine(T)
+    -- the outline: 100% for Size, the empty place for Window off
+    local ol = f.outline
+    local olA = 0
+    if mode == "trackerScale" then
+      ol:SetWidth(156 * sc100); ol:SetHeight((m:GetHeight() or 80) * sc100); ol.tag:SetText("100%")
+      olA = 0.7 * Ease(T / 0.6)
+    elseif mode == "tracker" then
+      ol:SetWidth(mw); ol:SetHeight(mh); ol.tag:SetText("")
+      olA = (1 - winA) * (0.45 + 0.25 * math.sin(T * 2.4))
+    end
+    ol:ClearAllPoints(); ol:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -14); ol:SetAlpha(olA)
+    -- the number and the size grip
+    local tagA, gripA = 0, 0
+    if mode == "trackerScale" or mode == "trackerAlpha" then
+      tagA = Ease((T - 0.3) / 0.4)
+      local shown = (mode == "trackerScale") and (f.scCur / sc100) or f.alCur
+      f.tag:SetText(Pct(shown))
+      f.tag:ClearAllPoints(); f.tag:SetPoint("LEFT", f, "TOPLEFT", px + mw + 12, py - mh / 2)
+    end
+    f.tag:SetAlpha(tagA)
+    -- the pointer: on the window's head (Locked), on its corner grip (Size)
+    local ptA, ptx, pty = 0, px + 60, py - 6
     if f.lockView then
-      f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60 + inX + dx, -14 - 6 + dy)
-      f.pointer:SetAlpha(Ease((T - 0.4) / 0.4))
+      ptA = Ease((T - 0.4) / 0.4)
+      ptx = px + 60 + 14 * tug - shake
       local bd = f.badge
       bd:SetAlpha(Ease((T - 0.2) / 0.5)); bd.word:SetAlpha(Ease((T - 0.35) / 0.5))
-      if not f.lockFree then bd.glow:SetAlpha(0.4 + 0.2 * math.sin(T * 2.5)) end
+      if not f.lockFree then bd.glow:SetAlpha(0.35 + 0.15 * math.sin(T * 2.5) + 0.5 * math.max(0, tug - 0.5) * 2) end
+    elseif mode == "trackerScale" then
+      ptA = Ease((T - 0.4) / 0.4); ptx, pty = px + mw - 6, py - mh + 6
+      gripA = ptA
     end
+    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", ptx, pty); f.pointer:SetAlpha(ptA)
+    f.grip:ClearAllPoints(); f.grip:SetPoint("BOTTOMRIGHT", f, "TOPLEFT", px + mw - 1, py - mh + 1); f.grip:SetAlpha(gripA)
+    -- Spell tracker: the icon flies in from the right to the window's last line
+    local flyA, glowA, rowA = 0, 0, 0
+    if mode == "spellTracker" then
+      local c = Mod(T, 4.6)
+      local fk = Ease((c - 0.3) / 0.9)
+      local sx, sy = (f:GetWidth() or 258) - 30, -70
+      if type(sx) ~= "number" then sx = 228 end
+      local tx, ty = px + 13 * f.scCur, py - ((m.hOff or 50) - 0.5) * f.scCur
+      f.fly:ClearAllPoints(); f.fly:SetPoint("CENTER", f, "TOPLEFT", sx + (tx - sx) * fk, sy + (ty - sy) * fk + 18 * math.sin(fk * 3.1416))
+      if f.spellOn then
+        flyA = math.min(Ease((c - 0.2) / 0.2), 1 - Ease((c - 1.15) / 0.2))
+        local r = c - 1.2
+        rowA = (r > 0 and r < 0.9) and 0.6 * math.sin(r / 0.9 * 3.1416) or 0
+      else
+        -- not tracked: it never reaches the list, it fades on the way
+        flyA = math.min(Ease((c - 0.2) / 0.2), 1 - Ease((c - 0.7) / 0.35))
+      end
+      glowA = flyA * 0.6
+      f.rowFlash:ClearAllPoints(); f.rowFlash:SetPoint("LEFT", f, "TOPLEFT", px - 6, ty - 3)
+    end
+    f.fly:SetAlpha(flyA); f.flyGlow:SetAlpha(glowA); f.rowFlash:SetAlpha(rowA)
   elseif pv == "reset" then
     -- the window glides home from where it was put, its first place lights up as it lands
     local c = Mod(T, 4.2)
@@ -1402,9 +1569,19 @@ function ST.Tick(e)
     local c = Mod(T, 3.6)
     local function A(start) local x = c - start; if x < 0 then return 0 end; return math.max(0, math.min(1, Ease(x / 0.3), (2.6 - x) / 0.5)) end
     local k = 1 - 0.8 * offK
-    f.main:SetAlpha(A(0.1) * k); f.mid:SetAlpha(A(0.45) * k); f.small:SetAlpha(A(0.8) * k)
+    local function F(kind) if f.focus and f.focus ~= kind then return 0.3 end return 1 end
+    if f.focus then
+      -- a colour being chosen: its line stays, gently breathing; the others wait faintly behind
+      local br = 0.85 + 0.15 * math.sin(T * 3)
+      f.main:SetAlpha(Ease(T / 0.4) * F("main") * (f.focus == "main" and br or 1))
+      f.mid:SetAlpha(Ease((T - 0.15) / 0.4) * F("mid") * (f.focus == "mid" and br or 1))
+      f.small:SetAlpha(Ease((T - 0.3) / 0.4) * F("small") * (f.focus == "small" and br or 1))
+    else
+      f.main:SetAlpha(A(0.1) * k); f.mid:SetAlpha(A(0.45) * k); f.small:SetAlpha(A(0.8) * k)
+    end
     local fx = c - 0.1
-    f.flare:SetAlpha((fx > 0 and fx < 0.8) and 0.55 * math.sin(fx / 0.8 * 3.1416) * k or 0)
+    if f.focus then fx = Mod(T, 2.4) end
+    f.flare:SetAlpha((fx > 0 and fx < 0.8 and (not f.focus or f.focus == "main")) and 0.55 * math.sin(fx / 0.8 * 3.1416) * k or 0)
   elseif pv == "bossline" then
     -- the next boss's time running down, its colour from yellow through orange to red; at zero
     -- the line flares as the boss comes
