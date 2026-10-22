@@ -2351,7 +2351,7 @@ end
 local function ShowCrumbs(labels)
   local c = ui.crumbs
   local n = table.getn(labels)
-  local avail = (820 - 100 - 190 - 10) - (50 + (ui.title:GetStringWidth() or 100) + 6) - 12
+  local avail = (820 - 97 - 190 - 10) - (50 + (ui.title:GetStringWidth() or 100) + 6) - 12
   local cut, shown = {}, {}
   for i = 1, n do shown[i] = labels[i] end
   for guard = 1, 300 do
@@ -2934,7 +2934,7 @@ local function BuildSettings(search)
   local gear = CreateFrame("Button", nil, frame)
   OnPage(gear)
   gear:SetWidth(19); gear:SetHeight(19)
-  gear:SetPoint("LEFT", search, "RIGHT", 22, 0)   -- (beside the cross; their medallions do not touch)
+  gear:SetPoint("LEFT", search, "RIGHT", 19, 0)   -- (beside the cross; their medallions do not touch)
   local gt = Tex(gear, "gear.tga", "ARTWORK"); gt:SetAllPoints(gear)
   -- under the mouse it sits on a small dark medallion with a gold rim (inside the bar's band)
   local gd = Tex(gear, "btn_disc.tga", "BORDER"); gd:SetWidth(24); gd:SetHeight(24); gd:SetPoint("CENTER", gear, "CENTER", 0, 0); gd:Hide()
@@ -3736,7 +3736,7 @@ local function Build()
   local search = CreateFrame("EditBox", "AzerlootSearch", frame, "InputBoxTemplate")
   OnPage(search)
   search:SetWidth(190); search:SetHeight(22)
-  search:SetPoint("RIGHT", bar, "RIGHT", -100, 0)   -- (room for the two medallions, clear of the gold end)
+  search:SetPoint("RIGHT", bar, "RIGHT", -97, 0)   -- (room for the two medallions, clear of the gold end)
   search:SetAutoFocus(false)
   -- its own look: a slot sunk into the band with a fine gold rim, a gold magnifier at its
   -- start, and the word "Search" inside it while it is empty (the template's box hidden)
@@ -3801,7 +3801,7 @@ local function Build()
   local close = CreateFrame("Button", nil, frame)
   OnPage(close)
   close:SetWidth(19); close:SetHeight(19)
-  close:SetPoint("LEFT", search, "RIGHT", 47, 0)
+  close:SetPoint("LEFT", search, "RIGHT", 44, 0)
   do
     local ct = Tex(close, "close.tga", "ARTWORK"); ct:SetAllPoints(close)
     local cd = Tex(close, "btn_disc.tga", "BORDER"); cd:SetWidth(24); cd:SetHeight(24); cd:SetPoint("CENTER", close, "CENTER", 0, 0); cd:Hide()
