@@ -2351,7 +2351,7 @@ end
 local function ShowCrumbs(labels)
   local c = ui.crumbs
   local n = table.getn(labels)
-  local avail = (820 - 70 - 170 - 10 - (ui.searchHint:GetStringWidth() or 40)) - (50 + (ui.title:GetStringWidth() or 100) + 6) - 12
+  local avail = (820 - 100 - 190 - 10) - (50 + (ui.title:GetStringWidth() or 100) + 6) - 12
   local cut, shown = {}, {}
   for i = 1, n do shown[i] = labels[i] end
   for guard = 1, 300 do
@@ -3735,11 +3735,31 @@ local function Build()
 
   local search = CreateFrame("EditBox", "AzerlootSearch", frame, "InputBoxTemplate")
   OnPage(search)
-  search:SetWidth(170); search:SetHeight(20)
+  search:SetWidth(190); search:SetHeight(22)
   search:SetPoint("RIGHT", bar, "RIGHT", -100, 0)   -- (room for the two medallions, clear of the gold end)
   search:SetAutoFocus(false)
+  -- its own look: a slot sunk into the band with a fine gold rim, a gold magnifier at its
+  -- start, and the word "Search" inside it while it is empty (the template's box hidden)
+  for _, part in ipairs({ "Left", "Middle", "Right" }) do
+    local t = getglobal("AzerlootSearch" .. part)
+    if t and t.Hide then t:Hide() end
+  end
+  do
+    local CAP = 15   -- (the ends keep the picture's round shape)
+    local l = Tex(search, "search_box.tga", "BACKGROUND"); l:SetWidth(CAP); l:SetHeight(22)
+    l:SetPoint("LEFT", search, "LEFT", 0, 0); l:SetTexCoord(0, 22 / 256, 0, 1)
+    local r = Tex(search, "search_box.tga", "BACKGROUND"); r:SetWidth(CAP); r:SetHeight(22)
+    r:SetPoint("RIGHT", search, "RIGHT", 0, 0); r:SetTexCoord(1 - 22 / 256, 1, 0, 1)
+    local m = Tex(search, "search_box.tga", "BACKGROUND"); m:SetHeight(22)
+    m:SetPoint("LEFT", l, "RIGHT", 0, 0); m:SetPoint("RIGHT", r, "LEFT", 0, 0); m:SetTexCoord(22 / 256, 1 - 22 / 256, 0, 1)
+    local g = Tex(search, "search_glass.tga", "ARTWORK"); g:SetWidth(14); g:SetHeight(14)
+    g:SetPoint("LEFT", search, "LEFT", 7, 0)
+    search.glass = g
+  end
+  if search.SetTextInsets then search:SetTextInsets(25, 10, 0, 0) end
   search:SetScript("OnTextChanged", function()
     local s = this:GetText() or ""
+    if this.HintLook then this.HintLook() end
     if s == state.search then return end -- SetText from the addon itself
     state.search = s
     if s ~= "" then
@@ -3753,11 +3773,23 @@ local function Build()
   search:SetScript("OnEscapePressed", function() this:SetText(""); this:ClearFocus() end)
   search:SetScript("OnEnterPressed", function() this:ClearFocus() end)
   ui.search = search
-  local hint = Carved(Font(frame, "GameFontNormalSmall", { 0.9, 0.85, 0.75 }))
+  local hint = Font(search, "GameFontNormalSmall", { 0.62, 0.55, 0.45 })
   SetFace(hint, "body", FONT, 12)
-  hint:SetPoint("RIGHT", search, "LEFT", -10, 0)
+  hint:SetPoint("LEFT", search, "LEFT", 26, 0)
   hint:SetText(AzT("Search"))
   ui.searchHint = hint
+  -- the word inside only while the box is empty and not being typed in
+  local function HintLook()
+    local empty = (search:GetText() or "") == ""
+    if empty and not search.typing then hint:Show() else hint:Hide() end
+    if search.glass then
+      if search.typing then search.glass:SetVertexColor(1, 1, 0.8) else search.glass:SetVertexColor(1, 1, 1) end
+    end
+  end
+  search.typing = false
+  search:SetScript("OnEditFocusGained", function() this.typing = true; HintLook() end)
+  search:SetScript("OnEditFocusLost", function() this.typing = false; HintLook() end)
+  search.HintLook = HintLook
   -- closing: a gold cross in the gear's own style beside it, lit the same way under the mouse
   local close = CreateFrame("Button", nil, frame)
   OnPage(close)
