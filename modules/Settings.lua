@@ -416,11 +416,10 @@ local function MakeRow(parent)
   r.value = Text(r, "body", 12, INK)
   r.value:SetPoint("CENTER", r, "RIGHT", -90, 2)
   r.value:SetWidth(150); r.value:SetJustifyH("CENTER")
-  -- a colour's little gem before its name, softly glowing in it (for the warnings' colours)
-  r.swEdge = r:CreateTexture(nil, "ARTWORK"); r.swEdge:SetTexture(MEDIA .. "glow.tga"); r.swEdge:SetBlendMode("ADD")
-  r.swEdge:SetWidth(30); r.swEdge:SetHeight(18); r.swEdge:Hide()
-  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetTexture(MEDIA .. "gem_white.tga")
-  r.swatch:SetWidth(16); r.swatch:SetHeight(16); r.swatch:SetPoint("CENTER", r.swEdge, "CENTER", 0, 0); r.swatch:Hide()
+  -- a colour's short brush stroke before its name (for the warnings' colours)
+  r.swEdge = r:CreateTexture(nil, "ARTWORK"); r.swEdge:SetTexture(WHITE); r.swEdge:SetWidth(1); r.swEdge:SetHeight(1); r.swEdge:SetAlpha(0); r.swEdge:Hide()
+  r.swatch = r:CreateTexture(nil, "OVERLAY"); r.swatch:SetTexture(MEDIA .. "brush.tga")
+  r.swatch:SetWidth(28); r.swatch:SetHeight(14); r.swatch:SetPoint("RIGHT", r.swEdge, "CENTER", 0, 0); r.swatch:Hide()
   -- a value just changed lights up for a moment
   local fl = r:CreateTexture(nil, "ARTWORK"); fl:SetTexture(MEDIA .. "glow.tga"); fl:SetBlendMode("ADD")
   fl:SetVertexColor(1, 0.75, 0.3); fl:SetWidth(176); fl:SetHeight(30); fl:SetPoint("CENTER", r.value, "CENTER", 0, -1); fl:SetAlpha(0)
@@ -1131,14 +1130,13 @@ function ST.Update()
           if AZL and AZL.SetFace then AZL.SetFace(r.value, "body", FRIZ, 10, "") else r.value:SetFont(FRIZ, 10) end
         end
         r.value:SetTextColor(vc[1], vc[2], vc[3])
-        -- (colours show in the marks under the value alone: kept plain)
-        local sw = false
+        local sw
+        if def.kind == "choice" then local k, o = OptIndex(def, Current(def)); sw = o[k] and o[k].color end
         if sw then
           local w = r.value:GetStringWidth() or 60
           if type(w) ~= "number" then w = 60 end
-          r.swEdge:ClearAllPoints(); r.swEdge:SetPoint("CENTER", r.value, "CENTER", -(w / 2 + 12), 1)
-          r.swatch:SetVertexColor(sw[1], sw[2], sw[3]); r.swEdge:SetVertexColor(sw[1], sw[2], sw[3])
-          r.swEdge:SetAlpha(sel and 0.7 or 0.4)
+          r.swEdge:ClearAllPoints(); r.swEdge:SetPoint("CENTER", r.value, "CENTER", -(w / 2 + 4), 0)
+          r.swatch:SetVertexColor(sw[1], sw[2], sw[3]); r.swatch:SetAlpha(0.95)
           r.swEdge:Show(); r.swatch:Show()
         else
           r.swEdge:Hide(); r.swatch:Hide()
