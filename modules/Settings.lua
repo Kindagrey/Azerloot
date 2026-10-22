@@ -1241,10 +1241,11 @@ function ST.Build()
   F.title = title
   -- the gold cross of the book's own bar, lit under the mouse
   local close = CreateFrame("Button", nil, F)
-  close:SetWidth(20); close:SetHeight(20)
-  close:SetPoint("RIGHT", bar, "RIGHT", -18, 1)
+  close:SetWidth(19); close:SetHeight(19)
+  close:SetPoint("RIGHT", bar, "RIGHT", -44, 0)   -- (on the red band, clear of the gold end)
   close:SetFrameLevel(F:GetFrameLevel() + 4)
   local ct = Tex(close, MEDIA .. "close.tga", "ARTWORK"); ct:SetAllPoints(close)
+  local cd = Tex(close, MEDIA .. "btn_disc.tga", "BORDER"); cd:SetWidth(29); cd:SetHeight(29); cd:SetPoint("CENTER", close, "CENTER", 0, 0)
   local cg = close:CreateTexture(nil, "BACKGROUND")
   cg:SetTexture(MEDIA .. "glow.tga"); cg:SetBlendMode("ADD"); cg:SetVertexColor(1, 0.72, 0.15)
   cg:SetPoint("TOPLEFT", close, "TOPLEFT", -14, 12); cg:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 14, -12)
