@@ -468,7 +468,7 @@ local function Field(f, alpha)
   return t
 end
 local function Parchment(f)
-  local t = Tex(f, MEDIA .. "page.tga", "BACKGROUND"); t:SetPoint("TOPLEFT", f, "TOPLEFT", -6, 6); t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 6, -6)
+  local t = Tex(f, MEDIA .. "page_wide.tga", "BACKGROUND"); t:SetPoint("TOPLEFT", f, "TOPLEFT", -6, 6); t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 6, -6)
   return t
 end
 local function OffMark(f)
@@ -955,7 +955,7 @@ function ST.Build()
   local list = CreateFrame("Frame", nil, F)
   list:SetWidth(LIST_W + 28); list:SetHeight(H - 132)
   list:SetPoint("TOPLEFT", F, "TOPLEFT", 22, -110)
-  local page = Tex(list, MEDIA .. "page.tga", "BACKGROUND")
+  local page = Tex(list, MEDIA .. "page_wide.tga", "BACKGROUND")
   page:SetPoint("TOPLEFT", list, "TOPLEFT", -8, 8); page:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", 8, -8)
   F.list = list
   F.heads, F.rows = {}, {}

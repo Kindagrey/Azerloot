@@ -2737,11 +2737,11 @@ local function PlaceLeaf(rightSide, w)
   f.cast:ClearAllPoints()
   if rightSide then
     f:SetPoint("TOPLEFT", ui.pageR, "TOPLEFT", 0, 0)
-    f.sheet:SetTexCoord(1, 0, 0, 1)
+    f.sheet:SetTexture(MEDIA .. "page_r.tga"); f.sheet:SetTexCoord(0, 1, 0, 1)
     f.cast:SetPoint("CENTER", f, "RIGHT", 0, 0)
   else
     f:SetPoint("TOPRIGHT", ui.pageL, "TOPRIGHT", 0, 0)
-    f.sheet:SetTexCoord(0, 1, 0, 1)
+    f.sheet:SetTexture(MEDIA .. "page.tga"); f.sheet:SetTexCoord(0, 1, 0, 1)
     f.cast:SetPoint("CENTER", f, "LEFT", 0, 0)
   end
   f:SetWidth(math.max(1, w))
@@ -3586,8 +3586,8 @@ local function Build()
     local pg = CreateFrame("Frame", nil, ui.book)
     pg:SetWidth(385); pg:SetHeight(504)
     pg:SetPoint(point, ui.book, point, x, -28)
-    local t = Tex(pg, "page.tga", "BORDER"); t:SetAllPoints(pg)
-    if mirror then t:SetTexCoord(1, 0, 0, 1) end -- burnt edges face outwards
+    -- two different sheets, so the open book does not show the same page twice
+    local t = Tex(pg, mirror and "page_r.tga" or "page.tga", "BORDER"); t:SetAllPoints(pg)
     local area = CreateFrame("Frame", nil, pg)
     area:SetWidth(374); area:SetHeight(444)
     area:SetPoint("TOPLEFT", pg, "TOPLEFT", ax, -33)
