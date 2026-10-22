@@ -175,17 +175,29 @@ local Show
 -- a busy fight. The first is none at all.
 W.SOUNDS = {
   { key = "off", label = "Off" },
+  -- soft
+  { key = "whisper", label = "Whisper", file = "Sound\\Interface\\iTellMessage.wav" },
+  { key = "softping", label = "Soft ping", file = "Sound\\Interface\\igTextPopupPing02.wav" },
+  { key = "friend", label = "Friend online", file = "Sound\\Interface\\FriendJoin.wav" },
+  { key = "quest", label = "Quest update", file = "Sound\\Interface\\iQuestUpdate.wav" },
+  { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
+  -- clear
   { key = "raid", label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
   { key = "ready", label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
   { key = "gong", label = "Auction house", name = "AUCTIONWINDOWOPEN" },
   { key = "invite", label = "Invitation", name = "igPlayerInvite" },
-  { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
+  -- loud (only files the game's own archives hold play: these are in its patch.MPQ)
+  { key = "flag", label = "Flag taken", file = "Sound\\Interface\\PVPFlagTakenMono.wav" },
+  { key = "alarm", label = "Battle alarm", file = "Sound\\Interface\\PVPWarningAllianceMono.wav" },
+  { key = "drums", label = "War drums", file = "Sound\\Interface\\OrcExploration.wav" },
 }
 -- which sound each call has: "soon" (a boss in 10 seconds) and "turn" (a boss's phase)
 local SOUND_KEY = { soon = "soundSoon", turn = "soundTurn" }
 function W.SoundPick(what)
   local k = DB()[SOUND_KEY[what] or ""] or "raid"
   for i = 1, table.getn(W.SOUNDS) do if W.SOUNDS[i].key == k then return W.SOUNDS[i], i end end
+  -- a sound the list no longer has (or none yet): the raid warning
+  for i = 1, table.getn(W.SOUNDS) do if W.SOUNDS[i].key == "raid" then return W.SOUNDS[i], i end end
   return W.SOUNDS[2], 2
 end
 -- (a sound with a file plays from it; one with only a name, by the game's name for it)
