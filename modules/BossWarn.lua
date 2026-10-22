@@ -176,19 +176,19 @@ local Show
 W.SOUNDS = {
   { key = "off", label = "Off" },
   -- soft
-  { key = "whisper", label = "Whisper", file = "Sound\\Interface\\iTellMessage.wav" },
-  { key = "friend", label = "Friend online", file = "Sound\\Interface\\FriendJoin.wav" },
-  { key = "quest", label = "Quest update", file = "Sound\\Interface\\iQuestUpdate.wav" },
-  { key = "ping", label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
+  { key = "whisper", dur = 0.4, label = "Whisper", file = "Sound\\Interface\\iTellMessage.wav" },
+  { key = "friend", dur = 1.5, label = "Friend online", file = "Sound\\Interface\\FriendJoin.wav" },
+  { key = "quest", dur = 1.6, label = "Quest update", file = "Sound\\Interface\\iQuestUpdate.wav" },
+  { key = "ping", dur = 1.6, label = "Map ping", file = "Sound\\Interface\\MapPing.wav", name = "MapPing" },
   -- clear
-  { key = "raid", label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
-  { key = "ready", label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
-  { key = "gong", label = "Auction house", name = "AUCTIONWINDOWOPEN" },
-  { key = "invite", label = "Invitation", name = "igPlayerInvite" },
+  { key = "raid", dur = 1.3, label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
+  { key = "ready", dur = 2.9, label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
+  { key = "gong", dur = 2.2, label = "Auction house", name = "AUCTIONWINDOWOPEN" },
+  { key = "invite", dur = 2.8, label = "Invitation", name = "igPlayerInvite" },
   -- loud (only files the game's own archives hold play: these are in its patch.MPQ)
-  { key = "flag", label = "Flag taken", file = "Sound\\Interface\\PVPFlagTakenMono.wav" },
-  { key = "alarm", label = "Battle alarm", file = "Sound\\Interface\\PVPWarningAllianceMono.wav" },
-  { key = "drums", label = "War drums", file = "Sound\\Interface\\OrcExploration.wav" },
+  { key = "flag", dur = 2.0, label = "Flag taken", file = "Sound\\Interface\\PVPFlagTakenMono.wav" },
+  { key = "alarm", dur = 4.9, label = "Battle alarm", file = "Sound\\Interface\\PVPWarningAllianceMono.wav" },
+  { key = "drums", dur = 4.9, label = "War drums", file = "Sound\\Interface\\OrcExploration.wav" },
 }
 -- which sound each call has: "soon" (a boss in 10 seconds) and "turn" (a boss's phase)
 local SOUND_KEY = { soon = "soundSoon", turn = "soundTurn" }

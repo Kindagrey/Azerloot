@@ -19,6 +19,7 @@ local LIST_W, ROW_H = 384, 30  -- the parchment's rows
 local BRASS = { 0.77, 0.59, 0.24 }
 local INK = { 0.2, 0.1, 0.02 }
 local LIGHT = { 1, 0.92, 0.75 }
+local BOOK_W, BOOK_H = 150, 150 * 560 / 880   -- the book in the size preview at 100%
 local GOLD = { 1, 0.82, 0 }
 
 local function DB() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end return AzerlootDB end
@@ -114,7 +115,9 @@ end
 local function SoundSet(what, key)
   DB()[what == "soon" and "soundSoon" or "soundTurn"] = key
   local s = (AzlW and AzlW.SOUNDS) or {}
-  for i = 1, table.getn(s) do if s[i].key == key and AzlW.PlaySoundOf then AzlW.PlaySoundOf(s[i]) end end
+  for i = 1, table.getn(s) do
+    if s[i].key == key and AzlW.PlaySoundOf then AzlW.PlaySoundOf(s[i]); ST.ping = 0; ST.pingDur = s[i].dur or 1.2 end
+  end
 end
 
 ST.TABS = {
@@ -419,7 +422,7 @@ local function MakeRow(parent)
   local abg = Tex(ab, MEDIA .. "button.tga", "BACKGROUND"); abg:SetAllPoints(ab)
   local abh = ab:CreateTexture(nil, "HIGHLIGHT"); abh:SetTexture(MEDIA .. "glow.tga"); abh:SetBlendMode("ADD"); abh:SetAlpha(0.25); abh:SetAllPoints(ab)
   ab.text = Text(ab, "head", 14, GOLD)
-  ab.text:SetPoint("CENTER", ab, "CENTER", 0, 0)
+  ab.text:SetPoint("CENTER", ab, "CENTER", 0, 1.5)   -- (the face sits low in its line)
   ab.row = r
   ab:SetScript("OnClick", function() local d = this.row.def; if d then ST.Run(d) end end)
   ab:SetScript("OnEnter", function() ST.Hover(this.row) end)
@@ -471,14 +474,27 @@ local function Parchment(f)
   local t = Tex(f, MEDIA .. "page_wide.tga", "BACKGROUND"); t:SetPoint("TOPLEFT", f, "TOPLEFT", -6, 6); t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 6, -6)
   return t
 end
+-- "Off" as a soft change, not a sign laid over it: the picture dims and fades back, and a small
+-- dark pill with the word rises at its foot (Tick moves it; DRAW only says which way)
 local function OffMark(f)
   local o = CreateFrame("Frame", nil, f); o:SetAllPoints(f); o:SetFrameLevel(f:GetFrameLevel() + 5)
-  local v = o:CreateTexture(nil, "BACKGROUND"); v:SetTexture(WHITE); v:SetVertexColor(0, 0, 0); v:SetAlpha(0.55); v:SetAllPoints(o)
-  local t = Text(o, "head", 22, { 1, 0.3, 0.25 }); t:SetPoint("CENTER", o, "CENTER", 0, 0); t:SetText(AzT("Off"))
-  t:SetShadowColor(0, 0, 0, 1); t:SetShadowOffset(1, -1)
-  o:Hide()
+  o.dim = o:CreateTexture(nil, "BACKGROUND"); o.dim:SetTexture(WHITE); o.dim:SetVertexColor(0.02, 0.01, 0); o.dim:SetAllPoints(o)
+  local pill = CreateFrame("Frame", nil, o); pill:SetWidth(64); pill:SetHeight(20)
+  pill:SetPoint("BOTTOM", o, "BOTTOM", 0, 10)
+  pill.bg = pill:CreateTexture(nil, "BACKGROUND"); pill.bg:SetTexture(WHITE); pill.bg:SetVertexColor(0.08, 0.02, 0.01); pill.bg:SetAlpha(0.85); pill.bg:SetAllPoints(pill)
+  Edge(pill, 0, { 0.85, 0.22, 0.15 }, 0.9)
+  pill.word = Text(pill, "head", 13, { 1, 0.35, 0.28 }); pill.word:SetPoint("CENTER", pill, "CENTER", 0, 0); pill.word:SetText(AzT("Off"))
+  o.pill = pill
+  o.k, o.want = 0, 0
+  o.dim:SetAlpha(0); pill:SetAlpha(0)
+  -- (the old calls still work: Show / Hide only say which way it goes)
+  o.Show = function(self) self.want = 1 end
+  o.Hide = function(self) self.want = 0 end
   return o
 end
+local function Ease(x) if x <= 0 then return 0 elseif x >= 1 then return 1 end; return 1 - (1 - x) * (1 - x) * (1 - x) end
+local function Toward(cur, want, e, speed) if type(cur) ~= "number" then return want end; local k = e * speed; if k > 1 then k = 1 end; return cur + (want - cur) * k end
+local function Mod(a, b) return a - math.floor(a / b) * b end
 
 -- a small wishlist window, as the real one draws: its size and darkness from the settings
 local function MiniTracker(f)
@@ -500,28 +516,57 @@ local function MiniTracker(f)
     tx:SetText(AzG and AzG(L[2]) or L[2]); tx:SetJustifyH("LEFT")
     local bn
     if L[4] then bn = m:CreateFontString(nil, "OVERLAY"); bn:SetFont(FRIZ, 7); bn:SetTextColor(0.3, 1, 0.3); bn:SetText(L[4]) end
-    m.rows[i] = { icon = ic, text = tx, bonus = bn, spell = L[4] ~= nil }
+    local sh = m:CreateTexture(nil, "BORDER"); sh:SetTexture(MEDIA .. "glow.tga"); sh:SetBlendMode("ADD")
+    sh:SetVertexColor(1, 0.8, 0.35); sh:SetAlpha(0); sh:SetHeight(16); sh:SetWidth(150)
+    m.rows[i] = { icon = ic, text = tx, bonus = bn, spell = L[4] ~= nil, shine = sh }
   end
+  m.spellK = 1
   m.lock = Tex(m, "Interface\\ChatFrame\\UI-ChatFrame-LockIcon", "OVERLAY"); m.lock:SetWidth(11); m.lock:SetHeight(11)
   m.lock:SetPoint("TOPRIGHT", m, "TOPRIGHT", -6, -6)
   m.Draw = function(self, spells, alpha, scale, locked)
+    -- (the spell row is always laid out; Layout fades it and the window's foot with spellK)
     local y = -22
     for i = 1, table.getn(self.rows) do
       local R = self.rows[i]
-      if R.spell and not spells then
-        R.icon:Hide(); R.text:Hide(); if R.bonus then R.bonus:Hide() end
-      else
-        R.icon:ClearAllPoints(); R.icon:SetPoint("TOPLEFT", self, "TOPLEFT", 8, y); R.icon:Show()
-        R.text:ClearAllPoints(); R.text:SetPoint("LEFT", R.icon, "RIGHT", 4, 0); R.text:Show()
-        y = y - 15
-        if R.bonus then R.bonus:ClearAllPoints(); R.bonus:SetPoint("TOPLEFT", R.text, "BOTTOMLEFT", 0, -1); R.bonus:Show(); y = y - 9 end
-      end
+      R.icon:ClearAllPoints(); R.icon:SetPoint("TOPLEFT", self, "TOPLEFT", 8, y); R.icon:Show()
+      R.text:ClearAllPoints(); R.text:SetPoint("LEFT", R.icon, "RIGHT", 4, 0); R.text:Show()
+      R.shine:ClearAllPoints(); R.shine:SetPoint("LEFT", self, "TOPLEFT", -4, y - 6)
+      if R.spell then self.hOff = -y + 6 end
+      y = y - 15
+      if R.bonus then R.bonus:ClearAllPoints(); R.bonus:SetPoint("TOPLEFT", R.text, "BOTTOMLEFT", 0, -1); R.bonus:Show(); y = y - 9 end
     end
-    self:SetHeight(-y + 6)
+    self.hOn = -y + 6
+    self.spellWant = spells and 1 or 0
+    if self.spellK == nil then self.spellK = self.spellWant end
+    self:Layout()
     self:SetBackdropColor(0, 0, 0, alpha)
     self:SetBackdropBorderColor(0.8, 0.62, 0.28, math.min(1, alpha + 0.4))
     self:SetScale(scale)
     if locked then self.lock:SetVertexColor(1, 0.82, 0); self.lock:SetAlpha(1) else self.lock:SetVertexColor(0.8, 0.8, 0.8); self.lock:SetAlpha(0.45) end
+  end
+  m.Layout = function(self)
+    local k = self.spellK or 1
+    self:SetHeight((self.hOff or 60) + ((self.hOn or 80) - (self.hOff or 60)) * k)
+    for i = 1, table.getn(self.rows) do
+      local R = self.rows[i]
+      if R.spell then
+        R.icon:SetAlpha(k); R.text:SetAlpha(k); if R.bonus then R.bonus:SetAlpha(k) end
+        if k < 0.02 then R.icon:Hide(); R.text:Hide(); if R.bonus then R.bonus:Hide() end
+        else R.icon:Show(); R.text:Show(); if R.bonus then R.bonus:Show() end end
+      end
+    end
+  end
+  -- one row after another catches the light, as a found piece does
+  m.Shine = function(self, t)
+    local n = table.getn(self.rows)
+    local c = Mod(t, 4.5)
+    for i = 1, n do
+      local x = c - 0.6 - (i - 1) * 0.55
+      local a = 0
+      if x > 0 and x < 0.9 then a = 0.45 * math.sin(x / 0.9 * 3.1416) end
+      if self.rows[i].spell then a = a * (self.spellK or 1) end
+      self.rows[i].shine:SetAlpha(a)
+    end
   end
   return m
 end
@@ -534,11 +579,58 @@ local function SafeFont(fs, file, size, flags, fallback)
     fs:SetFont(fallback, size, flags)
   end
 end
+-- a warning's line in its face, made smaller until it fits the width it has
+local function FitFont(fs, file, size, room, text)
+  SafeFont(fs, file, size, "THICKOUTLINE", MORPH); fs:SetText(text)
+  local w = fs:GetStringWidth()
+  if type(w) == "number" and w > room then
+    SafeFont(fs, file, math.max(8, math.floor(size * room / w)), "THICKOUTLINE", MORPH)
+  end
+end
 local function WarnFaces(key)
   if key == "book" then key = (AZL and AZL.FaceKey and AZL.FaceKey()) or "classic" end
   local head, body = FaceFiles(key)
   if key == "classic" then body = FRIZ end
   return head, body
+end
+
+-- the parchment previews write themselves: the heading comes up, the words follow one by one
+-- as if inked, the last line after them; it stays a while, fades, and is written again
+local function Write(f, h, b, w)
+  local words, i = {}, 1
+  while true do
+    local a, z = string.find(b, " ", i, true)
+    if not a then table.insert(words, string.sub(b, i)); break end
+    table.insert(words, string.sub(b, i, a - 1)); i = z + 1
+  end
+  if f.hText ~= h or f.bText ~= b or f.fText ~= w then f.writeT = 0 end
+  f.hText, f.bText, f.fText, f.words = h, b, w, words
+  f.head:SetText(h); f.body:SetText(b); f.foot:SetText(w)
+end
+local function WriteTick(f, e)
+  f.writeT = (f.writeT or 0) + e
+  local t = f.writeT
+  if t > 7 then f.writeT = 0; t = 0 end
+  local out = 1
+  if t > 6.2 then out = 1 - Ease((t - 6.2) / 0.6) end
+  f.head:SetAlpha(Ease(t / 0.5) * out)
+  local n = table.getn(f.words or {})
+  local shown = math.floor((t - 0.5) / 0.16) + 1
+  if shown < 0 then shown = 0 elseif shown > n then shown = n end
+  if f.shownWords ~= shown then
+    f.shownWords = shown
+    local str = ""
+    for k = 1, shown do str = (k == 1) and f.words[k] or (str .. " " .. f.words[k]) end
+    f.body:SetText(str)
+  end
+  f.body:SetAlpha(out)
+  f.foot:SetAlpha(Ease((t - 0.7 - n * 0.16) / 0.5) * out)
+  if f.quill then
+    local q = (shown > 0 and shown < n) and 1 or 0
+    f.quillA = Toward(f.quillA or 0, q, e, 6)
+    f.quill:SetAlpha(f.quillA * out)
+    f.quill:ClearAllPoints(); f.quill:SetPoint("BOTTOMLEFT", f, "BOTTOMRIGHT", -46 + 3 * math.sin(t * 9), 26 + 2 * math.sin(t * 13))
+  end
 end
 
 local BUILD = {}
@@ -547,22 +639,59 @@ BUILD.bookfont = function(f)
   f.head = f:CreateFontString(nil, "OVERLAY"); f.head:SetFont(MORPH, 20); f.head:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -18); f.head:SetTextColor(0.2, 0.1, 0.02)
   f.body = f:CreateFontString(nil, "OVERLAY"); f.body:SetFont(FRIZ, 12); f.body:SetPoint("TOPLEFT", f.head, "BOTTOMLEFT", 0, -6); f.body:SetWidth(232)
   f.body:SetJustifyH("LEFT"); f.body:SetTextColor(0.28, 0.18, 0.08)
-  f.foot = f:CreateFontString(nil, "OVERLAY"); f.foot:SetFont(FRIZ, 11); f.foot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14); f.foot:SetTextColor(0.18, 0.74, 0.05)
+  f.foot = f:CreateFontString(nil, "OVERLAY"); f.foot:SetFont(FRIZ, 11); f.foot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14); f.foot:SetTextColor(0.1, 0.46, 0.02)
+  f.quill = Tex(f, MEDIA .. "quill.tga", "OVERLAY"); f.quill:SetWidth(30); f.quill:SetHeight(30); f.quill:SetAlpha(0)
 end
 BUILD.language = function(f)
   Parchment(f)
   f.head = Text(f, "head", 20, { 0.2, 0.1, 0.02 }); f.head:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -18)
   f.body = Text(f, "body", 12, { 0.28, 0.18, 0.08 }); f.body:SetPoint("TOPLEFT", f.head, "BOTTOMLEFT", 0, -6); f.body:SetWidth(232); f.body:SetJustifyH("LEFT")
   f.foot = Text(f, "body", 11, { 0.45, 0.3, 0.12 }); f.foot:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
+  f.quill = Tex(f, MEDIA .. "quill.tga", "OVERLAY"); f.quill:SetWidth(30); f.quill:SetHeight(30); f.quill:SetAlpha(0)
 end
 BUILD.booksize = function(f)
-  local bg = f:CreateTexture(nil, "BACKGROUND"); bg:SetTexture(WHITE); bg:SetVertexColor(0.07, 0.05, 0.03); bg:SetAllPoints(f)
-  -- the book at 100% as a faint outline, the chosen size drawn over it
-  f.ghost = Tex(f, MEDIA .. "book.tga", "BORDER"); f.ghost:SetAlpha(0.25)
-  f.ghost:SetPoint("CENTER", f, "CENTER", 0, 6); f.ghost:SetWidth(180); f.ghost:SetHeight(90)
-  f.book = Tex(f, MEDIA .. "book.tga", "ARTWORK")
-  f.book:SetPoint("CENTER", f, "CENTER", 0, 6)
-  f.pct = Text(f, "head", 16, GOLD); f.pct:SetPoint("BOTTOM", f, "BOTTOM", 0, 8)
+  -- the open book, pages and all, lying on the leather; a fine gold frame marks 100%
+  local bg = Tex(f, MEDIA .. "leather.tga", "BACKGROUND"); bg:SetAllPoints(f); bg:SetVertexColor(0.55, 0.5, 0.48)
+  local bk = CreateFrame("Frame", nil, f); bk:SetWidth(BOOK_W); bk:SetHeight(BOOK_H)
+  bk:SetPoint("CENTER", f, "CENTER", 0, 0)
+  local sh = Tex(bk, MEDIA .. "shadow.tga", "BACKGROUND"); sh:SetVertexColor(0, 0, 0); sh:SetAlpha(0.8)
+  sh:SetPoint("TOPLEFT", bk, "TOPLEFT", -14, 8); sh:SetPoint("BOTTOMRIGHT", bk, "BOTTOMRIGHT", 18, -16)
+  local cover = Tex(bk, MEDIA .. "book.tga", "BORDER"); cover:SetAllPoints(bk)
+  -- the pages sit where the book's own do (880 x 560, each page 385 x 504, 28 in from the edge)
+  local k = BOOK_W / 880
+  local pl = Tex(bk, MEDIA .. "page.tga", "ARTWORK"); pl:SetWidth(385 * k); pl:SetHeight(504 * k)
+  pl:SetPoint("TOPLEFT", bk, "TOPLEFT", 28 * k, -28 * k)
+  local pr = Tex(bk, MEDIA .. "page_r.tga", "ARTWORK"); pr:SetWidth(385 * k); pr:SetHeight(504 * k)
+  pr:SetPoint("TOPRIGHT", bk, "TOPRIGHT", -28 * k, -28 * k)
+  local co = CreateFrame("Frame", nil, bk); co:SetAllPoints(bk); co:SetFrameLevel(bk:GetFrameLevel() + 1)
+  local corners = Tex(co, MEDIA .. "corners.tga", "ARTWORK"); corners:SetAllPoints(co)
+  -- a few lines of ink on each page, so it reads as a book
+  local ink = { 0.35, 0.22, 0.1 }
+  local function Lines(page, x0)
+    local hd = Tex(co, WHITE, "OVERLAY"); hd:SetVertexColor(ink[1], ink[2], ink[3]); hd:SetAlpha(0.85)
+    hd:SetWidth(30 * BOOK_W / 150); hd:SetHeight(3); hd:SetPoint("TOPLEFT", page, "TOPLEFT", x0, -10 * BOOK_W / 150)
+    for j = 1, 5 do
+      local l = Tex(co, WHITE, "OVERLAY"); l:SetVertexColor(ink[1], ink[2], ink[3]); l:SetAlpha(0.45)
+      l:SetWidth((j == 3 or j == 5) and 34 * BOOK_W / 150 or 48 * BOOK_W / 150); l:SetHeight(1.5)
+      l:SetPoint("TOPLEFT", page, "TOPLEFT", x0, -(16 + j * 6) * BOOK_W / 150)
+    end
+  end
+  Lines(pl, 9 * BOOK_W / 150); Lines(pr, 6 * BOOK_W / 150)
+  f.bk = bk
+  -- 100%: a fine gold frame over everything
+  local fr = CreateFrame("Frame", nil, f); fr:SetWidth(BOOK_W); fr:SetHeight(BOOK_H); fr:SetPoint("CENTER", f, "CENTER", 0, 0)
+  fr:SetFrameLevel(f:GetFrameLevel() + 6)
+  for _, e in ipairs({ { "TOPLEFT", "TOPRIGHT", 0, 1 }, { "BOTTOMLEFT", "BOTTOMRIGHT", 0, 1 }, { "TOPLEFT", "BOTTOMLEFT", 1, 0 }, { "TOPRIGHT", "BOTTOMRIGHT", 1, 0 } }) do
+    local t = Tex(fr, WHITE, "OVERLAY"); t:SetVertexColor(GOLD[1], GOLD[2], GOLD[3]); t:SetAlpha(0.7)
+    t:SetPoint(e[1], fr, e[1], 0, 0); t:SetPoint(e[2], fr, e[2], 0, 0)
+    if e[3] == 1 then t:SetWidth(1) else t:SetHeight(1) end
+  end
+  fr.tag = Text(fr, "body", 9, GOLD); fr.tag:SetPoint("BOTTOMLEFT", fr, "TOPLEFT", 0, 2); fr.tag:SetText("100%")
+  fr.tag:SetShadowColor(0, 0, 0, 1); fr.tag:SetShadowOffset(1, -1)
+  f.frame100 = fr
+  local pf = CreateFrame("Frame", nil, f); pf:SetAllPoints(f); pf:SetFrameLevel(f:GetFrameLevel() + 7)
+  f.pct = Text(pf, "head", 18, GOLD); f.pct:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 6)
+  f.pct:SetShadowColor(0, 0, 0, 1); f.pct:SetShadowOffset(1, -1)
 end
 BUILD.tracker = function(f)
   Field(f, 0.1)
@@ -596,6 +725,9 @@ BUILD.reset = function(f)
   f.mini:Draw(true, 0.35, 0.6, false)
   f.arrow = Text(f, "head", 26, GOLD); f.arrow:SetPoint("CENTER", f, "CENTER", 10, -4); f.arrow:SetText("<<")
   f.arrow:SetShadowColor(0, 0, 0, 1); f.arrow:SetShadowOffset(1, -1)
+  -- the first place lights up as the window lands in it
+  f.home = f:CreateTexture(nil, "BORDER"); f.home:SetTexture(MEDIA .. "glow.tga"); f.home:SetBlendMode("ADD")
+  f.home:SetVertexColor(1, 0.78, 0.3); f.home:SetWidth(120); f.home:SetHeight(70); f.home:SetPoint("CENTER", f, "TOPLEFT", 62, -40); f.home:SetAlpha(0)
 end
 BUILD.arrange = function(f)
   Field(f, 0.25)
@@ -607,6 +739,9 @@ BUILD.arrange = function(f)
   end
   f.boxes = { Box(-14, 130, { 1, 0.18, 0.12 }), Box(-40, 100, { 1, 0.55, 0.12 }), Box(-96, 80, { 0.35, 1, 0.35 }) }
   f.mini = MiniTracker(f); f.mini:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8 / 0.55, 24 / 0.55); f.mini:Draw(false, 0.35, 0.55, false)
+  local cf = CreateFrame("Frame", nil, f); cf:SetAllPoints(f); cf:SetFrameLevel(f:GetFrameLevel() + 4)
+  f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(20); f.pointer:SetHeight(20); f.pointer:SetAlpha(0)
+  f.boxY, f.boxW = { -14, -40, -96 }, { 130, 100, 80 }
   f.hint = Text(f, "body", 10, LIGHT); f.hint:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -118); f.hint:SetWidth(240); f.hint:SetJustifyH("RIGHT")
   f.hint:SetShadowColor(0, 0, 0, 1); f.hint:SetShadowOffset(1, -1)
 end
@@ -615,6 +750,9 @@ BUILD.warnings = function(f)
   f.main = f:CreateFontString(nil, "OVERLAY"); f.main:SetFont(MORPH, 20, "THICKOUTLINE"); f.main:SetPoint("TOP", f, "TOP", 0, -24); f.main:SetTextColor(1, 0.18, 0.12)
   f.mid = f:CreateFontString(nil, "OVERLAY"); f.mid:SetFont(MORPH, 15, "THICKOUTLINE"); f.mid:SetPoint("TOP", f.main, "BOTTOM", 0, -14); f.mid:SetTextColor(1, 0.55, 0.12)
   f.small = f:CreateFontString(nil, "OVERLAY"); f.small:SetFont(MORPH, 12, "THICKOUTLINE"); f.small:SetPoint("BOTTOM", f, "BOTTOM", 0, 18); f.small:SetTextColor(0.35, 1, 0.35)
+  -- a red flare behind the boss warning as it comes
+  f.flare = f:CreateTexture(nil, "BORDER"); f.flare:SetTexture(MEDIA .. "glow.tga"); f.flare:SetBlendMode("ADD")
+  f.flare:SetVertexColor(1, 0.25, 0.1); f.flare:SetWidth(230); f.flare:SetHeight(60); f.flare:SetPoint("CENTER", f.main, "CENTER", 0, 0); f.flare:SetAlpha(0)
   f.off = OffMark(f)
 end
 BUILD.bossline = function(f)
@@ -629,22 +767,46 @@ BUILD.bossline = function(f)
   s.name = Text(s, "body", 11, { 1, 0.86, 0.6 }); s.name:SetPoint("LEFT", s.icon, "RIGHT", 6, 0)
   s.time = Text(s, "body", 12, GOLD); s.time:SetPoint("RIGHT", s, "RIGHT", -8, 0)
   f.strip = s
+  s.flare = f:CreateTexture(nil, "BORDER"); s.flare:SetTexture(MEDIA .. "glow.tga"); s.flare:SetBlendMode("ADD")
+  s.flare:SetVertexColor(1, 0.3, 0.1); s.flare:SetWidth(250); s.flare:SetHeight(70); s.flare:SetPoint("CENTER", s, "CENTER", 0, 0); s.flare:SetAlpha(0)
   f.off = OffMark(f)
 end
 BUILD.sound = function(f)
-  local bg = f:CreateTexture(nil, "BACKGROUND"); bg:SetTexture(WHITE); bg:SetVertexColor(0.07, 0.05, 0.03); bg:SetAllPoints(f)
+  -- the moment it rings: the warning it comes with over the field, a round button that sends
+  -- out waves of light, and a row of bars on each side that dance while it plays
+  Field(f, 0.45)
+  f.word = f:CreateFontString(nil, "OVERLAY"); f.word:SetFont(MORPH, 18, "THICKOUTLINE")
+  f.word:SetPoint("TOP", f, "TOP", 0, -14); f.word:SetTextColor(1, 0.18, 0.12)
   local b = CreateFrame("Button", nil, f)
-  b:SetWidth(64); b:SetHeight(64); b:SetPoint("CENTER", f, "CENTER", 0, 12)
+  b:SetWidth(46); b:SetHeight(46); b:SetPoint("CENTER", f, "CENTER", 0, -6)
+  b:SetFrameLevel(f:GetFrameLevel() + 3)
+  f.waves = {}
+  for i = 1, 3 do
+    local w = f:CreateTexture(nil, "BORDER"); w:SetTexture(MEDIA .. "glow.tga"); w:SetBlendMode("ADD")
+    w:SetVertexColor(1, 0.72, 0.25); w:SetPoint("CENTER", b, "CENTER", 0, 0); w:SetWidth(46); w:SetHeight(46); w:SetAlpha(0)
+    f.waves[i] = w
+  end
+  f.bars = {}
+  for side = -1, 1, 2 do
+    for j = 1, 6 do
+      local t = f:CreateTexture(nil, "ARTWORK"); t:SetTexture(WHITE); t:SetVertexColor(GOLD[1], GOLD[2] * 0.85, 0.15)
+      t:SetWidth(4); t:SetHeight(2); t:SetPoint("CENTER", b, "CENTER", side * (30 + j * 8), 0)
+      t:SetAlpha(0.9 - j * 0.1)
+      table.insert(f.bars, { tex = t, j = j, side = side })
+    end
+  end
   b.ring = Tex(b, MEDIA .. "ring.tga", "ARTWORK"); b.ring:SetAllPoints(b)
   b.glow = Tex(b, MEDIA .. "glow.tga", "BACKGROUND"); b.glow:SetBlendMode("ADD"); b.glow:SetVertexColor(1, 0.75, 0.3)
-  b.glow:SetPoint("TOPLEFT", b, "TOPLEFT", -26, 26); b.glow:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 26, -26); b.glow:SetAlpha(0)
-  b.play = Text(b, "head", 30, GOLD); b.play:SetPoint("CENTER", b, "CENTER", 3, 1); b.play:SetText(">")
+  b.glow:SetPoint("TOPLEFT", b, "TOPLEFT", -20, 20); b.glow:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 20, -20); b.glow:SetAlpha(0)
+  b.play = Text(b, "head", 24, GOLD); b.play:SetPoint("CENTER", b, "CENTER", 2, 1); b.play:SetText(">")
   b:SetScript("OnClick", function() ST.PlayPreview() end)
   b:SetScript("OnEnter", function() this.play:SetTextColor(1, 1, 0.7) end)
   b:SetScript("OnLeave", function() this.play:SetTextColor(GOLD[1], GOLD[2], GOLD[3]) end)
   f.button = b
-  f.name = Text(f, "body", 13, LIGHT); f.name:SetPoint("BOTTOM", f, "BOTTOM", 0, 26)
-  f.hint = Text(f, "body", 10, { 0.7, 0.62, 0.48 }); f.hint:SetPoint("BOTTOM", f, "BOTTOM", 0, 10); f.hint:SetText(AzT("Click to hear it."))
+  f.name = Text(f, "body", 13, LIGHT); f.name:SetPoint("BOTTOM", f, "BOTTOM", 0, 22)
+  f.name:SetShadowColor(0, 0, 0, 1); f.name:SetShadowOffset(1, -1)
+  f.hint = Text(f, "body", 10, { 0.85, 0.78, 0.62 }); f.hint:SetPoint("BOTTOM", f, "BOTTOM", 0, 8); f.hint:SetText(AzT("Click to hear it."))
+  f.hint:SetShadowColor(0, 0, 0, 1); f.hint:SetShadowOffset(1, -1)
 end
 
 -- draws a preview for the setting (and the value it would have)
@@ -652,9 +814,8 @@ local DRAW = {}
 DRAW.bookfont = function(f, def)
   local key = Current(def)
   local head, body = FaceFiles(key)
-  SafeFont(f.head, head, 20, "", MORPH); f.head:SetText(AzT("Rings"))
-  SafeFont(f.body, body, 12, "", FRIZ); f.body:SetText(AzT("Every ring with its value at every rarity."))
-  SafeFont(f.foot, body, 11, "", FRIZ); f.foot:SetText(AzG and AzG("Heavy Dark Iron Ring") or "Heavy Dark Iron Ring")
+  SafeFont(f.head, head, 20, "", MORPH); SafeFont(f.body, body, 12, "", FRIZ); SafeFont(f.foot, body, 11, "", FRIZ)
+  Write(f, AzT("Rings"), AzT("Every ring with its value at every rarity."), AzG and AzG("Heavy Dark Iron Ring") or "Heavy Dark Iron Ring")
 end
 DRAW.language = function(f, def)
   local code = Current(def)
@@ -667,20 +828,21 @@ DRAW.language = function(f, def)
     if a1 then h, b = a1, a2 end
     if a3 then w = a3 end
   end
-  f.head:SetText(h); f.body:SetText(b); f.foot:SetText(w)
+  Write(f, h, b, w)
 end
 DRAW.booksize = function(f, def)
-  local v = Current(def)
-  f.book:SetWidth(180 * v); f.book:SetHeight(90 * v)
-  f.pct:SetText(Pct(v))
+  -- (Tick grows or shrinks the book to it)
+  f.want = Current(def)
+  if type(f.cur) ~= "number" then f.cur = f.want * 0.9 end
 end
 DRAW.tracker = function(f, def)
   local function V(key) for _, t in ipairs(ST.TABS) do for _, s in ipairs(t.sections) do for _, d in ipairs(s.rows) do if d.key == key then return Current(d) end end end end end
   local sc = 0.75 * V("trackerScale")
   local locked = V("locked")
-  f.mini:Draw(V("spellTracker"), V("trackerAlpha"), sc, locked)
-  f.dx, f.dy = 0, 0
-  f.mini:ClearAllPoints(); f.mini:SetPoint("TOPLEFT", f, "TOPLEFT", 14 / sc, -14 / sc)
+  -- the wanted size and darkness: Tick takes the window there smoothly
+  f.scWant, f.alWant = sc, V("trackerAlpha")
+  if type(f.scCur) ~= "number" then f.scCur, f.alCur = sc, f.alWant end
+  f.mini:Draw(V("spellTracker"), f.alCur, f.scCur, locked)
   -- only "Locked" shows the lock: gold and shut, or grey and open with the window dragged about
   f.lockView = (def and def.key == "locked") and true or false
   f.lockFree = f.lockView and not locked
@@ -700,15 +862,18 @@ DRAW.tracker = function(f, def)
   end
   if V("tracker") then f.off:Hide() else f.off:Show() end
 end
-DRAW.reset = function(f, def) end
+DRAW.reset = function(f, def) f.mini:Draw(true, 0.35, 0.6, false) end
 DRAW.arrange = function(f, def) f.hint:SetText(AzT("Shift-click: move the wishlist and the warnings")) end
 DRAW.warnings = function(f, def)
   local key = DB().warnFont or "book"
   if def.key == "warnFont" then key = Current(def) end
   local head, body = WarnFaces(key)
-  SafeFont(f.main, head, 20, "THICKOUTLINE", MORPH); f.main:SetText(AzT("%s in 10 sec.", AzG and AzG("Hogger") or "Hogger"))
-  SafeFont(f.mid, head, 15, "THICKOUTLINE", MORPH); f.mid:SetText(AzG and AzG("A wall of foes closes in!") or "A wall of foes closes in!")
-  SafeFont(f.small, head, 12, "THICKOUTLINE", MORPH); f.small:SetText(AzT("%s picked up!", AzG and AzG("Restoration Rune") or "Restoration Rune"))
+  -- (each line kept inside the box: a long one in a wide face gets smaller)
+  local room = (f:GetWidth() or 258) - 20
+  if type(room) ~= "number" or room <= 0 then room = 238 end
+  FitFont(f.main, head, 20, room, AzT("%s in 10 sec.", AzG and AzG("Hogger") or "Hogger"))
+  FitFont(f.mid, head, 15, room, AzG and AzG("A wall of foes closes in!") or "A wall of foes closes in!")
+  FitFont(f.small, head, 12, room, AzT("%s picked up!", AzG and AzG("Restoration Rune") or "Restoration Rune"))
   local on = WarnGet("bossAlerts")
   if def.key == "bossAlerts" then on = Current(def) end
   if on then f.off:Hide() else f.off:Show() end
@@ -718,7 +883,18 @@ DRAW.bossline = function(f, def)
 end
 DRAW.sound = function(f, def)
   local i, o = OptIndex(def, Current(def))
+  local off = Current(def) == "off"
   f.name:SetText(o[i] and AzT(o[i].label) or "")
+  if off then f.name:SetTextColor(1, 0.3, 0.25) else f.name:SetTextColor(LIGHT[1], LIGHT[2], LIGHT[3]) end
+  -- the warning this sound comes with, in the warnings' own face
+  local head = WarnFaces(DB().warnFont or "book")
+  local text
+  if def.sound == "turn" then text = AzT("%d%% health!", 50)
+  else text = AzT("%s in 10 sec.", AzG and AzG("Hogger") or "Hogger") end
+  local room = (f:GetWidth() or 258) - 20
+  if type(room) ~= "number" or room <= 0 then room = 238 end
+  FitFont(f.word, head, 18, room, text)
+  f.word:SetAlpha(off and 0.35 or 0.9)
 end
 
 function ST.PlayPreview()
@@ -726,9 +902,10 @@ function ST.PlayPreview()
   if not (def and def.sound and AzlW and AzlW.SOUNDS) then return end
   local key = Current(def)
   for i = 1, table.getn(AzlW.SOUNDS) do
-    if AzlW.SOUNDS[i].key == key and AzlW.PlaySoundOf then AzlW.PlaySoundOf(AzlW.SOUNDS[i]) end
+    if AzlW.SOUNDS[i].key == key and AzlW.PlaySoundOf then AzlW.PlaySoundOf(AzlW.SOUNDS[i]); ST.pingDur = AzlW.SOUNDS[i].dur or 1.2 end
   end
   ST.ping = 0
+  if key == "off" then ST.ping = nil end
 end
 
 function ST.ShowPreview(def)
@@ -736,6 +913,8 @@ function ST.ShowPreview(def)
   if not def or not def.preview or not BUILD[def.preview] then return end
   local f = PvFrame(def.preview)
   if not f.built then BUILD[def.preview](f); f.built = true end
+  -- a new setting starts its preview's little show from the beginning
+  if ST.pvDef ~= def then ST.pvT = 0; ST.pvDef = def; f.writeT = 0; f.cur = false; f.scCur = false end
   DRAW[def.preview](f, def)
   f:Show()
   ST.shownPv = f
@@ -1027,7 +1206,7 @@ function ST.Build()
   ap:SetPoint("TOPLEFT", pv, "BOTTOMLEFT", 0, -30)
   local apb = Tex(ap, MEDIA .. "button.tga", "BACKGROUND"); apb:SetAllPoints(ap)
   local aph = ap:CreateTexture(nil, "HIGHLIGHT"); aph:SetTexture(MEDIA .. "glow.tga"); aph:SetBlendMode("ADD"); aph:SetAlpha(0.3); aph:SetAllPoints(ap)
-  ap.text = Text(ap, "head", 15, GOLD); ap.text:SetPoint("CENTER", ap, "CENTER", 0, 0); ap.text:SetText(AzT("Apply and reload"))
+  ap.text = Text(ap, "head", 15, GOLD); ap.text:SetPoint("CENTER", ap, "CENTER", 0, 1.5); ap.text:SetText(AzT("Apply and reload"))
   ap:SetScript("OnClick", function() ST.Apply() end)
   ap:Hide()
   F.apply = ap
@@ -1135,34 +1314,145 @@ function ST.Tick(e)
   if not (f and f:IsShown()) then return end
   local def = ST.selected
   if not def then return end
-  if def.preview == "tracker" and f.lockFree then
-    -- free: the pointer takes the window by its head and moves it in a slow loop
-    local t = ST.t
-    local dx, dy = 18 * math.sin(t * 1.3), 7 * math.sin(t * 2.6)
-    local sc = f.mini:GetScale()
-    if not sc or sc <= 0 then sc = 1 end
-    f.mini:ClearAllPoints(); f.mini:SetPoint("TOPLEFT", f, "TOPLEFT", (14 + dx) / sc, (-14 + dy) / sc)
-    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60 + dx, -14 - 6 + dy)
-  elseif def.preview == "warnings" then
-    -- the three come in one after another, stay, and fade, as in a run
-    local c = math.mod and math.mod(ST.t, 3.2) or (ST.t - math.floor(ST.t / 3.2) * 3.2)
-    local function A(start) local x = c - start; if x < 0 then return 0 end; return math.max(0, math.min(1, x / 0.3, (2.4 - x) / 0.5)) end
-    f.main:SetAlpha(A(0)); f.mid:SetAlpha(A(0.35)); f.small:SetAlpha(A(0.7))
-  elseif def.preview == "bossline" then
-    -- the next boss's time running down, its colour from yellow through orange to red
-    local left = math.max(0, 95 - (ST.t - math.floor(ST.t / 12) * 12) * 95 / 12)
+  ST.pvT = (ST.pvT or 0) + e
+  local T = ST.pvT
+  -- Off: the picture dims, the little pill rises (offK: how far)
+  local offK = 0
+  if type(f.off) == "table" and type(f.off.want) == "number" then
+    local o = f.off
+    o.k = Toward(o.k, o.want, e, 7)
+    if o.k < 0.003 then o.k = 0 end
+    o.dim:SetAlpha(0.5 * o.k); o.pill:SetAlpha(o.k)
+    o.pill:ClearAllPoints(); o.pill:SetPoint("BOTTOM", o, "BOTTOM", 0, 2 + 8 * Ease(o.k))
+    offK = o.k
+  end
+  local pv = def.preview
+  if pv == "bookfont" or pv == "language" then
+    WriteTick(f, e)
+  elseif pv == "booksize" then
+    -- the book grows or shrinks to its size, the number counting along
+    f.cur = Toward(f.cur, f.want or 1, e, 7)
+    f.bk:SetScale(f.cur); f.bk:SetAlpha(Ease(T / 0.4))
+    f.pct:SetText(Pct(f.cur))
+    f.frame100:SetAlpha(0.4 + 0.3 * math.sin(T * 2.2))
+  elseif pv == "tracker" then
+    -- the window slides in, takes its size and darkness smoothly, its rows catch the light;
+    -- free (Locked: Off) the pointer drags it about
+    f.scCur = Toward(f.scCur, f.scWant or 0.75, e, 8)
+    f.alCur = Toward(f.alCur, f.alWant or 0.35, e, 8)
+    local m = f.mini
+    m.spellK = Toward(m.spellK, m.spellWant or 1, e, 8)
+    m:Layout()
+    m:SetScale(f.scCur)
+    m:SetBackdropColor(0, 0, 0, f.alCur); m:SetBackdropBorderColor(0.8, 0.62, 0.28, math.min(1, f.alCur + 0.4))
+    local inX = -40 * (1 - Ease(T / 0.5))
+    local dx, dy = 0, 0
+    if f.lockFree then dx, dy = 18 * math.sin(T * 1.3), 7 * math.sin(T * 2.6) end
+    m:ClearAllPoints(); m:SetPoint("TOPLEFT", f, "TOPLEFT", (14 + inX + dx) / f.scCur, (-14 + dy) / f.scCur)
+    m:SetAlpha(Ease(T / 0.5) * (1 - 0.75 * offK))
+    m:Shine(T)
+    if f.lockView then
+      f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60 + inX + dx, -14 - 6 + dy)
+      f.pointer:SetAlpha(Ease((T - 0.4) / 0.4))
+      local bd = f.badge
+      bd:SetAlpha(Ease((T - 0.2) / 0.5)); bd.word:SetAlpha(Ease((T - 0.35) / 0.5))
+      if not f.lockFree then bd.glow:SetAlpha(0.4 + 0.2 * math.sin(T * 2.5)) end
+    end
+  elseif pv == "reset" then
+    -- the window glides home from where it was put, its first place lights up as it lands
+    local c = Mod(T, 4.2)
+    local W = f:GetWidth() or 258
+    local H = f:GetHeight() or 136
+    if type(W) ~= "number" or W <= 0 then W = 258 end
+    if type(H) ~= "number" or H <= 0 then H = 136 end
+    local mh = (f.mini:GetHeight() or 80) * 0.6
+    if type(mh) ~= "number" then mh = 48 end
+    local sx, sy = W - 16 - 156 * 0.6, -(H - 12 - mh)
+    local g = Ease((c - 0.5) / 1.2)
+    local x, y = sx + (14 - sx) * g, sy + (-14 - sy) * g
+    f.mini:ClearAllPoints(); f.mini:SetPoint("TOPLEFT", f, "TOPLEFT", x / 0.6, y / 0.6)
+    local a = math.min(1, c / 0.3, (4.2 - c) / 0.4)
+    f.mini:SetAlpha(math.max(0, a))
+    f.ghost:SetAlpha(0.25 + 0.1 * math.sin(T * 2))
+    local land = c - 1.7
+    f.home:SetAlpha((land > 0 and land < 0.9) and 0.6 * math.sin(land / 0.9 * 3.1416) or 0)
+    f.arrow:SetAlpha((c > 0.4 and c < 1.8) and (0.5 + 0.5 * math.sin((c - 0.4) * 9)) or 0.25)
+  elseif pv == "arrange" then
+    -- the three places show up one by one; a pointer takes the boss warning, moves it and turns
+    -- the wheel to make it bigger, then puts it back
+    local c = Mod(T, 6)
+    local out = math.max(0, math.min(1, (6 - c) / 0.5))
+    for i = 1, 3 do
+      local bx = f.boxes[i]
+      bx:SetAlpha(Ease((c - 0.2 - (i - 1) * 0.3) / 0.35) * out)
+    end
+    local move = Ease((c - 1.5) / 0.9) - Ease((c - 3.9) / 0.9)
+    local grow = Ease((c - 2.6) / 0.4) - Ease((c - 3.5) / 0.4)
+    local b1 = f.boxes[1]
+    b1:ClearAllPoints(); b1:SetPoint("TOP", f, "TOP", 50 - 70 * move, -14 - 10 * move)
+    b1:SetWidth(130 * (1 + 0.18 * grow)); b1:SetHeight(18 * (1 + 0.18 * grow))
+    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", b1, "CENTER", 4, -2)
+    f.pointer:SetAlpha(Ease((c - 1.1) / 0.3) * math.max(0, math.min(1, (5.0 - c) / 0.4)))
+    f.mini:SetAlpha(Ease(T / 0.5))
+    f.hint:SetAlpha(Ease((T - 0.3) / 0.5))
+  elseif pv == "warnings" then
+    -- the three come in one after another, stay, and fade, as in a run; a flare behind the first
+    local c = Mod(T, 3.6)
+    local function A(start) local x = c - start; if x < 0 then return 0 end; return math.max(0, math.min(1, Ease(x / 0.3), (2.6 - x) / 0.5)) end
+    local k = 1 - 0.8 * offK
+    f.main:SetAlpha(A(0.1) * k); f.mid:SetAlpha(A(0.45) * k); f.small:SetAlpha(A(0.8) * k)
+    local fx = c - 0.1
+    f.flare:SetAlpha((fx > 0 and fx < 0.8) and 0.55 * math.sin(fx / 0.8 * 3.1416) * k or 0)
+  elseif pv == "bossline" then
+    -- the next boss's time running down, its colour from yellow through orange to red; at zero
+    -- the line flares as the boss comes
+    local c = Mod(T, 12)
+    local left = math.max(0, 95 - c * 95 / 10.5)
     local s = f.strip
+    s:SetAlpha(Ease(T / 0.5) * (1 - 0.7 * offK))
+    s:ClearAllPoints(); s:SetPoint("CENTER", f, "CENTER", 0, -12 * (1 - Ease(T / 0.5)))
     s.name:SetText(AzT("Next boss: %s", AzG and AzG("Hogger") or "Hogger"))
     s.time:SetText(math.floor(left / 60) .. ":" .. string.format("%02d", math.floor(left - math.floor(left / 60) * 60)))
     if AzlW and AzlW.TimeColour then
-      local c, amp, speed = AzlW.TimeColour(left)
-      s.time:SetTextColor(c[1], c[2], c[3])
+      local col, amp, speed = AzlW.TimeColour(left)
+      s.time:SetTextColor(col[1], col[2], col[3])
       s.time:SetAlpha(1 - amp * (0.5 + 0.5 * math.sin(ST.t * speed)))
     end
-  elseif def.preview == "sound" and ST.ping then
-    ST.ping = ST.ping + e
-    local g = f.button.glow
-    g:SetAlpha(math.max(0, 0.8 - ST.ping))
-    if ST.ping > 1 then ST.ping = nil end
+    local z = c - 10.5
+    s.flare:SetAlpha((z > 0 and z < 1.3) and 0.7 * math.sin(z / 1.3 * 3.1416) * (1 - offK) or 0)
+  elseif def.preview == "sound" then
+    -- while it plays: the waves go out one after another, the bars dance, the words flare;
+    -- then all settles again
+    local t = ST.ping
+    local dur = ST.pingDur or 1.2
+    if t then ST.ping = t + e; t = ST.ping end
+    local playing = t and t < dur
+    local env = 0
+    if t then env = math.max(0, math.min(1, t / 0.08, (dur + 0.35 - t) / 0.35)) end
+    f.button.glow:SetAlpha(0.7 * env)
+    for i = 1, 3 do
+      local w = f.waves[i]
+      local x = t and (t - (i - 1) * 0.3) or -1
+      if x >= 0 and (playing or x < dur + 0.9) then
+        local ph = x - math.floor(x / 0.9) * 0.9
+        if not playing and x >= dur then ph = math.min(0.9, x - dur + ph) end
+        local size = 46 + ph / 0.9 * 80   -- (kept inside the box)
+        w:SetWidth(size); w:SetHeight(size); w:SetAlpha(0.55 * (1 - ph / 0.9) * math.max(env, 0.001))
+      else
+        w:SetAlpha(0)
+      end
+    end
+    local now = ST.t or 0
+    for k = 1, table.getn(f.bars) do
+      local B = f.bars[k]
+      local amp = 2 + 1.5 * (1 + math.sin(now * 1.8 + B.j * 0.6 + B.side))
+      if env > 0 then
+        local a = math.abs(math.sin(now * 9 + B.j * 1.3 + B.side)) * (0.55 + 0.45 * math.sin(now * 5.3 + B.j * 0.7))
+        amp = 2 + env * math.max(0, a) * (26 - B.j * 3)
+      end
+      B.tex:SetHeight(amp)
+    end
+    f.word:SetAlpha(Current(def) == "off" and 0.35 or (0.85 + 0.15 * env))
+    if t and t > dur + 1 then ST.ping = nil end
   end
 end
