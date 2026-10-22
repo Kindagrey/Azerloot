@@ -1239,11 +1239,19 @@ function ST.Build()
   title:SetPoint("CENTER", bar, "CENTER", 0, 1)   -- (in the middle of the banner)
   title:SetText(AzT("Settings"))
   F.title = title
-  local close = CreateFrame("Button", nil, F, "UIPanelCloseButton")
-  close:SetWidth(30); close:SetHeight(30)
-  close:SetPoint("RIGHT", bar, "RIGHT", -10, 0)
+  -- the gold cross of the book's own bar, lit under the mouse
+  local close = CreateFrame("Button", nil, F)
+  close:SetWidth(20); close:SetHeight(20)
+  close:SetPoint("RIGHT", bar, "RIGHT", -18, 1)
   close:SetFrameLevel(F:GetFrameLevel() + 4)
-  close:SetScript("OnClick", function() ST.Close() end)
+  local ct = Tex(close, MEDIA .. "close.tga", "ARTWORK"); ct:SetAllPoints(close)
+  local cg = close:CreateTexture(nil, "BACKGROUND")
+  cg:SetTexture(MEDIA .. "glow.tga"); cg:SetBlendMode("ADD"); cg:SetVertexColor(1, 0.72, 0.15)
+  cg:SetPoint("TOPLEFT", close, "TOPLEFT", -14, 12); cg:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 14, -12)
+  cg:Hide()
+  close:SetScript("OnEnter", function() cg:Show(); ct:SetVertexColor(1, 1, 0.8) end)
+  close:SetScript("OnLeave", function() cg:Hide(); ct:SetVertexColor(1, 1, 1) end)
+  close:SetScript("OnClick", function() cg:Hide(); ST.Close() end)
   -- the tabs: words in a row, a fine line under all of them
   F.tabs = {}
   local tx = 34

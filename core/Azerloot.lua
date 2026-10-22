@@ -3756,10 +3756,24 @@ local function Build()
   hint:SetPoint("RIGHT", search, "LEFT", -10, 0)
   hint:SetText(AzT("Search"))
   ui.searchHint = hint
-  local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+  -- closing: a gold cross in the gear's own style beside it, lit the same way under the mouse
+  local close = CreateFrame("Button", nil, frame)
   OnPage(close)
-  close:SetWidth(30); close:SetHeight(30)
-  close:SetPoint("LEFT", search, "RIGHT", 26, 0)
+  close:SetWidth(19); close:SetHeight(19)
+  close:SetPoint("LEFT", search, "RIGHT", 30, 0)
+  do
+    local ct = Tex(close, "close.tga", "ARTWORK"); ct:SetAllPoints(close)
+    local cg = close:CreateTexture(nil, "BACKGROUND")
+    cg:SetTexture(GLOW); cg:SetBlendMode("ADD"); cg:SetVertexColor(1, 0.72, 0.15)
+    cg:SetPoint("TOPLEFT", close, "TOPLEFT", -14, 12); cg:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 14, -12)
+    cg:Hide()
+    close:SetScript("OnEnter", function() cg:Show(); ct:SetVertexColor(1, 1, 0.8) end)
+    close:SetScript("OnLeave", function() cg:Hide(); ct:SetVertexColor(1, 1, 1) end)
+    close:SetScript("OnMouseDown", function() ct:SetPoint("TOPLEFT", close, "TOPLEFT", 1, -1); ct:SetPoint("BOTTOMRIGHT", close, "BOTTOMRIGHT", 1, -1) end)
+    close:SetScript("OnMouseUp", function() ct:ClearAllPoints(); ct:SetAllPoints(close) end)
+    close:SetScript("OnClick", function() cg:Hide(); frame:Hide() end)
+  end
+  ui.close = close
 
   BuildSettings(search)
 
