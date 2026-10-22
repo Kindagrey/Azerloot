@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the book's own words in German, French, Spanish and Portuguese (English is the
 -- key). %s and %d stand for what the book fills in. Words the game itself has (slots,
 -- categories, names) come from locales\GameText.lua instead.

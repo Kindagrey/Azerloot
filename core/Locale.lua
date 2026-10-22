@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the book's language. English, German, French, Spanish or Portuguese: the
 -- languages whose every letter the book's fonts can show. "Auto" follows the game's
 -- language when it is one of them, else English. The choice is read once per session;

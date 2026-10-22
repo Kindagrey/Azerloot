@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the chronicle. Every run the game reports as ended is written down per class:
 -- how it went (from the game's AZS_GetRunSummary), and what the hero had (the build, the
 -- spells and their ranks, the jewelry worn, the run's numbers and the boss loot). The last

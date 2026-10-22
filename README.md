@@ -46,3 +46,6 @@
 
 ## 💬 Feedback
 Azeroth Survivors Discord: https://discord.gg/CXAvQ6ZTXe
+
+## ©️ Copyright
+Copyright © 2026 Kindagrey. **All rights reserved.** Azerloot is free to download and use for your own play. Changing it, building on it, or publishing copies of it anywhere else (changed or not) needs Kindagrey's written permission. Details in [LICENSE.txt](LICENSE.txt).

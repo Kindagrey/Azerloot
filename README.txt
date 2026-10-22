@@ -97,7 +97,15 @@ FILES
     locales\       translations: the book's words and the game's own texts
     data\          jewelry, class amulets and every boss's loot
     media\         fonts (with their licences) and textures
+    LICENSE.txt    what you may and may not do with Azerloot
 
 
 Works with the default UI and with SurvivorsDragonUi (round and square minimaps).
 Azeroth Survivors Discord: https://discord.gg/CXAvQ6ZTXe by aethus meow meow
+
+
+COPYRIGHT
+---------
+Copyright (c) 2026 Kindagrey. All rights reserved. Free to download and use for your own
+play; changing it, building on it or publishing copies of it elsewhere needs Kindagrey's
+written permission. See LICENSE.txt.

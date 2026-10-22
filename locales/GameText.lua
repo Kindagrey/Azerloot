@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the game's own words in the book's languages, from its translation tables:
 -- English text -> the same text in German, French, Spanish and Portuguese. exact: whole
 -- texts; tpl: texts with values, as patterns on the English, filled into the translation.

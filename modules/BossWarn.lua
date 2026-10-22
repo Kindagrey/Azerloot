@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the boss warner. During a run a small bar shows the boss alive now (its health
 -- live from the game, with a gold mark at each health where it changes its tactics), or, with
 -- none alive, how long until the next one comes. Big words in the middle of the screen say

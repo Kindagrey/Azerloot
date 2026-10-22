@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the names the game gives its rings, trinkets and amulets in every language
 -- it ships (taken from the game's own translations), each pointing to the English name
 -- this addon uses. It lets the wishlist recognise a piece whatever language you play in.

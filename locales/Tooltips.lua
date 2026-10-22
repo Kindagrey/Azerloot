@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the game's own translations, to read a spell's tooltip in English whatever
 -- language the game runs in. exact: whole texts; tpl: texts with values, as patterns
 -- (longest literal first), with the names of their values and the English text.

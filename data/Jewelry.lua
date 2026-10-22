@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot data. Values recorded from the Azeroth Survivors codex; names and icons
 -- come from the game's own data. Rarity order: Common, Uncommon, Rare, Epic, Legendary.
 Azerloot_Data = {}

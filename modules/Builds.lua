@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: builds. Up to five per class: the spells and jewelry planned for a run, with a
 -- profile of what the build is strong and weak at. One build is loaded into the wishlist,
 -- from the book or with a click when a run begins; builds travel as short text codes.

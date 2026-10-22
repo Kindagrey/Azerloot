@@ -1,0 +1,55 @@
+Azerloot - the loot book for Azeroth Survivors
+Copyright (c) 2026 Kindagrey. All rights reserved.
+
+This software - its code, texts, translations, data tables, layout and the artwork made
+for it - is the work of Kindagrey and is protected by copyright. No licence is granted
+beyond what is written below.
+
+YOU MAY
+  * download Azerloot from its official home (https://github.com/Kindagrey/Azerloot) or
+    install it with an addon manager that fetches it from there (such as lazyaddons);
+  * use it, free of charge, for your own play;
+  * read its files and change your own settings;
+  * share links to its official home and its official releases.
+
+YOU MAY NOT, without the written permission of Kindagrey
+  * change, translate, adapt or build on its code or any other part of it, or publish or
+    hand on a changed version or a work made from it ("fork", "edit", "port", "rework");
+  * copy or publish it, in whole or in part, anywhere else (other websites, repositories,
+    addon sites, packs or compilations), whether changed or not;
+  * use its code, data, texts or artwork in another addon or project;
+  * sell it, or charge for it or for access to it;
+  * remove or change this notice or the copyright lines in its files.
+
+Viewing or forking the repository on GitHub, as GitHub's own terms allow for public
+repositories, grants no further right to change or publish it.
+
+Permission is given only in writing, by Kindagrey, for the case named. Requests,
+suggestions and bug reports are welcome on GitHub or the Azeroth Survivors Discord.
+
+NOT COVERED BY THIS NOTICE
+  * The fonts in media\fonts are by their own authors under the SIL Open Font License;
+    each comes with its licence file beside it.
+  * Names, words, icons and data of the game Azeroth Survivors and of World of Warcraft
+    belong to their owners; Azerloot only refers to them.
+
+The software is provided "as is", without warranty of any kind. Kindagrey is not liable
+for any harm or loss arising from its use.
+
+
+------------------------------------------------------------------------------------------
+Deutsch (zur Erläuterung; im Zweifel gilt der englische Text oben)
+
+Azerloot - Copyright (c) 2026 Kindagrey. Alle Rechte vorbehalten.
+
+Du darfst Azerloot von seiner offiziellen Seite (oder über einen Addon-Manager, der es
+von dort lädt) herunterladen und kostenlos für dein eigenes Spiel benutzen, seine Dateien
+lesen und Links zu den offiziellen Releases teilen.
+
+Ohne schriftliche Erlaubnis von Kindagrey darfst du es nicht verändern, übersetzen oder
+darauf aufbauen, keine veränderte oder unveränderte Kopie anderswo veröffentlichen oder
+weitergeben, keine Teile (Code, Daten, Texte, Bilder) in anderen Projekten verwenden, es
+nicht verkaufen und diesen Hinweis nicht entfernen.
+
+Die Schriften in media\fonts stehen unter ihrer eigenen Lizenz (SIL Open Font License).
+Namen, Texte, Symbole und Daten des Spiels gehören ihren Inhabern.

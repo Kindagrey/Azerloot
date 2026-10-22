@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot 2.3.1 - Azeroth Survivors (benilla client, Lua 5.0) by Kindagrey
 -- A book-style compendium: every ring, trinket and amulet a run can offer with its value
 -- at every rarity, each class's spells and their legendary amulets, a search, and a

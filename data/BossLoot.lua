@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: boss loot of every zone for every class, read from the game's own
 -- drop tables and boss table. Each piece drops on its own roll at its zone's chance;
 -- a duplicate adds nothing. In the Gates of Ahn'Qiraj and Naxxramas only the class weapon

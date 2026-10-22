@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot: the settings window. Opened by the gear in the book's top bar (the book steps
 -- back into the dark meanwhile), by a right-click on the minimap button, or by /azl settings.
 -- Three tabs - the book, the wishlist window and Azerwarn - each a list of settings on a
