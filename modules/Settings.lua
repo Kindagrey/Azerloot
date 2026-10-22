@@ -567,6 +567,24 @@ end
 BUILD.tracker = function(f)
   Field(f, 0.1)
   f.mini = MiniTracker(f)
+  -- for "Locked": a large lock on the right, what it means under it, and a pointer that
+  -- drags the window about while it is free
+  local bd = CreateFrame("Frame", nil, f); bd:SetWidth(54); bd:SetHeight(54)
+  bd:SetPoint("CENTER", f, "RIGHT", -58, 10); bd:SetFrameLevel(f:GetFrameLevel() + 2)
+  bd.disc = Tex(bd, WHITE, "BACKGROUND"); bd.disc:SetVertexColor(0, 0, 0); bd.disc:SetAlpha(0.55)
+  bd.disc:SetPoint("TOPLEFT", bd, "TOPLEFT", 6, -6); bd.disc:SetPoint("BOTTOMRIGHT", bd, "BOTTOMRIGHT", -6, 6)
+  bd.glow = Tex(bd, MEDIA .. "glow.tga", "BORDER"); bd.glow:SetBlendMode("ADD"); bd.glow:SetVertexColor(1, 0.75, 0.3)
+  bd.glow:SetPoint("TOPLEFT", bd, "TOPLEFT", -18, 18); bd.glow:SetPoint("BOTTOMRIGHT", bd, "BOTTOMRIGHT", 18, -18)
+  bd.ring = Tex(bd, MEDIA .. "ring.tga", "ARTWORK"); bd.ring:SetAllPoints(bd)
+  bd.lock = Tex(bd, "Interface\\ChatFrame\\UI-ChatFrame-LockIcon", "OVERLAY"); bd.lock:SetWidth(28); bd.lock:SetHeight(28)
+  bd.lock:SetPoint("CENTER", bd, "CENTER", 0, 0)
+  bd.word = Text(f, "body", 11, LIGHT); bd.word:SetPoint("TOP", bd, "BOTTOM", 0, -6); bd.word:SetWidth(110)
+  bd.word:SetShadowColor(0, 0, 0, 1); bd.word:SetShadowOffset(1, -1)
+  bd.word:Hide(); bd:Hide()
+  f.badge = bd
+  local cf = CreateFrame("Frame", nil, f); cf:SetAllPoints(f); cf:SetFrameLevel(f:GetFrameLevel() + 4)
+  f.pointer = Tex(cf, "Interface\\Cursor\\Point", "OVERLAY"); f.pointer:SetWidth(22); f.pointer:SetHeight(22); f.pointer:Hide()
+  f.dx, f.dy, f.lockView, f.lockFree = 0, 0, false, false
   f.off = OffMark(f)
 end
 BUILD.reset = function(f)
@@ -659,8 +677,27 @@ end
 DRAW.tracker = function(f, def)
   local function V(key) for _, t in ipairs(ST.TABS) do for _, s in ipairs(t.sections) do for _, d in ipairs(s.rows) do if d.key == key then return Current(d) end end end end end
   local sc = 0.75 * V("trackerScale")
-  f.mini:Draw(V("spellTracker"), V("trackerAlpha"), sc, V("locked"))
+  local locked = V("locked")
+  f.mini:Draw(V("spellTracker"), V("trackerAlpha"), sc, locked)
+  f.dx, f.dy = 0, 0
   f.mini:ClearAllPoints(); f.mini:SetPoint("TOPLEFT", f, "TOPLEFT", 14 / sc, -14 / sc)
+  -- only "Locked" shows the lock: gold and shut, or grey and open with the window dragged about
+  f.lockView = (def and def.key == "locked") and true or false
+  f.lockFree = f.lockView and not locked
+  local bd = f.badge
+  if f.lockView then
+    bd:Show(); bd.word:Show()
+    if locked then
+      bd.lock:SetVertexColor(1, 0.82, 0); bd.lock:SetAlpha(1); bd.glow:SetAlpha(0.55); bd.ring:SetVertexColor(1, 1, 1)
+      bd.word:SetText(AzT("Fixed in place")); bd.word:SetTextColor(1, 0.82, 0)
+    else
+      bd.lock:SetVertexColor(0.75, 0.75, 0.75); bd.lock:SetAlpha(0.6); bd.glow:SetAlpha(0); bd.ring:SetVertexColor(0.6, 0.6, 0.6)
+      bd.word:SetText(AzT("Free to move")); bd.word:SetTextColor(0.85, 0.85, 0.85)
+    end
+    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60, -14 - 6); f.pointer:Show()
+  else
+    bd:Hide(); bd.word:Hide(); f.pointer:Hide()
+  end
   if V("tracker") then f.off:Hide() else f.off:Show() end
 end
 DRAW.reset = function(f, def) end
@@ -1098,7 +1135,15 @@ function ST.Tick(e)
   if not (f and f:IsShown()) then return end
   local def = ST.selected
   if not def then return end
-  if def.preview == "warnings" then
+  if def.preview == "tracker" and f.lockFree then
+    -- free: the pointer takes the window by its head and moves it in a slow loop
+    local t = ST.t
+    local dx, dy = 18 * math.sin(t * 1.3), 7 * math.sin(t * 2.6)
+    local sc = f.mini:GetScale()
+    if not sc or sc <= 0 then sc = 1 end
+    f.mini:ClearAllPoints(); f.mini:SetPoint("TOPLEFT", f, "TOPLEFT", (14 + dx) / sc, (-14 + dy) / sc)
+    f.pointer:ClearAllPoints(); f.pointer:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + 60 + dx, -14 - 6 + dy)
+  elseif def.preview == "warnings" then
     -- the three come in one after another, stay, and fade, as in a run
     local c = math.mod and math.mod(ST.t, 3.2) or (ST.t - math.floor(ST.t / 3.2) * 3.2)
     local function A(start) local x = c - start; if x < 0 then return 0 end; return math.max(0, math.min(1, x / 0.3, (2.4 - x) / 0.5)) end
