@@ -1786,6 +1786,25 @@ local CLASS_INK = {
   mage = { 0.05, 0.38, 0.6 }, warlock = { 0.36, 0.22, 0.6 }, druid = { 0.68, 0.3, 0.0 },
 }
 local function ClassInk(key) return CLASS_INK[key] or INK end
+-- a class's NAME on the parchment: the colour of its icon's frame, only deeper, with a firm
+-- dark-brown shadow so even the light ones (priest, mage, rogue) read on the paper.
+-- (kept in the table: the main chunk has no locals left)
+CLASS_INK.names = {
+  warrior = { 0.58, 0.32, 0.08 }, paladin = { 0.80, 0.28, 0.55 }, hunter = { 0.52, 0.62, 0.10 },
+  rogue = { 0.78, 0.66, 0.0 }, priest = { 0.97, 0.96, 0.92 }, shaman = { 0.0, 0.42, 0.86 },
+  mage = { 0.22, 0.66, 0.88 }, warlock = { 0.52, 0.40, 0.80 }, druid = { 0.92, 0.44, 0.02 },
+}
+-- the icon's frame on the parchment: the class colour, but the warrior's pale tan is a deeper brown
+CLASS_INK.frames = { warrior = { 0.62, 0.36, 0.12 } }
+function CLASS_INK.Name(fs, key)
+  local c = CLASS_INK.names[key] or INK
+  fs:SetTextColor(c[1], c[2], c[3]); fs:SetShadowColor(0.16, 0.08, 0.02, 1); fs:SetShadowOffset(1, -1)
+end
+function CLASS_INK.Frame(tex, key, hex)
+  local c = CLASS_INK.frames[key]
+  if c then tex:SetVertexColor(c[1], c[2], c[3])
+  else tex:SetVertexColor(tonumber(string.sub(hex, 1, 2), 16) / 255, tonumber(string.sub(hex, 3, 4), 16) / 255, tonumber(string.sub(hex, 5, 6), 16) / 255) end
+end
 
 -- A boss's health as the game gives it with the standard run options: the base value of
 -- the boss table x 5.75 x the zone's strength (Elwynn 0.82 ... Ahn'Qiraj 4.4). Checked in the
@@ -2401,8 +2420,8 @@ local function DrawTitle()
   local cls = PlayerClass()
   local ci = ClassInfo(cls)
   T.icon:SetTexture("Interface\\Icons\\" .. (CLASS_ICON[cls] or "INV_Misc_QuestionMark"))
-  T.frame:SetVertexColor(tonumber(string.sub(ci.color, 1, 2), 16) / 255, tonumber(string.sub(ci.color, 3, 4), 16) / 255, tonumber(string.sub(ci.color, 5, 6), 16) / 255)
-  T.hero:SetText(AzG(ci.name)); local ink = ClassInk(cls); T.hero:SetTextColor(ink[1], ink[2], ink[3])
+  CLASS_INK.Frame(T.frame, cls, ci.color)
+  T.hero:SetText(AzG(ci.name)); CLASS_INK.Name(T.hero, cls)
   local have, n = ClassProgress(cls)
   T.bar:SetProgress(have, n)
   T.count:SetText(have .. "/" .. n)
@@ -2974,13 +2993,13 @@ local function BuildHomeCollection(Strip)
     sh:SetTexture(MEDIA .. "shadow.tga"); sh:SetVertexColor(0.15, 0.08, 0.02); sh:SetAlpha(0.75)
     sh:SetPoint("TOPLEFT", ib, "TOPLEFT", -12, 9); sh:SetPoint("BOTTOMRIGHT", ib, "BOTTOMRIGHT", 16, -17)
     local fr = ib:CreateTexture(nil, "BORDER"); fr:SetAllPoints(ib); fr:SetTexture(WHITE)
-    fr:SetVertexColor(tonumber(string.sub(c.color, 1, 2), 16) / 255, tonumber(string.sub(c.color, 3, 4), 16) / 255, tonumber(string.sub(c.color, 5, 6), 16) / 255)
+    CLASS_INK.Frame(fr, c.key, c.color)
     local ic = ib:CreateTexture(nil, "ARTWORK")
     ic:SetPoint("TOPLEFT", ib, "TOPLEFT", 2, -2); ic:SetPoint("BOTTOMRIGHT", ib, "BOTTOMRIGHT", -2, 2)
     ic:SetTexture("Interface\\Icons\\" .. (CLASS_ICON[c.key] or c.spells[1].icon))
     ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
     -- the name above a long bar, the count at the right end of the bar
-    local nm = Engraved(Heading(Font(cell, "GameFontNormal", ClassInk(c.key)), 15))
+    local nm = Heading(Font(cell, "GameFontNormal", ClassInk(c.key)), 15); CLASS_INK.Name(nm, c.key)
     nm:SetPoint("TOPLEFT", ib, "TOPRIGHT", 10, 2)
     nm:SetText(AzG(c.name))
     local bar = ProgressBar(cell, 196, 10)
