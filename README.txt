@@ -1,4 +1,4 @@
-Azerloot 2.3.1 - the loot book for Azeroth Survivors, by Kindagrey
+Azerloot 2.5.0 - the loot book for Azeroth Survivors, by Kindagrey
 ===================================================================
 
 Every boss drop in every zone, every ring, trinket and amulet at every rarity, each
