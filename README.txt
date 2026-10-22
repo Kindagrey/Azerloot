@@ -18,6 +18,7 @@ Updating: delete the old "Azerloot" folder first, then unpack the new one.
 OPENING THE BOOK
 ----------------
 Minimap button, /azl, or a key of your choice (Key Bindings menu).
+Right-click on the minimap button (or the gear in the book's top bar): the settings.
 Shift-click on the minimap button: the wishlist window and the three warning places can be
 dragged where you like, the mouse wheel over a warning makes it larger or smaller;
 Shift-click again (or click a warning example) when done.
@@ -25,6 +26,7 @@ Shift-click again (or click a warning example) when done.
     /azl              open or close the book
     /azl tracker      wishlist window on/off
     /azl layout       move the wishlist and the warnings (as Shift-click on the minimap button)
+    /azl settings     the settings window
     /azl collection   your collected boss pieces
     /azl reset        wishlist window back to its first place
 
@@ -79,9 +81,11 @@ through it to the game; its headings still fold. Taking parts of a loaded build 
 the wishlist unloads the build ("Load into wishlist" brings it back whole).
 
 Search (top bar): rings, trinkets, amulets, boss loot, bosses, zones and pages.
-Settings (gear in the top bar): font, language (English, Deutsch, Français, Español,
-Português or Auto) and book size; then the wishlist window: on/off,
-spell tracker, its size, its opacity, and back to its first place.
+Settings (gear in the top bar, or a right-click on the minimap button): a window in three
+tabs, each setting with a live preview beside it. Book: font, language (English, Deutsch,
+Français, Español, Português or Auto) and size. Wishlist: the window on/off, locked, its
+size and opacity, the spell tracker, back to its first place. Azerwarn: warnings, the boss
+line, the warnings' font, the two sounds. A language takes effect with a reload.
 
 
 FILES

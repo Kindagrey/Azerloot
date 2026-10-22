@@ -2897,183 +2897,26 @@ local function ProgressBar(parent, w, h)
   return b
 end
 
--- The setting "Azerwarn" (the boss warner): its row, and its two parts folding out to the right
--- like the fonts, each ticked while on - the big words in the middle of the screen, and the
--- bar with the boss's health and the marks where it turns.
+-- The boss warner's (Azerwarn) two parts, each switched on its own in the settings window: the
+-- big words in the middle of the screen, and the boss's line in the wishlist window.
 AZL_WARN_PARTS = {
   { key = "bossAlerts", label = "Warnings",
     tip = "Big words when a boss comes, when it turns and when the game calls a stampede, a pack or a guardian. The game's own banners make room for them." },
   { key = "bossBar", label = "Boss in the wishlist",
     tip = "A line in the wishlist window: the next boss and its time, or the boss alive with its health and the marks where it turns." },
 }
-function AzlWarnMenu(sp, Panel, Row, SetCheck)
-  local wr = Row(sp, 152)
-  local wrt = wr:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  wrt:SetPoint("LEFT", wr, "LEFT", 4, 0)
-  wrt:SetText("Azerwarn")
-  local wra = wr:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  wra:SetPoint("RIGHT", wr, "RIGHT", -4, 0)
-  wra:SetText(">")
-  local ws = Panel(sp)
-  ws:SetWidth(182); ws:SetHeight(46 + (table.getn(AZL_WARN_PARTS) + 3) * 19)
-  ws:SetHead("Azerwarn")
-  ws:SetPoint("TOPLEFT", wr, "TOPRIGHT", 13, 8)   -- level with its row
-  ws.items = {}
-  local function DBw() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end return AzerlootDB end
-  for i = 1, table.getn(AZL_WARN_PARTS) do
-    local part = AZL_WARN_PARTS[i]
-    local o = Row(ws, 164)
-    o:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (i - 1) * 19)
-    -- On in green or Off in grey at its right, like the settings' switches
-    local v = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    v:SetPoint("RIGHT", o, "RIGHT", -4, 0)
-    o.value = v
-    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetPoint("LEFT", o, "LEFT", 4, 0)
-    t:SetText(AzT(part.label))
-    o.label = t
-    o.key = part.key
-    o:SetScript("OnClick", function()
-      local d = DBw()
-      -- (the old single switch, off: both parts start off)
-      if d.bossWarn == false then d.bossWarn = nil; d.bossAlerts = false; d.bossBar = false end
-      d[this.key] = (d[this.key] == false)
-      ws:Update(); ws:Fit()
-      if AzlW and AzlW.Banners then AzlW.Banners() end
-      if AzlW and AzlW.Update then AzlW.Update() end
-    end)
-    o:SetScript("OnEnter", function()
-      local pt = AZL_WARN_PARTS[1]
-      for k = 1, table.getn(AZL_WARN_PARTS) do if AZL_WARN_PARTS[k].key == this.key then pt = AZL_WARN_PARTS[k] end end
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(AzT(pt.label), 1, 0.82, 0)
-      GameTooltip:AddLine(AzT(pt.tip), 0.85, 0.85, 0.85, 1)
-      GameTooltip:Show()
-    end)
-    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    ws.items[i] = o
-  end
-  -- the two sounds: a boss in 10 seconds, and a boss's turn; a click gives the next one (and
-  -- plays it), Off among them
-  local SOUND_ROWS = {
-    { what = "soon", label = "Sound: boss in 10 sec.", tip = "Played with the warning that a boss comes in 10 seconds. Click for the next sound, it plays at once; Off is among them." },
-    { what = "turn", label = "Sound: boss phase", tip = "Played when a boss turns: a new phase or a new attack once wounded. Click for the next sound, it plays at once; Off is among them." },
-  }
-  ws.sounds = {}
-  for i = 1, table.getn(SOUND_ROWS) do
-    local sr = SOUND_ROWS[i]
-    local o = Row(ws, 164)
-    o:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (table.getn(AZL_WARN_PARTS) + i - 1) * 19)
-    local v = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    v:SetPoint("RIGHT", o, "RIGHT", -4, 0)
-    o.value = v
-    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetPoint("LEFT", o, "LEFT", 4, 0)
-    t:SetText(AzT(sr.label))
-    o.label, o.what, o.tip = t, sr.what, sr.tip
-    o:SetScript("OnClick", function()
-      if AzlW and AzlW.NextSound then AzlW.NextSound(this.what) end
-      ws:Update(); ws:Fit()
-    end)
-    o:SetScript("OnEnter", function()
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(this.label:GetText(), 1, 0.82, 0)
-      GameTooltip:AddLine(AzT(this.tip), 0.85, 0.85, 0.85, 1)
-      GameTooltip:Show()
-    end)
-    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    ws.sounds[i] = o
-  end
-  -- the warnings' own face: like the book's (the default), or one of the book's faces; a
-  -- click gives the next one and shows an example warning in it
-  local fo = Row(ws, 164)
-  fo:SetPoint("TOPLEFT", ws, "TOPLEFT", 9, -38 - (table.getn(AZL_WARN_PARTS) + table.getn(SOUND_ROWS)) * 19)
-  local fov = fo:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  fov:SetPoint("RIGHT", fo, "RIGHT", -4, 0)
-  local fot = fo:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  fot:SetPoint("LEFT", fo, "LEFT", 4, 0)
-  fot:SetText(AzT("Font"))
-  fo.label, fo.value = fot, fov
-  fo:SetScript("OnClick", function()
-    local d = DBw()
-    local keys = { "book" }
-    for k = 1, table.getn(AZL.Faces) do table.insert(keys, AZL.Faces[k].key) end
-    local cur, n = d.warnFont or "book", 1
-    for k = 1, table.getn(keys) do if keys[k] == cur then n = k end end
-    -- the next one the game can draw (one it cannot is passed over)
-    for step = 1, table.getn(keys) do
-      local idx = n + step
-      while idx > table.getn(keys) do idx = idx - table.getn(keys) end
-      local nk = keys[idx]
-      d.warnFont = nk
-      AZL.ApplyFaces()
-      if nk == "book" or nk == "classic" or AZL.FaceKey("warn") == nk then break end
-    end
-    ws:Update(); ws:Fit()
-    if AzlW and AzlW.ShowAlert and not AzlW.moving then
-      AzlW.ShowAlert(AzT("%s in 10 sec.", "Hogger"), this.value:GetText(), "Ability_Hunter_Pet_Hyena")
-    end
-  end)
-  fo:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Font"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("The warnings' own font. Like the book follows the book's font; any other changes the warnings only. Click for the next one, an example shows at once."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  fo:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  ws.fontRow = fo
-  ws.Update = function(self)
-    local d = DBw()
-    for i = 1, table.getn(self.items) do
-      local on, v = d.bossWarn ~= false and d[self.items[i].key] ~= false, self.items[i].value
-      if on then v:SetText(AzT("On")); v:SetTextColor(0.3, 1, 0.3)
-      else v:SetText(AzT("Off")); v:SetTextColor(1, 0.3, 0.25) end
-    end
-    -- the warnings' face by its name, in gold
-    local wf = d.warnFont or "book"
-    local wl = "Like the book"
-    local faces = (AZL and AZL.Faces) or {}
-    for k = 1, table.getn(faces) do if faces[k].key == wf then wl = faces[k].label end end
-    self.fontRow.value:SetText(AzT(wl)); self.fontRow.value:SetTextColor(1, 0.82, 0)
-    -- a sound by its name in gold, Off in red
-    for i = 1, table.getn(self.sounds) do
-      local o = self.sounds[i]
-      local sd = AzlW and AzlW.SoundPick and AzlW.SoundPick(o.what)
-      if sd and (sd.file or sd.name) then o.value:SetText(AzT(sd.label)); o.value:SetTextColor(1, 0.82, 0)
-      else o.value:SetText(AzT("Off")); o.value:SetTextColor(1, 0.3, 0.25) end
-    end
-  end
-  -- as wide as its longest name needs
-  ws.Fit = function(self)
-    local need = 164
-    local all = {}
-    for i = 1, table.getn(self.items) do table.insert(all, self.items[i]) end
-    for i = 1, table.getn(self.sounds) do table.insert(all, self.sounds[i]) end
-    table.insert(all, self.fontRow)
-    for i = 1, table.getn(all) do
-      local w = (all[i].label:GetStringWidth() or 0) + 8 + (all[i].value:GetStringWidth() or 0) + 14
-      if w > need then need = w end
-    end
-    need = math.ceil(need)
-    self:SetWidth(need + 18)
-    for i = 1, table.getn(all) do all[i]:SetWidth(need) end
-    self.div:SetWidth(need + 2)
-  end
-  ws:Hide()
-  return wr, wrt, wra, ws
-end
 
 -- The settings, built apart from the book so neither function grows too big for the game's
 -- Lua (it allows a function only so many outside names).
 local function BuildSettings(search)
-  -- the settings: a brass gear before the close button, opening a small panel. For now it
-  -- holds the reading face; later settings join it there.
+  -- the settings: a brass gear before the close button. It opens the settings window
+  -- (modules\Settings.lua), in front of the book, which steps back into the dark meanwhile.
   local gear = CreateFrame("Button", nil, frame)
   OnPage(gear)
   gear:SetWidth(19); gear:SetHeight(19)
   gear:SetPoint("LEFT", search, "RIGHT", 5, 0)
   local gt = Tex(gear, "gear.tga", "ARTWORK"); gt:SetAllPoints(gear)
-  -- lit like the path and the title while the mouse is on it, and while its panel is open
+  -- lit like the path and the title while the mouse is on it
   local gg = gear:CreateTexture(nil, "BACKGROUND")
   gg:SetTexture(GLOW); gg:SetBlendMode("ADD"); gg:SetVertexColor(1, 0.72, 0.15)
   gg:SetPoint("TOPLEFT", gear, "TOPLEFT", -14, 12); gg:SetPoint("BOTTOMRIGHT", gear, "BOTTOMRIGHT", 14, -12)
@@ -3082,400 +2925,12 @@ local function BuildSettings(search)
     if on then gg:Show(); gt:SetVertexColor(1, 1, 0.8) else gg:Hide(); gt:SetVertexColor(1, 1, 1) end
   end
   gear.glow = gg
-  -- The settings open upwards, above the bar, so they never cover the book; a setting's
-  -- choices fold out to the right of it. Hover marks a row with a soft warm light.
-  local function Panel(parent)
-    local p = CreateFrame("Frame", nil, parent)
-    p:SetFrameStrata("DIALOG")
-    p:SetBackdrop({
-      bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-      edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-      tile = true, tileSize = 16, edgeSize = 16,
-      insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    -- the same dark ground and gold frame as the builds' lists, so every list of the book
-    -- looks alike; a solid layer under the border keeps the page from showing through
-    p:SetBackdropColor(0.06, 0.04, 0.02, 1)
-    local solid = p:CreateTexture(nil, "BACKGROUND"); solid:SetTexture(WHITE)
-    solid:SetVertexColor(0.08, 0.055, 0.03)
-    solid:SetPoint("TOPLEFT", p, "TOPLEFT", 4, -4); solid:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -4, 4)
-    p:SetBackdropBorderColor(0.8, 0.62, 0.3, 1)
-    p:EnableMouse(true)
-    if p.SetClampedToScreen then p:SetClampedToScreen(true) end
-    -- its heading and, under it, the book's gold ornament line
-    p.SetHead = function(self, txt)
-      if type(self.head) ~= "table" then
-        local hd = self:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        hd:SetPoint("TOPLEFT", self, "TOPLEFT", 12, -9); hd:SetJustifyH("LEFT")
-        local dv = self:CreateTexture(nil, "ARTWORK"); dv:SetTexture(MEDIA .. "divider_gold.tga")
-        dv:SetHeight(12); dv:SetPoint("TOP", self, "TOP", 0, -25)
-        self.head, self.div = hd, dv
-      end
-      self.head:SetText(txt)
-      self.div:SetWidth((self:GetWidth() or 170) - 16)
-    end
-    return p
-  end
-  local function Row(parent, w)
-    local o = CreateFrame("Button", nil, parent)
-    o:SetWidth(w); o:SetHeight(18)
-    local hl = o:CreateTexture(nil, "HIGHLIGHT")
-    hl:SetTexture(WHITE); hl:SetVertexColor(1, 0.8, 0.4); hl:SetAlpha(0.22)
-    hl:SetAllPoints(o)
-    return o
-  end
-  local sp = Panel(gear)
-  sp:SetWidth(170); sp:SetHeight(319)
-  -- sits right on the bar, its right edge in line with the book's corner
-  sp:SetPoint("BOTTOMRIGHT", gear, "TOPRIGHT", 46, 8)
-  sp:SetHead(AzT("Settings"))
-  -- the setting "Font": its name, the face in use, and the arrow to its choices
-  local fr = Row(sp, 152)
-  fr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38)
-  local frt = fr:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  frt:SetPoint("LEFT", fr, "LEFT", 4, 0)
-  frt:SetText(AzT("Font"))
-  local fra = fr:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  fra:SetPoint("RIGHT", fr, "RIGHT", -4, 0)
-  fra:SetText(">")
-  sp.fontRow = fr
-  -- its choices, folding out to the right, each name in its own face
-  local sub = Panel(sp)
-  sub:SetWidth(182); sub:SetHeight(46 + table.getn(FACES) * 19)
-  sub:SetHead(AzT("Font"))
-  -- beside the settings, past the book's right edge and clear of the chapter tabs below
-  sub:SetPoint("TOPLEFT", fr, "TOPRIGHT", 13, 8)   -- level with its row
-  sub.items = {}
-  for i = 1, table.getn(FACES) do
-    local fc = FACES[i]
-    local o = Row(sub, 164)
-    o:SetPoint("TOPLEFT", sub, "TOPLEFT", 9, -38 - (i - 1) * 19)
-    local ck = o:CreateTexture(nil, "OVERLAY")
-    ck:SetWidth(14); ck:SetHeight(14); ck:SetPoint("LEFT", o, "LEFT", 2, 0)
-    SetCheck(ck)
-    o.check = ck
-    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetFont(fc.body or BODY, fc.body and 12 or 13)
-    t:SetPoint("LEFT", o, "LEFT", 20, 0)
-    t:SetText(AzT(fc.label))
-    o.key = fc.key
-    o:SetScript("OnClick", function()
-      if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
-      local before = FaceKey()
-      AzerlootDB.font = this.key
-      ApplyAllFaces()
-      -- back to the original faces: the game's own text styles only come back whole with a
-      -- reload (setting their face again draws them a little differently)
-      if this.key == "classic" and before ~= "classic" then ReloadUI(); return end
-      if FaceKey() ~= this.key then
-        AzerlootDB.font = "classic"
-        Print(AzT("%s could not be loaded by your game, so the book keeps its original faces.", AzT(FaceInfo(this.key).label)))
-      end
-      sub:Update()
-      Refresh()
-      RefreshTracker()
-    end)
-    o:SetScript("OnEnter", function()
-      local f = FaceInfo(this.key)
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(AzT(f.label), 1, 0.82, 0)
-      GameTooltip:AddLine(AzT(f.tip), 0.85, 0.85, 0.85, 1)
-      GameTooltip:Show()
-    end)
-    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    sub.items[i] = o
-  end
-  sub.Update = function(self)
-    local cur = FaceKey()
-    for i = 1, table.getn(self.items) do
-      if self.items[i].key == cur then self.items[i].check:Show() else self.items[i].check:Hide() end
-    end
-  end
-  sub:Hide()
-  -- the setting "Language": the book's language, its choices folding out like the fonts';
-  -- a new choice reloads the interface, so every page is written anew
-  local lr = Row(sp, 152)
-  lr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 19)
-  local lrt = lr:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  lrt:SetPoint("LEFT", lr, "LEFT", 4, 0)
-  lrt:SetText(AzT("Language"))
-  local lra = lr:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  lra:SetPoint("RIGHT", lr, "RIGHT", -4, 0)
-  lra:SetText(">")
-  local lsub = Panel(sp)
-  lsub:SetWidth(182); lsub:SetHeight(46 + table.getn(AZL_LANGS) * 19)
-  lsub:SetHead(AzT("Language"))
-  lsub:SetPoint("TOPLEFT", lr, "TOPRIGHT", 13, 8)
-  lsub.items = {}
-  for i = 1, table.getn(AZL_LANGS) do
-    local lg = AZL_LANGS[i]
-    local o = Row(lsub, 164)
-    o:SetPoint("TOPLEFT", lsub, "TOPLEFT", 9, -38 - (i - 1) * 19)
-    local ck = o:CreateTexture(nil, "OVERLAY")
-    ck:SetWidth(14); ck:SetHeight(14); ck:SetPoint("LEFT", o, "LEFT", 2, 0)
-    SetCheck(ck)
-    o.check = ck
-    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetPoint("LEFT", o, "LEFT", 20, 0)
-    t:SetText(lg.code == "auto" and AzT(lg.label) or lg.label)
-    o.code = lg.code
-    o:SetScript("OnClick", function()
-      if type(AzerlootDB) ~= "table" then AzerlootDB = {} end
-      local was = AzerlootDB.lang or "auto"
-      if was == this.code then return end
-      AzerlootDB.lang = this.code
-      ReloadUI()
-    end)
-    o:SetScript("OnEnter", function()
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(AzT("Language"), 1, 0.82, 0)
-      GameTooltip:AddLine(AzT("The book's language. Changing it reloads the interface."), 0.85, 0.85, 0.85, 1)
-      if this.code == "auto" then
-        GameTooltip:AddLine(AzT("Auto follows the game's language when the book has it, else English."), 0.85, 0.85, 0.85, 1)
-      end
-      GameTooltip:Show()
-    end)
-    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    lsub.items[i] = o
-  end
-  lsub.Update = function(self)
-    local cur = (type(AzerlootDB) == "table" and AzerlootDB.lang) or "auto"
-    for i = 1, table.getn(self.items) do
-      if self.items[i].code == cur then self.items[i].check:Show() else self.items[i].check:Hide() end
-    end
-  end
-  lsub:Hide()
-  local function OpenLangs() sub:Hide(); sp.warnMenu:Hide(); lsub:Update(); lsub:Show() end
-  lr:SetScript("OnEnter", OpenLangs)
-  lr:SetScript("OnClick", function() if lsub:IsVisible() then lsub:Hide() else OpenLangs() end end)
-  -- switches: a name and its state, On in green or Off in grey; a click flips it
-  local function Switch(i, label, get, set, tip)
-    local o = Row(sp, 152)
-    o:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - (i + 1) * 19)
-    local t = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    t:SetPoint("LEFT", o, "LEFT", 4, 0); t:SetText(AzT(label))
-    local v = o:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    v:SetPoint("RIGHT", o, "RIGHT", -4, 0)
-    o.value, o.label = v, t
-    o.Update = function(self)
-      if get() then self.value:SetText(AzT("On")); self.value:SetTextColor(0.3, 1, 0.3)
-      else self.value:SetText(AzT("Off")); self.value:SetTextColor(1, 0.3, 0.25) end
-    end
-    o:SetScript("OnClick", function() set(not get()); this:Update() end)
-    o:SetScript("OnEnter", function()
-      sub:Hide(); lsub:Hide(); sp.warnMenu:Hide()
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(AzT(label), 1, 0.82, 0)
-      GameTooltip:AddLine(AzT(tip), 0.85, 0.85, 0.85, 1)
-      GameTooltip:Show()
-    end)
-    o:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    return o
-  end
-  local function DB() if type(AzerlootDB) ~= "table" then AzerlootDB = {} end return AzerlootDB end
-  sp.switches = {
-    Switch(1, "Spell tracker", function() return DB().spellTracker ~= false end,
-      function(on) DB().spellTracker = on; if not on then ForgetLearnedSpells() end; RefreshTracker(); Refresh() end,
-      "Spells you pick up in a run join the wishlist window, with their bonuses."),
-    Switch(2, "Wishlist window", function() return DB().tracker ~= false end,
-      function(on) DB().tracker = on; RefreshTracker() end,
-      "The small window with your wishlist."),
-  }
-  -- in two groups: the book (font, language, size), then under a gold line
-  -- the wishlist window (shown, spells, size, see-through, back to its place)
-  local SW = sp.switches
-  SW[2]:ClearAllPoints(); SW[2]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 4 * 19 - 16)
-  SW[1]:ClearAllPoints(); SW[1]:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 5 * 19 - 16)
-  -- the boss warner (Azerwarn) on its own, under a second gold line; its parts fold out
-  local wr, wrt, wra, wsub = AzlWarnMenu(sp, Panel, Row, SetCheck)
-  sp.warnRow, sp.warnMenu = wr, wsub
-  wr:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 11 * 19 - 6 - 32)
-  local function OpenWarn() sub:Hide(); lsub:Hide(); wsub:Update(); wsub:Show(); wsub:Fit() end
-  wr:SetScript("OnEnter", OpenWarn)
-  wr:SetScript("OnClick", function() if wsub:IsVisible() then wsub:Hide() else OpenWarn() end end)
-  local dv3 = sp:CreateTexture(nil, "ARTWORK"); dv3:SetTexture(MEDIA .. "divider_gold.tga")
-  dv3:SetHeight(12); dv3:SetPoint("TOP", sp, "TOP", 0, -38 - 11 * 19 - 6 - 15)
-  sp.div3 = dv3
-  local dv2 = sp:CreateTexture(nil, "ARTWORK"); dv2:SetTexture(MEDIA .. "divider_gold.tga")
-  dv2:SetHeight(12); dv2:SetPoint("TOP", sp, "TOP", 0, -38 - 4 * 19 - 1)
-  sp.div2 = dv2
-  -- the wishlist window's see-through background: a slider from clear to dark
-  local ol = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ol:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 8 * 19 - 3 - 16)
-  ol:SetText(AzT("Wishlist opacity"))
-  local ov = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  ov:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 8 * 19 - 3 - 16)
-  local sl = CreateFrame("Slider", nil, sp)
-  sl:SetOrientation("HORIZONTAL")
-  sl:SetWidth(144); sl:SetHeight(16)
-  sl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 9 * 19 - 2 - 16)
-  sl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
-    tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
-  sl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-  sl:SetMinMaxValues(0, 1)
-  sl:SetValueStep(0.05)
-  sl.label = ov
-  sl.Show_ = function(self, v) self.label:SetText(math.floor(v * 100 + 0.5) .. "%") end
-  sl:SetScript("OnValueChanged", function()
-    local v = this:GetValue() or arg1 or 0.35
-    v = math.floor(v * 20 + 0.5) / 20
-    DB().trackerAlpha = v
-    this:Show_(v)
-    RefreshTracker()
-  end)
-  sl:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Wishlist opacity"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("How dark the wishlist window's background is, from clear to solid."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  sl:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  sp.opacity = sl
-  -- the book's size: from 15% smaller to 25% larger than its own; it takes effect when the
-  -- slider is let go, so the panel does not shift under the mouse while dragging
-  local bl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 2 * 19 - 3)
-  bl:SetText(AzT("Book size"))
-  local bv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  bv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 2 * 19 - 3)
-  local bsl = CreateFrame("Slider", nil, sp)
-  bsl:SetOrientation("HORIZONTAL")
-  bsl:SetWidth(144); bsl:SetHeight(16)
-  bsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 3 * 19 - 2)
-  bsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
-    tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
-  bsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-  bsl:SetMinMaxValues(0.85, 1.25)
-  bsl:SetValueStep(0.05)
-  bsl.label = bv
-  bsl.Show_ = function(self, v) self.label:SetText(math.floor(v * 100 + 0.5) .. "%") end
-  bsl:SetScript("OnValueChanged", function()
-    local v = this:GetValue() or arg1 or 1
-    v = math.floor(v * 20 + 0.5) / 20
-    this.pending = v
-    this:Show_(v)
-    if not this.held then Azerloot_SetBookSize(v) end
-  end)
-  bsl:SetScript("OnMouseDown", function() this.held = true end)
-  bsl:SetScript("OnMouseUp", function()
-    this.held = false
-    if this.pending then Azerloot_SetBookSize(this.pending) end
-  end)
-  bsl:SetScript("OnEnter", function()
-    sub:Hide(); lsub:Hide()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Book size"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("Makes the whole book smaller or larger, text and pictures alike: from 85% to 125%."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  bsl:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  bsl.held, bsl.pending = false, false
-  sp.bookSize = bsl
-  -- the wishlist window's size, from 60% to 140% of its own: each player sets what reads
-  -- well on his screen (a long wishlist still shrinks to fit below the window's top)
-  local wl = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  wl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 6 * 19 - 3 - 16)
-  wl:SetText(AzT("Wishlist size"))
-  local wv = sp:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  wv:SetPoint("TOPRIGHT", sp, "TOPRIGHT", -13, -38 - 6 * 19 - 3 - 16)
-  local wsl = CreateFrame("Slider", nil, sp)
-  wsl:SetOrientation("HORIZONTAL")
-  wsl:SetWidth(144); wsl:SetHeight(16)
-  wsl:SetPoint("TOPLEFT", sp, "TOPLEFT", 13, -38 - 7 * 19 - 2 - 16)
-  wsl:SetBackdrop({ bgFile = "Interface\\Buttons\\UI-SliderBar-Background", edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
-    tile = true, tileSize = 8, edgeSize = 8, insets = { left = 3, right = 3, top = 6, bottom = 6 } })
-  wsl:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
-  wsl:SetMinMaxValues(0.6, 1.4)
-  wsl:SetValueStep(0.05)
-  wsl.label = wv
-  wsl.Show_ = function(self, v) self.label:SetText(math.floor(v * 100 + 0.5) .. "%") end
-  wsl:SetScript("OnValueChanged", function()
-    local v = this:GetValue() or arg1 or 1
-    v = math.floor(v * 20 + 0.5) / 20
-    DB().trackerScale = v
-    this:Show_(v)
-    if AzlFitTracker then AzlFitTracker() end
-  end)
-  wsl:SetScript("OnEnter", function()
-    sub:Hide(); lsub:Hide()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Wishlist size"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("Makes the wishlist window smaller or larger: from 60% to 140%."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  wsl:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  sp.trackSize = wsl
-  -- a window dragged off the screen (or lost after a change of resolution) comes back here
-  local rs = Row(sp, 152)
-  rs:SetPoint("TOPLEFT", sp, "TOPLEFT", 9, -38 - 10 * 19 - 6 - 16)
-  local rst = rs:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-  rst:SetPoint("LEFT", rs, "LEFT", 4, 0); rst:SetText(AzT("Reset Wishlist position"))
-  rs:SetScript("OnClick", function() Azerloot_ResetTracker() end)
-  rs:SetScript("OnEnter", function()
-    sub:Hide(); lsub:Hide()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Reset Wishlist position"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("Brings the wishlist window back to its first place and size, unlocked and shown."), 0.85, 0.85, 0.85, 1)
-    GameTooltip:Show()
-  end)
-  rs:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  local function OpenFonts() lsub:Hide(); wsub:Hide(); sub:Update(); sub:Show() end
-  fr:SetScript("OnEnter", OpenFonts)
-  fr:SetScript("OnClick", function() if sub:IsVisible() then sub:Hide() else OpenFonts() end end)
-  -- both close on their own a moment after the mouse leaves them
-  sp:SetScript("OnUpdate", function()
-    if MouseIsOver and (MouseIsOver(this) or MouseIsOver(gear) or (sub:IsVisible() and MouseIsOver(sub)) or (lsub:IsVisible() and MouseIsOver(lsub)) or (wsub:IsVisible() and MouseIsOver(wsub))) then
-      this.away = 0; return
-    end
-    this.away = (this.away or 0) + (arg1 or 0)
-    if this.away > 1.5 then this:Hide() end
-  end)
-  -- as wide as its longest line needs (a long language), never narrower than before
-  sp.lines = { { fr, frt, fra }, { lr, lrt, lra }, { rs, rst }, { wr, wrt, wra } }
-  for i = 1, table.getn(sp.switches) do
-    local o = sp.switches[i]
-    table.insert(sp.lines, { o, o.label, o.value })
-  end
-  sp.sliders = { { sl, ol, ov }, { bsl, bl, bv }, { wsl, wl, wv } }
-  sp.Fit = function(self)
-    local need = 152
-    for i = 1, table.getn(self.lines) do
-      local L = self.lines[i]
-      local w = (L[2]:GetStringWidth() or 0) + 8 + (L[3] and ((L[3]:GetStringWidth() or 0) + 14) or 0)
-      if w > need then need = w end
-    end
-    for i = 1, table.getn(self.sliders) do
-      local S = self.sliders[i]
-      local w = (S[2]:GetStringWidth() or 0) + (S[3]:GetStringWidth() or 0) + 16
-      if w > need then need = w end
-    end
-    need = math.ceil(need)
-    self:SetWidth(need + 18)
-    for i = 1, table.getn(self.lines) do self.lines[i][1]:SetWidth(need) end
-    for i = 1, table.getn(self.sliders) do self.sliders[i][1]:SetWidth(need - 8) end
-    self.div:SetWidth(need + 2)
-    if self.div2 then self.div2:SetWidth(need + 2) end
-    if self.div3 then self.div3:SetWidth(need + 2) end
-  end
-  sp:SetScript("OnHide", function() if not (MouseIsOver and MouseIsOver(gear)) then gear:Lit(false) end end)
-  sp:Hide()
   gear:SetScript("OnClick", function()
     GameTooltip:Hide()
-    if sp:IsVisible() then sp:Hide(); return end
-    sub:Hide(); lsub:Hide(); wsub:Hide(); sp.away = 0
-    for i = 1, table.getn(sp.switches) do sp.switches[i]:Update() end
-    local a = (type(AzerlootDB) == "table" and AzerlootDB.trackerAlpha) or 0.35
-    sp.opacity:SetValue(a); sp.opacity:Show_(a)
-    local bs = (type(AzerlootDB) == "table" and AzerlootDB.bookSize) or 1
-    sp.bookSize.held = true; sp.bookSize:SetValue(bs); sp.bookSize.held = false; sp.bookSize:Show_(bs)
-    local ts = (type(AzerlootDB) == "table" and AzerlootDB.trackerScale) or 1
-    sp.trackSize:SetValue(ts); sp.trackSize:Show_(ts)
-    sp:Show()
-    sp:Fit()
+    if AzlSettings then AzlSettings.Toggle() end
   end)
   gear:SetScript("OnEnter", function()
     this:Lit(true)
-    if sp:IsVisible() then return end
     -- short lines that never wrap: the client lays out wrapped lines badly in this corner
     GameTooltip:SetOwner(this, "ANCHOR_BOTTOMLEFT")
     GameTooltip:AddLine(AzT("Settings"), 1, 0.82, 0)
@@ -3484,11 +2939,8 @@ local function BuildSettings(search)
     GameTooltip:AddLine(AzT("Size of the book"), 0.85, 0.85, 0.85)
     GameTooltip:Show()
   end)
-  gear:SetScript("OnLeave", function()
-    GameTooltip:Hide()
-    if not sp:IsVisible() then this:Lit(false) end
-  end)
-  ui.gear, ui.settings, ui.fontMenu = gear, sp, sub
+  gear:SetScript("OnLeave", function() GameTooltip:Hide(); this:Lit(false) end)
+  ui.gear = gear
 end
 
 -- the home pages' headings and the right page's collection of every class
@@ -6454,14 +5906,15 @@ local function BuildMinimapButton()
   mmButton:SetScript("OnClick", function()
     GameTooltip:Hide()
     if IsShiftKeyDown and IsShiftKeyDown() then Azerloot_LayoutMode(); return end
+    if arg1 == "RightButton" and AzlSettings then AzlSettings.Toggle(); return end
     Azerloot_Toggle()
   end)
   mmButton:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, "ANCHOR_LEFT")
     GameTooltip:AddLine("Azerloot", 1, 0.82, 0)
     GameTooltip:AddLine(AzT("Click: open or close the book"), 0.9, 0.9, 0.9)
+    GameTooltip:AddLine(AzT("Right-click: settings"), 0.9, 0.9, 0.9)
     GameTooltip:AddLine(AzT("Shift-click: move the wishlist and the warnings"), 0.9, 0.9, 0.9)
-    GameTooltip:AddLine(AzT("Settings: the gear in the book's top bar"), 0.6, 0.6, 0.6)
     GameTooltip:AddLine(AzT("Drag: move round the minimap"), 0.6, 0.6, 0.6)
     GameTooltip:Show()
   end)
@@ -6609,6 +6062,7 @@ SlashCmdList["AZERLOOT"] = function(msg)
     return
   end
   if msg == "layout" then Azerloot_LayoutMode(); return end
+  if msg == "settings" or msg == "options" or msg == "config" then if AzlSettings then AzlSettings.Toggle() end; return end
   if msg == "reset" then
     Azerloot_ResetTracker()
     return
@@ -6718,7 +6172,13 @@ AZL = {
   Font = Font, Tex = Tex, Heading = Heading, Engraved = Engraved, Carved = Carved, Highlight = Highlight,
   DropShadow = DropShadow, SetIcon = SetIcon, SetFace = SetFace, FadeIn = FadeIn, Go = Go, Print = Print, Hex = Hex,
   OpenSearchHit = OpenSearchHit, Faces = FACES, ApplyFaces = function() ApplyAllFaces() end,
-  FaceKey = function(g) return FaceKey(g) end,
+  FaceKey = function(g) return FaceKey(g) end, HEAD_FONT = HEAD_FONT, FONT = FONT, Body = function() return BODY end,
+  ForgetLearnedSpells = function() ForgetLearnedSpells() end,
+  -- the wishlist window locked or open, as its own lock button does it
+  SetTrackerLock = function(on)
+    TrackerDB().trackerLocked = on and true or false
+    TrackerLockLook(); RefreshTracker()
+  end,
   Wish = Wish, WishKey = WishKey, ClassInfo = ClassInfo, PlayerClass = PlayerClass, ItemEntries = ItemEntries,
   ClassEntries = ClassEntries, SpellEntries = SpellEntries, IsFound = IsFound, KnowsSpell = KnowsSpell,
   SpellDesc = SpellDesc, EntryTitle = EntryTitle, EntrySections = EntrySections, AutoSpells = AutoSpells,

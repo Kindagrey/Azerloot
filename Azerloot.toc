@@ -19,3 +19,4 @@ core\Azerloot.lua
 modules\Builds.lua
 modules\Chronicle.lua
 modules\BossWarn.lua
+modules\Settings.lua
