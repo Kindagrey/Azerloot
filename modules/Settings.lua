@@ -126,7 +126,7 @@ local function SoundGet(what)
   return sd and sd.key or "raid"
 end
 local function SoundSet(what, key)
-  DB()[what == "soon" and "soundSoon" or "soundTurn"] = key
+  DB()[(AzlW and AzlW.SOUND_KEY and AzlW.SOUND_KEY[what]) or (what == "soon" and "soundSoon" or "soundTurn")] = key
   local s = (AzlW and AzlW.SOUNDS) or {}
   for i = 1, table.getn(s) do
     if s[i].key == key and AzlW.PlaySoundOf then AzlW.PlaySoundOf(s[i]); ST.ping = 0; ST.pingDur = s[i].dur or 1.2 end
@@ -255,6 +255,9 @@ ST.TABS = {
       { key = "soundTurn", kind = "choice", label = "Phase change", preview = "sound", sound = "turn",
         desc = "Played when a boss turns: a new phase or a new attack once wounded.",
         options = SoundChoices, get = function() return SoundGet("turn") end, set = function(v) SoundSet("turn", v) end },
+      { key = "soundDown", kind = "choice", label = "Hero down (co-op)", preview = "sound", sound = "down",
+        desc = "Played when a hero of your party is down, or you are: stand next to them to bring them back.",
+        options = SoundChoices, get = function() return SoundGet("down") end, set = function(v) SoundSet("down", v) end },
     } },
   } },
 }
@@ -969,6 +972,7 @@ DRAW.sound = function(f, def)
   local head = WarnFaces(DB().warnFont or "book")
   local text
   if def.sound == "turn" then text = AzT("%d%% health!", 50)
+  elseif def.sound == "down" then text = AzT("%s is down!", "Jaina")
   else text = AzT("%s in 10 sec.", AzG and AzG("Hogger") or "Hogger") end
   local room = (f:GetWidth() or 258) - 20
   if type(room) ~= "number" or room <= 0 then room = 238 end
@@ -1071,23 +1075,28 @@ function ST.ShowTab(key)
   for _, r in ipairs(F.rows) do r:Hide(); r.def = false end
   local y, hi, ri = -10, 0, 0
   local first
+  -- a tab with more rows than the page holds draws them a little closer together
+  local n, room = 0, (F.list:GetHeight() or (H - 132)) - 14
+  for _, sec in ipairs(tab.sections) do n = n + 1 + table.getn(sec.rows); room = room - 4 end
+  local step = ROW_H
+  if type(room) == "number" and n > 0 and n * ROW_H > room then step = math.floor(room / n) end
   for _, sec in ipairs(tab.sections) do
     hi = hi + 1
     local h = F.heads[hi]
     if not h then h = MakeHead(F.list); F.heads[hi] = h end
     h:ClearAllPoints(); h:SetPoint("TOPLEFT", F.list, "TOPLEFT", 14, y)
     h.text:SetText(AzT(sec.label))
-    h:Show()
-    y = y - ROW_H
+    h:SetHeight(step); h:Show()
+    y = y - step
     for _, def in ipairs(sec.rows) do
       ri = ri + 1
       local r = F.rows[ri]
       if not r then r = MakeRow(F.list); F.rows[ri] = r end
       r:ClearAllPoints(); r:SetPoint("TOPLEFT", F.list, "TOPLEFT", 14, y)
       r.def = def
-      r:Show()
+      r:SetHeight(step); r:Show()
       first = first or r
-      y = y - ROW_H
+      y = y - step
     end
     y = y - 4
   end

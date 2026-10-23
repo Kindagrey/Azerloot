@@ -63,7 +63,8 @@ Chronicle    Every run you finish, per class: the last 50, your best run pinned 
              jewelry at the end, and the boss loot (with "New!" on pieces that run
              added to your collection). "All builds" shows the runs of one build only,
              deleted builds included. Runs you leave with the game's own button are
-             not written down.
+             not written down. A co-op run shows the party's DPS in its summary;
+             hover it for every hero's share and best spell.
 
 
 
@@ -86,7 +87,7 @@ Settings (gear in the top bar, or a right-click on the minimap button): a window
 tabs, each setting with a live preview beside it. Book: font, language (English, Deutsch,
 Français, Español, Português or Auto) and size. Wishlist: the window on/off, locked, its
 size and opacity, the spell tracker, back to its first place. Azerwarn: warnings, the boss
-line, the warnings' font, a colour for each of the three warning places, the two sounds. A language takes effect with a reload.
+line, the warnings' font, a colour for each of the three warning places, the three sounds. A language takes effect with a reload.
 
 
 FILES

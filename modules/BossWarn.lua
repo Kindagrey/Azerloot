@@ -217,8 +217,10 @@ W.SOUNDS = {
   { key = "alarm", dur = 4.9, label = "Battle alarm", file = "Sound\\Interface\\PVPWarningAllianceMono.wav" },
   { key = "drums", dur = 4.9, label = "War drums", file = "Sound\\Interface\\OrcExploration.wav" },
 }
--- which sound each call has: "soon" (a boss in 10 seconds) and "turn" (a boss's phase)
-local SOUND_KEY = { soon = "soundSoon", turn = "soundTurn" }
+-- which sound each call has: "soon" (a boss in 10 seconds), "turn" (a boss's phase) and
+-- "down" (in co-op, a hero of the party down)
+local SOUND_KEY = { soon = "soundSoon", turn = "soundTurn", down = "soundDown" }
+W.SOUND_KEY = SOUND_KEY
 function W.SoundPick(what)
   local k = DB()[SOUND_KEY[what] or ""] or "raid"
   for i = 1, table.getn(W.SOUNDS) do if W.SOUNDS[i].key == k then return W.SOUNDS[i], i end end
@@ -376,6 +378,7 @@ end
 W.Box = Box
 
 Show = function(f, text, sub, icon, sound)
+  f.live = nil
   f.text:SetText(text or "")
   f.sub:SetText(sub or "")
   Place(f)
@@ -522,6 +525,7 @@ local function Said(who, by)
   return false
 end
 
+local REVIVE_ICON = "Spell_Holy_Resurrection"
 -- The game's banners, as it sends them to addons (since its update of 21 October): every one,
 -- bosses, guardians, achievements, zones, magnets, caches and runes, with its text in the
 -- player's language, even while its own banners are hidden
@@ -541,6 +545,22 @@ function W.OnBanner(b)
       rest = string.gsub(string.sub(text, string.len(first) + 1), "^%s+", "")
       text = first
     end
+  end
+  -- co-op: a friend down (by name, in the game's words), the hero down, the hero back up
+  if b.kind == "frienddown" or b.kind == "downed" then
+    -- "Anna is down!" big, what to do about it under it
+    if not rest then
+      local first = First(text)
+      if first ~= text then
+        rest = string.gsub(string.sub(text, string.len(first) + 1), "^%s+", "")
+        text = first
+      end
+    end
+    Alert(text, rest, REVIVE_ICON, "down")
+    return
+  elseif b.kind == "revived" then
+    Alert(text, rest, REVIVE_ICON, nil, true)
+    return
   end
   local boss = b.boss and Lookup(b.name) or nil
   if boss then arrived[string.lower(b.name)] = GetTime() end
@@ -947,7 +967,31 @@ function W.Lairs()
   end
 end
 
+-- co-op: while the hero brings a friend back, or is being brought back, how far it is, in the
+-- small place, kept up for as long as it goes on (the game's AZS_GetRevive)
+function W.Revive()
+  if not W.AlertsOn() or not AZS_GetRevive or W.moving then return end
+  local ok, r = pcall(AZS_GetRevive)
+  if not ok or type(r) ~= "table" then return end
+  local rs, sh = tonumber(r.rshare), tonumber(r.share)
+  local text
+  if type(r.reviving) == "string" and r.reviving ~= "" and rs and rs > 0 and rs < 1 then
+    text = G(function() return AzT("Bringing %s back: %d%%", r.reviving, math.floor(rs * 100)) end)
+  elseif tonumber(r.down) == 1 and sh and sh > 0 and sh < 1 and type(r.by) == "string" and r.by ~= "" then
+    text = G(function() return AzT("%s is bringing you back: %d%%", r.by, math.floor(sh * 100)) end)
+  end
+  if not text then return end
+  local f = Box("small")
+  -- a notice just shown there is read first
+  if f:IsShown() and not f.live and (f.left or 0) > BOX.small.dur - 1.5 then return end
+  if not (f:IsShown() and f.live) then Show(f, text, nil, REVIVE_ICON) end
+  f.live = true
+  f.text:SetText(text)
+  if (f.left or 0) < 1.2 then f.left = 1.2 end
+end
+
 function W.Update()
+  W.Revive()
   local ph = Phase()
   local running = ph == "playing" or ph == "ready" or ph == "paused" or ph == "choosing"
   if not running then

@@ -168,6 +168,25 @@ function C.Snap()
   L.caches = tonumber(R.chest) or L.caches
   L.level = (UnitLevel and UnitLevel("player")) or L.level
   if type(AZS_ZONE) == "table" and AZS_ZONE.zone and AZS_ZONE.zone ~= "" then L.zone = AZS_ZONE.zone end
+  C.SnapParty(L)
+end
+
+-- co-op: the party's damage meter (the game's AZS_GetPartyMeter), each hero with their class,
+-- damage, damage per second and the spell that dealt the most; the party's own per second
+function C.SnapParty(L)
+  if not AZS_GetPartyMeter then return end
+  local ok, lines, total, rate = pcall(AZS_GetPartyMeter)
+  if not ok or type(lines) ~= "table" or table.getn(lines) < 2 then return end
+  local pt = {}
+  for i = 1, table.getn(lines) do
+    local x = lines[i]
+    if type(x) == "table" and x.name and x.name ~= "" then
+      table.insert(pt, { n = tostring(x.name), c = x.class and string.lower(tostring(x.class)) or nil,
+        d = tonumber(x.dmg), p = tonumber(x.dps), top = (x.top and x.top ~= "") and tostring(x.top) or nil })
+    end
+  end
+  if table.getn(pt) < 2 then return end
+  L.party, L.partyDmg, L.partyDps = pt, tonumber(total), tonumber(rate)
 end
 
 -- a piece of boss loot that dropped in this run
@@ -205,6 +224,7 @@ function C.Record(phase)
   L.done = true
   local sum = Summary()
   local S = C.Normalize(sum)
+  C.SnapParty(L)
   -- a run the hero left by the game's own button is not written down (nor does leaving
   -- the endless fight change the run already written)
   if C.Left(S.result) then return end
@@ -234,7 +254,7 @@ function C.Record(phase)
     gold = tonumber(S.gold) or L.gold, caches = tonumber(S.caches) or L.caches,
     hero = S.hero or (UnitName and UnitName("player")), race = S.race, zone = S.zone or L.zone,
     build = L.build, spells = L.spells, jewels = L.jewels, stats = L.stats, loot = L.loot,
-    lootNew = L.lootNew,
+    lootNew = L.lootNew, party = L.party, partyDmg = L.partyDmg, partyDps = L.partyDps,
   }
   -- the summary as the game gave it, for anything it tells that is not shown yet
   if type(sum) == "table" then
@@ -269,6 +289,7 @@ function C.Continue(run, S, L, sum)
   run.stats = L.stats or run.stats
   run.loot = L.loot or run.loot
   run.lootNew = L.lootNew or run.lootNew
+  if L.party then run.party, run.partyDmg, run.partyDps = L.party, L.partyDmg, L.partyDps end
   if type(sum) == "table" then
     run.raw = {}
     for k, v in pairs(sum) do if Plain(v) then run.raw[tostring(k)] = v end end
@@ -1039,6 +1060,19 @@ function C.MakeRight(P)
   end)
   sh:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.rows = {}
+  -- (the last place, in a co-op run: every hero's damage per second on hovering it)
+  local nS = table.getn(SUMMARY)
+  local pt = CreateFrame("Frame", nil, P)
+  pt:SetWidth(150); pt:SetHeight(16)
+  pt:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 150 + Mod(nS - 1, 2) * 160 - 4, -72 - math.floor((nS - 1) / 2) * 17)
+  pt:EnableMouse(true)
+  pt:SetScript("OnEnter", function()
+    local r = C.sel
+    if not (r and r.party) then return end
+    C.PartyTip(this, r)
+  end)
+  pt:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  R.partyTip = pt
   for k = 1, table.getn(SUMMARY) do
     local col, row = Mod(k - 1, 2), math.floor((k - 1) / 2)
     local x = PAGE_MID - 150 + col * 160
@@ -1266,10 +1300,14 @@ function C.DrawRight(cls)
   C.FxSet(run.won and "heal" or "blood")
   local best = C.BestOf(cls, C.Runs(cls))
   if best and best.id == run.id then R.seal:Show() else R.seal:Hide() end
-  R.sub:SetText(C.ZoneName(run.zone) .. "  ·  " .. C.Date(run.at, true))
+  R.sub:SetText(C.ZoneName(run.zone) .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
   for k = 1, table.getn(SUMMARY) do
     local row = R.rows[k]
     row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
+    -- a co-op run: the party's damage per second in the last place (each hero on hovering it)
+    if k == table.getn(SUMMARY) and run.party then
+      row.l:SetText(AzT("Party DPS")); row.v:SetText(C.Big(run.partyDps))
+    end
     -- the numbers in the heading's own ink: green for a run survived, red for one lost
     if run.won then row.v:SetTextColor(0.1, 0.45, 0.04) else row.v:SetTextColor(0.6, 0.1, 0.05) end
     row.l:Show(); row.v:Show()
@@ -1360,6 +1398,30 @@ function C.DrawRight(cls)
       f:Hide()
     end
   end
+end
+
+-- a co-op run's party: every hero, the most damage first, in their class's colour
+function C.PartyTip(owner, r)
+  GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+  GameTooltip:AddLine(AzT("Party DPS"), 1, 0.82, 0)
+  local total = tonumber(r.partyDmg) or 0
+  if total <= 0 then for i = 1, table.getn(r.party) do total = total + (tonumber(r.party[i].d) or 0) end end
+  for i = 1, table.getn(r.party) do
+    local h = r.party[i]
+    local cc = h.c and RAID_CLASS_COLORS and RAID_CLASS_COLORS[string.upper(h.c)]
+    local cr, cg, cb = 1, 1, 1
+    if cc then cr, cg, cb = cc.r, cc.g, cc.b end
+    local pct = (total > 0 and tonumber(h.d)) and string.format("  (%d%%)", math.floor(h.d / total * 100 + 0.5)) or ""
+    GameTooltip:AddDoubleLine(h.n, C.Big(h.p) .. pct, cr, cg, cb, 1, 1, 1)
+    if h.top then
+      -- (the game may name the spell by its key or by its name)
+      local okI, info = pcall(C.SpellInfo, h.c, h.top)
+      if not okI then info = nil end
+      GameTooltip:AddLine("   " .. AzG(info and info.name or h.top), 0.6, 0.6, 0.6)
+    end
+  end
+  GameTooltip:AddDoubleLine(AzT("Party"), C.Big(r.partyDps), 1, 0.82, 0, 1, 0.82, 0)
+  GameTooltip:Show()
 end
 
 -- a boss piece by its English name: its entry (icon, slot, bonuses) and the zone it drops in
