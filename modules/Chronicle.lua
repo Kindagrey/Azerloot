@@ -1060,11 +1060,9 @@ function C.MakeRight(P)
   end)
   sh:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.rows = {}
-  -- (the last place, in a co-op run: every hero's damage per second on hovering it)
-  local nS = table.getn(SUMMARY)
+  -- (a co-op run's own place after the others: every hero's damage per second on hovering it)
   local pt = CreateFrame("Frame", nil, P)
   pt:SetWidth(150); pt:SetHeight(16)
-  pt:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 150 + Mod(nS - 1, 2) * 160 - 4, -72 - math.floor((nS - 1) / 2) * 17)
   pt:EnableMouse(true)
   pt:SetScript("OnEnter", function()
     local r = C.sel
@@ -1073,15 +1071,12 @@ function C.MakeRight(P)
   end)
   pt:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.partyTip = pt
-  for k = 1, table.getn(SUMMARY) do
-    local col, row = Mod(k - 1, 2), math.floor((k - 1) / 2)
-    local x = PAGE_MID - 150 + col * 160
+  for k = 1, table.getn(SUMMARY) + 1 do
     local l = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
-    l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x, -74 - row * 17)
     local v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
-    v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", x + 140, -74 - row * 17)
     R.rows[k] = { l = l, v = v }
   end
+  C.PlaceRows(table.getn(SUMMARY))
 
   R.buildHead = C.Head(P, ui.right, -166)
   local bl = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
@@ -1283,6 +1278,7 @@ function C.DrawRight(cls)
   if not run then
     for k = 1, table.getn(parts) do parts[k]:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
+    R.partyTip:Hide()
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1301,11 +1297,17 @@ function C.DrawRight(cls)
   local best = C.BestOf(cls, C.Runs(cls))
   if best and best.id == run.id then R.seal:Show() else R.seal:Hide() end
   R.sub:SetText(C.ZoneName(run.zone) .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
-  for k = 1, table.getn(SUMMARY) do
+  -- a co-op run: the party's damage per second after the others (each hero on hovering it)
+  local nS = table.getn(SUMMARY) + (run.party and 1 or 0)
+  C.PlaceRows(nS)
+  local extra = R.rows[table.getn(SUMMARY) + 1]
+  extra.l:Hide(); extra.v:Hide()
+  if run.party then R.partyTip:Show() else R.partyTip:Hide() end
+  for k = 1, nS do
     local row = R.rows[k]
-    row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
-    -- a co-op run: the party's damage per second in the last place (each hero on hovering it)
-    if k == table.getn(SUMMARY) and run.party then
+    if SUMMARY[k] then
+      row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
+    else
       row.l:SetText(AzT("Party DPS")); row.v:SetText(C.Big(run.partyDps))
     end
     -- the numbers in the heading's own ink: green for a run survived, red for one lost
@@ -1396,6 +1398,24 @@ function C.DrawRight(cls)
       f.piece = nil
       f.isNew = false; f.badge:Hide()
       f:Hide()
+    end
+  end
+end
+
+-- the summary's places, two to a line: ten as always, a line closer together with an eleventh
+-- (a co-op run's party DPS), so the build's heading keeps its place
+function C.PlaceRows(n)
+  local R, ui = C.R, AZL.ui
+  local top, step = -74, 17
+  if n > table.getn(SUMMARY) then top, step = -72, 15 end
+  for k = 1, table.getn(R.rows) do
+    local col, row = Mod(k - 1, 2), math.floor((k - 1) / 2)
+    local x = PAGE_MID - 150 + col * 160
+    local y = top - row * step
+    R.rows[k].l:ClearAllPoints(); R.rows[k].l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x, y)
+    R.rows[k].v:ClearAllPoints(); R.rows[k].v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", x + 140, y)
+    if k == table.getn(SUMMARY) + 1 then
+      R.partyTip:ClearAllPoints(); R.partyTip:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x - 4, y + 2)
     end
   end
 end
