@@ -184,6 +184,13 @@ function C.Loot(cls, name, new)
   table.insert(L.loot, name)
 end
 
+-- in a party a fallen hero is only down: a friend can bring them back, and the run goes on.
+-- Only the game's word that the run is over (its summary, sent at the end) ends it then.
+local function Downed()
+  if not AZS_GetRevive then return false end
+  local ok, r = pcall(AZS_GetRevive)
+  return ok and type(r) == "table" and tonumber(r.down) == 1
+end
 local function Summary()
   if not AZS_GetRunSummary then return nil end
   local ok, s = pcall(AZS_GetRunSummary)
@@ -316,6 +323,8 @@ function C.Tick()
   if fighting then
     L.active = true
     C.Snap()
+  elseif ph == "dead" and L.active and not L.done and Downed() then
+    L.endAt, L.phase = nil, ph
   elseif (ph == "dead" or ph == "victory") and L.active and not L.done then
     -- the game may need a moment for its summary: wait up to twenty seconds for it
     L.endAt = L.endAt or (GetTime and GetTime() or 0)

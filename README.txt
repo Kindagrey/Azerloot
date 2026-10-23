@@ -9,8 +9,9 @@ Built for Azeroth Survivors (World of Warcraft 1.12.1 client).
 
 INSTALLATION
 ------------
-Unpack the folder "Azerloot" into your AddOns folder, usually
-    C:\Git\wenilla\benilla-config\AddOns
+Unpack the folder "Azerloot" into the AddOns folder in benilla-config, in the game's
+folder beside AzerothSurvivors.exe:
+    benilla-config\AddOns
 The folder must be named exactly "Azerloot".
 Updating: delete the old "Azerloot" folder first, then unpack the new one.
 

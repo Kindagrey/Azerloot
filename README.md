@@ -19,7 +19,7 @@
 
 **By hand:**
 1. Download the latest zip from [Releases](../../releases/latest).
-2. Unpack the folder into your AddOns folder, e.g. `C:\Git\wenilla\benilla-config\AddOns`. It must be named **`Azerloot`**, with `Azerloot.toc` directly inside it.
+2. Unpack the folder into `benilla-config\AddOns`, in the game's folder beside `AzerothSurvivors.exe`. It must be named **`Azerloot`**, with `Azerloot.toc` directly inside it.
 3. Start the game. Open the book with the minimap button, `/azl` or a key binding. Right-click the minimap button (or the gear in the book) for the settings.
 4. Shift-click the minimap button to move the wishlist window and the three warning places; the mouse wheel sizes the warnings.
 
