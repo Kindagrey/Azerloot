@@ -3092,19 +3092,36 @@ local function BuildBossView(Strip)
   st:SetWidth(310); st:SetHeight(36)
   B.stats = st
   -- two columns of two: name and number in the same face and size, on one line
-  local function Stat(label, x, y, col, edge)
+  -- (each with a word on what it means, on hovering it)
+  local function Stat(label, x, y, col, edge, tip)
     local l = Engraved(Font(st, "GameFontNormal", INK_SOFT, 13))
     l:SetPoint("TOPLEFT", st, "TOPLEFT", x, y)
     l:SetText(AzT(label) .. ":")
     local v = Font(st, "GameFontNormal", col, 13)
     v:SetShadowColor(edge[1], edge[2], edge[3], 1); v:SetShadowOffset(1, -1)
     v:SetPoint("LEFT", l, "RIGHT", 3, 0)
+    local h = CreateFrame("Frame", nil, st)
+    h:SetWidth(150); h:SetHeight(16)
+    h:SetPoint("TOPLEFT", st, "TOPLEFT", x - 2, y + 1)
+    h:EnableMouse(true)
+    h:SetScript("OnEnter", function()
+      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+      GameTooltip:AddLine(AzT(label), 1, 0.82, 0)
+      GameTooltip:AddLine(AzT(tip), 0.85, 0.85, 0.85, 1)
+      GameTooltip:Show()
+    end)
+    h:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    v.hover = h
     return v
   end
-  B.health = Stat("Health", 0, 0, INK_GOOD, { 0.02, 0.14, 0 })   -- the green of the Jewelry effects
-  B.hit = Stat("Hit", 160, 0, { 0.86, 0.1, 0.06 }, { 0.2, 0, 0 })
-  B.speed = Stat("Speed", 0, -18, { 1, 0.78, 0.08 }, { 0.25, 0.12, 0 })
-  B.spawns = Stat("Spawns", 160, -18, PAGE_RARITY.Legendary, { 0.22, 0.07, 0 })   -- the legendary orange
+  B.health = Stat("Health", 0, 0, INK_GOOD, { 0.02, 0.14, 0 },   -- the green of the Jewelry effects
+    "The boss's health in a run with the standard options, for one hero. In co-op it has more, sized to the heroes still standing.")
+  B.hit = Stat("Hit", 160, 0, { 0.86, 0.1, 0.06 }, { 0.2, 0, 0 },
+    "The damage of one of its ordinary hits, as the game's own boss table gives it.")
+  B.speed = Stat("Speed", 0, -18, { 1, 0.78, 0.08 }, { 0.25, 0.12, 0 },
+    "How fast it moves, in yards per second.")
+  B.spawns = Stat("Spawns", 160, -18, PAGE_RARITY.Legendary, { 0.22, 0.07, 0 },   -- the legendary orange
+    "When it comes: minutes into the run.")
 
   -- DANGERS: marked with the skull the game shows for a foe far above you
   B.dangers = Strip(ui.bossView, "Dangers")
