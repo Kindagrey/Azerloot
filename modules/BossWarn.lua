@@ -535,6 +535,7 @@ local REVIVE_ICON = "Spell_Holy_Resurrection"
 -- player's language, even while its own banners are hidden
 function W.OnBanner(b)
   if type(b) ~= "table" or type(b.text) ~= "string" or b.text == "" then return end
+  if W.SoundLogBanner then W.SoundLogBanner(b) end
   W.NoteLang(b.name)
   if not W.AlertsOn() or not DB().bannersTaken then return end
   if b.name and b.name ~= "" and Said(b.name, "banner") then return end
@@ -1127,12 +1128,12 @@ end
 -- what the warner itself put on the screen (or queued, or had no room for), so a run's log
 -- shows every call beside the game's line it came from
 function W.LogShown(how, text, sub, kind, sound)
-  if not DB().bossLogOn then return end
+  if not (DB().bossLogOn or DB().soundLogOn) then return end
   Log(">> " .. how .. " " .. tostring(kind) .. (sound and " +sound" or "") .. ": "
     .. tostring(text) .. (sub and sub ~= "" and ("  /  " .. tostring(sub)) or ""))
 end
 function W.LogSound(sd, ok)
-  if not DB().bossLogOn then return end
+  if not (DB().bossLogOn or DB().soundLogOn) then return end
   Log("~~ sound " .. tostring(sd.key) .. (ok and " (file)" or " (by name)"))
 end
 -- the fights' every tick and hit filled the log in two minutes: only those naming a boss stay
@@ -1200,7 +1201,27 @@ function W.StartLog()
     end)
   end
 end
+-- /azl soundlog: a whole run's warnings, the game's banners and every sound asked for, nothing
+-- else (the boss log's other lines would fill it in minutes)
+function W.SoundLogBanner(b)
+  if not DB().soundLogOn or DB().bossLogOn or type(b) ~= "table" then return end
+  Log("banner " .. tostring(b.kind) .. " [" .. tostring(b.name) .. "]: " .. tostring(b.text))
+end
 function W.Slash(msg)
+  if msg == "soundlog" then
+    local d = DB()
+    d.soundLogOn = not d.soundLogOn
+    if d.soundLogOn then
+      d.bossLog = {}
+      local function CV(n) local ok, v = pcall(function() return GetCVar and GetCVar(n) end); return ok and tostring(v) or "?" end
+      Log("sound settings: MasterSoundEffects " .. CV("MasterSoundEffects") .. ", MasterVolume " .. CV("MasterVolume")
+        .. ", SoundVolume " .. CV("SoundVolume") .. "; warnings " .. tostring(W.AlertsOn()) .. ", banners taken " .. tostring(d.bannersTaken and true or false))
+      AZL.Print(AzT("Sound log on: play a run, then type /azl soundlog again and /reload. The lines are kept in your saved variables (AzerlootDB.bossLog)."))
+    else
+      AZL.Print(AzT("Sound log off: %d lines kept. /reload writes them to your saved variables.", table.getn(d.bossLog or {})))
+    end
+    return true
+  end
   if msg == "bosslog" then
     local d = DB()
     d.bossLogOn = not d.bossLogOn
