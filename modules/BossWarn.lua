@@ -197,9 +197,10 @@ function W.ColourOf(key)
   return W.COLORS[1].c
 end
 function W.Colour(kind) return W.ColourOf(W.ColourKey(kind)) end
--- the sounds a player can pick for a boss in 10 seconds and for a boss's turn (Settings -
--- Azerwarn); played from their files: as named interface sounds the game cut them short in
--- a busy fight. The first is none at all.
+-- the sounds a player can pick for a boss in 10 seconds, a boss's turn and a hero down
+-- (Settings - Azerwarn); every one played from its file (the game's SoundEntries name each):
+-- as named interface sounds the game cut them short, or lost them, in a busy fight. The
+-- first is none at all.
 W.SOUNDS = {
   { key = "off", label = "Off" },
   -- soft
@@ -210,8 +211,8 @@ W.SOUNDS = {
   -- clear
   { key = "raid", dur = 1.3, label = "Raid warning", file = "Sound\\Interface\\RaidWarning.wav", name = "RaidWarning" },
   { key = "ready", dur = 2.9, label = "Ready check", file = "Sound\\Interface\\ReadyCheck.wav", name = "ReadyCheck" },
-  { key = "gong", dur = 2.2, label = "Auction house", name = "AUCTIONWINDOWOPEN" },
-  { key = "invite", dur = 2.8, label = "Invitation", name = "igPlayerInvite" },
+  { key = "gong", dur = 2.2, label = "Auction house", file = "Sound\\Interface\\AuctionWindowOpen.wav", name = "AUCTIONWINDOWOPEN" },
+  { key = "invite", dur = 2.8, label = "Invitation", file = "Sound\\Interface\\iPlayerInviteA.wav", name = "igPlayerInvite" },
   -- loud (only files the game's own archives hold play: these are in its patch.MPQ)
   { key = "flag", dur = 2.0, label = "Flag taken", file = "Sound\\Interface\\PVPFlagTakenMono.wav" },
   { key = "alarm", dur = 4.9, label = "Battle alarm", file = "Sound\\Interface\\PVPWarningAllianceMono.wav" },
