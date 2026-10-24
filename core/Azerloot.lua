@@ -3080,8 +3080,9 @@ local function BuildBossView(Strip)
   back:SetScript("OnLeave", function() GameTooltip:Hide() end)
   B.back = back
 
-  -- STATS: health and hit in red, speed in gold, each after its name
-  B.statStrip = Strip(ui.bossView, "Stats")
+  -- STATS: health and hit in red, speed in gold, each after its name; they are one hero's:
+  -- in co-op a boss has more health and hits harder, sized to the heroes still standing
+  B.statStrip = Strip(ui.bossView, "Stats (solo)")   -- (in co-op the bosses grow with the party)
   -- marked with the sword of the game's PvP rank badges
   local sword = B.statStrip:CreateTexture(nil, "OVERLAY")
   sword:SetTexture("Interface\\PvPRankBadges\\PvPRank06")

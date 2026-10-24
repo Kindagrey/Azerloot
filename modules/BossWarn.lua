@@ -233,6 +233,8 @@ function W.PlaySoundOf(sd)
   if not sd or not (sd.file or sd.name) then return end
   local ok = sd.file and PlaySoundFile and pcall(PlaySoundFile, sd.file)
   if not ok and sd.name and PlaySound then pcall(PlaySound, sd.name) end
+  -- (the boss log notes every sound the warner asked the game for, and when)
+  if W.LogSound then W.LogSound(sd, ok) end
 end
 -- (true: the boss in 10 seconds, as before)
 function W.Sound(what)
@@ -405,6 +407,8 @@ local function Alert(text, sub, icon, sound, low)
     else how = "DROPPED" end
   end
   if W.LogShown then W.LogShown(how, text, sub, kind, sound) end
+  -- no room for the words: their sound is heard all the same
+  if how == "DROPPED" and sound then W.Sound(sound) end
   if how ~= "shown" then return end
   Show(f, text, sub, icon, sound)
 end
@@ -1126,6 +1130,10 @@ function W.LogShown(how, text, sub, kind, sound)
   if not DB().bossLogOn then return end
   Log(">> " .. how .. " " .. tostring(kind) .. (sound and " +sound" or "") .. ": "
     .. tostring(text) .. (sub and sub ~= "" and ("  /  " .. tostring(sub)) or ""))
+end
+function W.LogSound(sd, ok)
+  if not DB().bossLogOn then return end
+  Log("~~ sound " .. tostring(sd.key) .. (ok and " (file)" or " (by name)"))
 end
 -- the fights' every tick and hit filled the log in two minutes: only those naming a boss stay
 local NOISE = { "^CHAT_MSG_SPELL_PERIODIC", "^CHAT_MSG_SPELL_AURA_GONE", "^CHAT_MSG_COMBAT_CREATURE_VS_SELF",
