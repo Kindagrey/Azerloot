@@ -3121,7 +3121,7 @@ local function BuildBossView(Strip)
   B.speed = Stat("Speed", 0, -18, { 1, 0.78, 0.08 }, { 0.25, 0.12, 0 },
     "How fast it moves, in yards per second.")
   B.spawns = Stat("Spawns", 160, -18, PAGE_RARITY.Legendary, { 0.22, 0.07, 0 },   -- the legendary orange
-    "When it comes: minutes into the run.")
+    "When it appears: minutes into the run.")
 
   -- DANGERS: marked with the skull the game shows for a foe far above you
   B.dangers = Strip(ui.bossView, "Dangers")
