@@ -4642,7 +4642,12 @@ function AzlAnchorTracker()
   if type(sc) ~= "number" or sc <= 0 then sc = 1 end
   local p = TrackerDB().trackerPos
   tracker:ClearAllPoints()
-  if type(p) == "table" and type(p[3]) == "number" then
+  -- (a window on the screen's right half is kept from the right edge: when the screen's
+  -- width in the interface's units changes, say with the game's UI scale, it stays on its
+  -- side instead of drifting across)
+  if type(p) == "table" and p[4] == "R" and type(p[5]) == "number" and type(p[3]) == "number" then
+    tracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", p[5] / sc, p[3] / sc)
+  elseif type(p) == "table" and type(p[3]) == "number" then
     tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1] / sc, p[3] / sc)
   elseif type(p) == "table" and type(p[1]) == "number" and type(p[2]) == "number" then
     tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", p[1] / sc, p[2] / sc)
@@ -4771,7 +4776,13 @@ function AzlPinTracker()
   -- the interface's units at a run's start, and a window measured from the bottom then
   -- slides down from the top
   local top = UIParent:GetTop() or UIParent:GetHeight() or t
-  TrackerDB().trackerPos = { l, t, t - top }
+  local r = tracker:GetRight()
+  local sw = UIParent:GetRight() or UIParent:GetWidth()
+  if r and type(sw) == "number" and sw > 0 and (l + r * sc) / 2 > sw / 2 then
+    TrackerDB().trackerPos = { l, t, t - top, "R", r * sc - sw }
+  else
+    TrackerDB().trackerPos = { l, t, t - top }
+  end
   if tracker.SetUserPlaced then tracker:SetUserPlaced(false) end
   AzlAnchorTracker()
 end
@@ -4816,14 +4827,7 @@ local function BuildTracker()
   end
   -- the game itself keeps no place of its own for it: only the book's counts
   if tracker.SetUserPlaced then tracker:SetUserPlaced(false) end
-  tracker:ClearAllPoints()
-  if pos and type(pos[3]) == "number" then
-    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos[1], pos[3])
-  elseif pos then
-    tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", pos[1], pos[2])   -- (kept so by 2.1.0)
-  else
-    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, -220)
-  end
+  AzlAnchorTracker()   -- (from the top: from its left or, on the right half, its right edge)
   local chk = CreateFrame("Frame")
   chk:SetScript("OnUpdate", function()
     this.t = (this.t or 0) + (arg1 or 0)
@@ -4835,7 +4839,14 @@ local function BuildTracker()
       -- a place kept from the bottom (2.1.0): kept from the top from now on, where it is
       AzlPinTracker(); p = TrackerDB().trackerPos
     end
-    if sw > 0 and type(p) == "table" and type(p[3]) == "number" and (p[1] < -40 or p[1] > sw - 40 or p[3] > 40 or p[3] < -(sh - 40)) then
+    -- (a window on the right half is kept from the right edge, and always lies on the screen)
+    local off = false
+    if sw > 0 and type(p) == "table" and type(p[3]) == "number" then
+      if p[4] == "R" and type(p[5]) == "number" then off = p[5] > 40 or p[5] < -(sw - 40)
+      else off = p[1] < -40 or p[1] > sw - 40 end
+      off = off or p[3] > 40 or p[3] < -(sh - 40)
+    end
+    if off then
       TrackerDB().trackerPos = nil
       tracker:ClearAllPoints(); tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 20, -220)
     end
@@ -4945,6 +4956,16 @@ local function BuildTracker()
   grip:SetScript("OnLeave", function() this.tex:SetAlpha(0.6) end)
   grip:SetScript("OnMouseDown", function()
     if TrackerDB().trackerLocked then return end
+    -- (sized from its left top corner: a window kept from the right edge is held at its left
+    -- while the grip is dragged, and pinned again after)
+    local gl, gt2 = tracker:GetLeft(), tracker:GetTop()
+    if gl and gt2 then
+      local u = UIParent:GetTop() or UIParent:GetHeight() or 0
+      local sc = tracker:GetScale()
+      if type(sc) ~= "number" or sc <= 0 then sc = 1 end
+      tracker:ClearAllPoints()
+      tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", gl, gt2 - u / sc)
+    end
     local x, y = GetCursorPosition()
     local es = tracker.GetEffectiveScale and tracker:GetEffectiveScale()
     local s = (type(es) == "number" and es > 0) and es or UIParent:GetEffectiveScale()
