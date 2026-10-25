@@ -2796,13 +2796,38 @@ function B.NoteStart()
   for i = 1, table.getn(sp) do if own[sp[i].key] then table.insert(found, sp[i].key) end end
   if table.getn(found) == 0 then return end   -- (not listed yet)
   B.startSeen = true
-  if table.getn(found) ~= 1 then return end   -- (a talent gave a second spell too: no telling)
-  local key = found[1]
-  if key ~= B.DefaultStart(cls) and not B.StartAlt(cls, key) then return end
+  B.startFound = found   -- (for /azl startinfo)
+  -- other talents may hand over more spells at the start (Swipe and Shred at 20 points in
+  -- Feral, Moonfire with Force of Nature): the class's own starting spell missing and one
+  -- talent's other one there tells it; the class's own there and none of the others too
+  local def, have, alts = B.DefaultStart(cls), {}, {}
+  for k = 1, table.getn(found) do have[found[k]] = true end
+  local list = B.START_ALT[cls] or {}
+  for k = 1, table.getn(list) do if have[list[k].key] then table.insert(alts, list[k].key) end end
+  local key
+  if not have[def] and table.getn(alts) == 1 then key = alts[1]
+  elseif have[def] and table.getn(alts) == 0 then key = def end
+  if not key then return end
   -- the loaded build is asked about, not changed: the player may have turned to other
   -- talents for this run only (the question waits in the wishlist window, see B.AskStart)
   B.startAsk = { cls = cls, key = key }
   AZL.RefreshTracker()
+end
+-- /azl startinfo: what the game listed at this run's start, and what came of it
+function B.StartInfo()
+  local cls = AZL.PlayerClass()
+  local t = B.All(cls)
+  local b = t.active and t.list[t.active]
+  local now = GetTime and GetTime() or 0
+  AZL.Print("start: phase " .. tostring(AZS_GetPhase and AZS_GetPhase()) .. ", run time " .. tostring(AZS_GetRunTime and AZS_GetRunTime())
+    .. ", list " .. (tonumber(AZS_SPELLS_UPDATED) and string.format("%.0f sec ago", now - AZS_SPELLS_UPDATED) or "never sent")
+    .. ", run seen " .. (B.runAt and string.format("%.0f sec ago", now - B.runAt) or "-"))
+  local sp, names = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}, {}
+  for i = 1, table.getn(sp) do table.insert(names, tostring(sp[i].key)) end
+  AZL.Print("start: the game's spells now: " .. table.concat(names, ", "))
+  AZL.Print("start: read at the start: " .. (B.startFound and table.concat(B.startFound, ", ") or "-")
+    .. "; loaded build: " .. (b and (b.name .. " (" .. tostring(B.StartKey(cls, b)) .. ")") or "-")
+    .. "; question: " .. (B.startAsk and tostring(B.startAsk.key) or "-"))
 end
 -- the question still open: the run that began with another starting spell than the loaded
 -- build's; nil once answered, once the build already has it, or once the run is over

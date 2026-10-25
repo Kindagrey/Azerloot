@@ -6207,6 +6207,7 @@ SlashCmdList["AZERLOOT"] = function(msg)
     Print(AzT("%s: %d of %d pieces in your collection", AzG(ClassInfo(cls).name), have, table.getn(all)))
     return
   end
+  if msg == "startinfo" then if AzlB and AzlB.StartInfo then AzlB.StartInfo() end; return end
   if msg == "layout" then Azerloot_LayoutMode(); return end
   if msg == "settings" or msg == "options" or msg == "config" then if AzlSettings then AzlSettings.Toggle() end; return end
   if msg == "reset" then
