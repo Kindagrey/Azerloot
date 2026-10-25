@@ -693,7 +693,7 @@ function B.Picking()
   if ok and tonumber(t) and tonumber(t) > 120 then AzerlootDB.buildPick = nil; return false end
   return true
 end
-function B.TrackerWanted() return B.Picking() or (B.AskStart() and true or false) end
+function B.TrackerWanted() return B.Picking() end
 -- the choice a new run opens by itself (not one opened by a click on the window's head):
 -- while it waits, the wishlist window shows the choice alone
 function B.RunPick() return B.Picking() and AzerlootDB.buildPick == true end
@@ -2619,49 +2619,6 @@ local function TrackerParts(tr)
   pk.since = 0
   pk.calm = true
   tr.pick = pk
-  -- the question when a run began with another starting spell: the words, then Yes and No
-  local ak = CreateFrame("Frame", nil, tr)
-  local al = ak:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-  al:SetPoint("TOPLEFT", ak, "TOPLEFT", 0, 0); al:SetJustifyH("LEFT")
-  ak.label = al
-  ak.btns = {}
-  for k = 1, 2 do
-    local b = CreateFrame("Button", nil, ak)
-    b:SetHeight(19)
-    local bg = b:CreateTexture(nil, "BACKGROUND"); bg:SetTexture(Z.WHITE)
-    bg:SetVertexColor(0.13, 0.08, 0.03); bg:SetAlpha(0.88); bg:SetAllPoints(b)
-    local glow = b:CreateTexture(nil, "BORDER"); glow:SetTexture(Z.GLOW); glow:SetBlendMode("ADD")
-    glow:SetVertexColor(1, 0.75, 0.3); glow:SetAlpha(0.35); glow:SetAllPoints(b); glow:Hide()
-    b.glow = glow
-    b.edges = {}
-    for side = 1, 4 do
-      local e = b:CreateTexture(nil, "ARTWORK"); e:SetTexture(Z.WHITE); e:SetVertexColor(0.9, 0.7, 0.3); e:SetAlpha(0.6)
-      if side == 1 then e:SetPoint("TOPLEFT", b, "TOPLEFT"); e:SetPoint("TOPRIGHT", b, "TOPRIGHT"); e:SetHeight(1)
-      elseif side == 2 then e:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT"); e:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT"); e:SetHeight(1)
-      elseif side == 3 then e:SetPoint("TOPLEFT", b, "TOPLEFT"); e:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT"); e:SetWidth(1)
-      else e:SetPoint("TOPRIGHT", b, "TOPRIGHT"); e:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT"); e:SetWidth(1) end
-      b.edges[side] = e
-    end
-    local t = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    t:SetPoint("CENTER", b, "CENTER", 0, 0)
-    t:SetText(AzT(k == 1 and "Yes" or "No"))
-    b.text = t
-    b.yes = (k == 1)
-    b:SetScript("OnEnter", function()
-      this.glow:Show(); for e = 1, 4 do this.edges[e]:SetAlpha(1) end
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-      GameTooltip:AddLine(AzT(this.yes and "Change the build's starting spell" or "Keep the build as it is"), 1, 0.82, 0)
-      GameTooltip:Show()
-    end)
-    b:SetScript("OnLeave", function()
-      this.glow:Hide(); for e = 1, 4 do this.edges[e]:SetAlpha(0.6) end
-      GameTooltip:Hide()
-    end)
-    b:SetScript("OnClick", function() B.AnswerStart(this.yes) end)
-    ak.btns[k] = b
-  end
-  ak:Hide()
-  tr.ask = ak
 end
 
 -- draws the build line (and the choice) under the window's title; returns the new top
@@ -2671,32 +2628,6 @@ function B.TrackerHead(tr, W, y)
   local t = B.All(cls)
   local b = t.active and t.list[t.active]
   local bl, pk = tr.bline, tr.pick
-  -- a run that began with another starting spell than the loaded build's: asked first
-  local q, qi, qb = nil, nil, nil
-  if not B.Picking() then q, qi, qb = B.AskStart() end
-  if q then
-    local ak = tr.ask
-    ak:ClearAllPoints(); ak:SetPoint("TOPLEFT", tr, "TOPLEFT", 8, y)
-    ak:SetWidth(W - 16)
-    local e = B.Entry(cls, { kind = "Spell", id = q.key })
-    ak.label:SetWidth(W - 16)
-    ak.label:SetText(AzT("This run began with %s. Make it the starting spell of \"%s\"?", e and AzG(e.item.name) or q.key, Short(qb.name, 20)))
-    local lh = ak.label:GetHeight()
-    if type(lh) ~= "number" or lh < 12 then lh = 26 end
-    local bw = math.floor((W - 16 - 8) / 2)
-    for k = 1, 2 do
-      local b = ak.btns[k]
-      b:ClearAllPoints(); b:SetPoint("TOPLEFT", ak, "TOPLEFT", (k - 1) * (bw + 8), -lh - 5)
-      b:SetWidth(bw)
-    end
-    local h = lh + 5 + 19
-    ak:SetHeight(h)
-    ak:Show()
-    pk:Hide()
-    y = y - h - 6
-  else
-    tr.ask:Hide()
-  end
   if B.Picking() then
     bl:Hide()
     pk:ClearAllPoints(); pk:SetPoint("TOPLEFT", tr, "TOPLEFT", 8, y)
@@ -2768,102 +2699,6 @@ end
 -- The player opens the window whose model the book holds: it gets its model back first,
 -- then opens as always.
 -- ---------- once the saved settings are there ----------
--- A run's first seconds tell which spell it began with: the game lists the hero's spells,
--- and before any level-up that is the starting spell alone. A talent's other one (Shred in
--- place of Wrath, say) goes into the loaded build as its starting spell, and back again.
-function B.NoteStart()
-  if type(AzerlootDB) ~= "table" then return end
-  -- (the game's own phase: the kept spell list of the run before must not stand in for it)
-  local ph = AZS_GetPhase and AZS_GetPhase() or nil
-  local now = GetTime and GetTime() or 0
-  -- (the game sends the hero's spells already while the run stands ready, before it starts)
-  if ph ~= "playing" and ph ~= "ready" then
-    if ph ~= "choosing" and ph ~= "paused" then B.startSeen = nil; B.runAt = nil end
-    return
-  end
-  B.runAt = B.runAt or now   -- (when this run was first seen, ready or playing)
-  -- (read once per list the game sends: a newer one in the first seconds is read again)
-  if B.startSeen == "done" or (B.startSeen and B.startSeen == AZS_SPELLS_UPDATED) then return end
-  local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() end)
-  t = ok and tonumber(t) or 0
-  if ph == "ready" then t = 0 end
-  if t > 30 then B.startSeen = "done"; return end   -- (joined late, or after a reload: no telling)
-  -- the list must be this run's start: the game keeps the last run's until it sends the new
-  -- one (sent while the run stands ready, or even before), and at the start every spell is at
-  -- its first rank: a list with a higher one is the run before's, or this one under way
-  local spl = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
-  for i = 1, table.getn(spl) do
-    if (tonumber(spl[i].rank) or 1) > 1 then return end
-  end
-  local sp = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
-  local cls = AZL.PlayerClass()
-  if not B.START_ALT[cls] then B.startSeen = "done"; return end
-  local info, own, found = AZL.ClassInfo(cls), {}, {}
-  for i = 1, table.getn(info.spells) do own[info.spells[i].key] = true end
-  for i = 1, table.getn(sp) do if own[sp[i].key] then table.insert(found, sp[i].key) end end
-  if table.getn(found) == 0 then return end   -- (not listed yet)
-  B.startSeen = AZS_SPELLS_UPDATED or "done"
-  B.startFound = found   -- (for /azl startinfo)
-  -- other talents may hand over more spells at the start (Swipe and Shred at 20 points in
-  -- Feral, Moonfire with Force of Nature): the class's own starting spell missing and one
-  -- talent's other one there tells it; the class's own there and none of the others too
-  local def, have, alts = B.DefaultStart(cls), {}, {}
-  for k = 1, table.getn(found) do have[found[k]] = true end
-  local list = B.START_ALT[cls] or {}
-  for k = 1, table.getn(list) do if have[list[k].key] then table.insert(alts, list[k].key) end end
-  local key
-  if not have[def] and table.getn(alts) == 1 then key = alts[1]
-  elseif have[def] and table.getn(alts) == 0 then key = def end
-  if not key then return end
-  -- the loaded build is asked about, not changed: the player may have turned to other
-  -- talents for this run only (the question waits in the wishlist window, see B.AskStart)
-  B.startAsk = { cls = cls, key = key }
-  AZL.RefreshTracker()
-end
--- /azl startinfo: what the game listed at this run's start, and what came of it
-function B.StartInfo()
-  local cls = AZL.PlayerClass()
-  local t = B.All(cls)
-  local b = t.active and t.list[t.active]
-  local now = GetTime and GetTime() or 0
-  AZL.Print("start: phase " .. tostring(AZS_GetPhase and AZS_GetPhase()) .. ", run time " .. tostring(AZS_GetRunTime and AZS_GetRunTime())
-    .. ", list " .. (tonumber(AZS_SPELLS_UPDATED) and string.format("%.0f sec ago", now - AZS_SPELLS_UPDATED) or "never sent")
-    .. ", run seen " .. (B.runAt and string.format("%.0f sec ago", now - B.runAt) or "-"))
-  local sp, names = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}, {}
-  for i = 1, table.getn(sp) do table.insert(names, tostring(sp[i].key)) end
-  AZL.Print("start: the game's spells now: " .. table.concat(names, ", "))
-  AZL.Print("start: read at the start: " .. (B.startFound and table.concat(B.startFound, ", ") or "-")
-    .. "; loaded build: " .. (b and (b.name .. " (" .. tostring(B.StartKey(cls, b)) .. ")") or "-")
-    .. "; question: " .. (B.startAsk and tostring(B.startAsk.key) or "-"))
-end
--- the question still open: the run that began with another starting spell than the loaded
--- build's; nil once answered, once the build already has it, or once the run is over
-function B.AskStart()
-  local q = B.startAsk
-  if not q then return nil end
-  local ph = AZS_GetPhase and AZS_GetPhase() or nil
-  if not (ph == "ready" or ph == "playing" or ph == "choosing" or ph == "paused") or q.cls ~= AZL.PlayerClass() then B.startAsk = nil; return nil end
-  local t = B.All(q.cls)
-  local b = t.active and t.list[t.active]
-  if not b or B.StartKey(q.cls, b) == q.key then return nil end
-  return q, t.active, b
-end
-function B.AnswerStart(yes)
-  local q, i = B.AskStart()
-  B.startAsk = nil
-  if q and yes then B.SetStart(q.cls, i, q.key) end
-  AZL.RefreshTracker()
-  if AZL.Frame() and AZL.Frame():IsVisible() then AZL.Refresh() end
-end
-local watchStart = CreateFrame("Frame")
-local wsAcc = 0
-watchStart:SetScript("OnUpdate", function()
-  wsAcc = wsAcc + (arg1 or 0)
-  if wsAcc < 1 then return end
-  wsAcc = 0
-  B.NoteStart()
-end)
-
 local starter = CreateFrame("Frame")
 starter:RegisterEvent("VARIABLES_LOADED")
 starter:SetScript("OnEvent", function()
