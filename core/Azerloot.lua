@@ -6251,6 +6251,9 @@ local lastClass, lastPhase, seenPhase, tick = nil, nil, false, 0
 watcher:RegisterEvent("VARIABLES_LOADED")
 watcher:RegisterEvent("PLAYER_ENTERING_WORLD")
 watcher:RegisterEvent("UNIT_INVENTORY_CHANGED")
+-- (the game's word on the run, its phase among it: a new run is seen at once, not up to two
+-- seconds later, so the wishlist window offers the builds before showing the last one)
+watcher:RegisterEvent("CHAT_MSG_ADDON")
 -- the lines a boss drop may arrive in; a client without one of them simply skips it
 local LOOT_EVENTS = { "CHAT_MSG_LOOT", "CHAT_MSG_SYSTEM", "CHAT_MSG_MONSTER_EMOTE", "CHAT_MSG_RAID_BOSS_EMOTE", "UI_INFO_MESSAGE" }
 local isLoot = {}
@@ -6258,6 +6261,15 @@ for i = 1, table.getn(LOOT_EVENTS) do
   if pcall(watcher.RegisterEvent, watcher, LOOT_EVENTS[i]) then isLoot[LOOT_EVENTS[i]] = true end
 end
 watcher:SetScript("OnEvent", function()
+  if event == "CHAT_MSG_ADDON" then
+    -- (only a new phase counts; the run's line comes often. Looked at on the next frame,
+    -- once the game's own reader has taken the line in)
+    if arg1 == "AZSRUN" then
+      local _, _, ph = string.find(arg2 or "", "ph=(%a+)")
+      if ph and ph ~= lastPhase then tick = 2 end
+    end
+    return
+  end
   if event == "VARIABLES_LOADED" or event == "PLAYER_ENTERING_WORLD" then
     if not mmButton then BuildMinimapButton() end
     -- the PvP set in the hero's own faction's names and looks
