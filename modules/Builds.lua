@@ -86,27 +86,60 @@ end
 
 -- Every run begins with the class's starting spell (the first of its spells), before any
 -- level-up: it is part of every build, in the first spell place, and is not stored with it.
-function B.StartKey(cls)
+function B.DefaultStart(cls)
   local info = AZL.ClassInfo(cls)
   local first = info and info.spells and info.spells[1]
   return first and first.key or nil
 end
-local function IsStart(cls, rec) return rec.kind == "Spell" and rec.id == B.StartKey(cls) end
+-- Talents that start every run with another spell instead (the game's own words): a build
+-- may begin with that one; b.start keeps it (nil: the class's own)
+B.START_ALT = {
+  rogue = { { key = "backstab", talent = "Shadow Dance" } },
+  priest = { { key = "sw_pain", talent = "Shadowy Apparitions" } },
+  mage = { { key = "arcane_missiles", talent = "Arcane Power" }, { key = "frostbolt", talent = "Summon Water Elemental" } },
+  druid = { { key = "shred", talent = "Cat Form" }, },
+}
+B.START_ALT.druid[1].talent2 = "Dire Bear Form"
+function B.StartAlt(cls, key)
+  local t = B.START_ALT[cls or ""]
+  if not t then return nil end
+  for i = 1, table.getn(t) do if t[i].key == key then return t[i] end end
+  return nil
+end
+-- the starting spell of a build (or, without one, of the class)
+function B.StartKey(cls, b)
+  if type(b) == "table" and b.start and B.StartAlt(cls, b.start) then return b.start end
+  return B.DefaultStart(cls)
+end
+local function IsStart(cls, rec, b) return rec.kind == "Spell" and rec.id == B.StartKey(cls, b) end
+-- a build's starting spell set (nil or the class's own: back to it); the spell leaves the
+-- other places if it stood in one, the class's own spell may now take one of them
+function B.SetStart(cls, i, key)
+  local b = B.Get(cls, i)
+  if not b then return end
+  if key == B.DefaultStart(cls) or not B.StartAlt(cls, key) then key = nil end
+  b.start = key
+  local st = B.StartKey(cls, b)
+  for n = table.getn(b.items), 1, -1 do
+    if b.items[n].kind == "Spell" and b.items[n].id == st then table.remove(b.items, n) end
+  end
+  if B.Changed then B.Changed(cls, i) end
+end
 -- a build's parts with the starting spell first
 function B.Items(cls, b)
   local out = {}
-  local st = B.StartKey(cls)
+  local st = B.StartKey(cls, b)
   if st then table.insert(out, { kind = "Spell", id = st }) end
   for i = 1, table.getn(b.items) do
-    if not IsStart(cls, b.items[i]) then table.insert(out, b.items[i]) end
+    if not IsStart(cls, b.items[i], b) then table.insert(out, b.items[i]) end
   end
   return out
 end
 -- how many spells a build holds, the starting spell counted
 function B.SpellCount(cls, b)
-  local n = B.StartKey(cls) and 1 or 0
+  local n = B.StartKey(cls, b) and 1 or 0
   for i = 1, table.getn(b.items) do
-    if b.items[i].kind == "Spell" and not IsStart(cls, b.items[i]) then n = n + 1 end
+    if b.items[i].kind == "Spell" and not IsStart(cls, b.items[i], b) then n = n + 1 end
   end
   return n
 end
@@ -119,7 +152,7 @@ function B.StripStart()
         local b = t.list[i]
         if type(b) == "table" and type(b.items) == "table" then
           for n = table.getn(b.items), 1, -1 do
-            if IsStart(cls, b.items[n]) then table.remove(b.items, n) end
+            if IsStart(cls, b.items[n], b) then table.remove(b.items, n) end
           end
         end
       end
@@ -187,7 +220,7 @@ function B.Add(cls, i, entry, oldKey, pos)
   local b = B.Get(cls, i)
   if not b then return nil end
   local rec = FromEntry(entry)
-  if IsStart(cls, rec) then return true end
+  if IsStart(cls, rec, b) then return true end
   if B.Has(b, RecKey(rec)) then return true end
   local at
   if oldKey then
@@ -595,6 +628,8 @@ end
 function B.Encode(cls, b)
   local D = AZL.D
   local parts = {}
+  -- (a starting spell a talent gives instead of the class's own, first: older versions skip it)
+  if b.start and B.StartAlt(cls, b.start) then table.insert(parts, "X." .. b.start) end
   for n = 1, table.getn(b.items) do
     local rec = b.items[n]
     local code
@@ -619,7 +654,9 @@ function B.Decode(code)
   for part in (string.gfind or string.gmatch)(list .. ",", "([^,]*),") do
     local _, _, t, id = string.find(part, "^(%a)%.(.+)$")
     local rec
-    if t == "S" then rec = { kind = "Spell", id = id }
+    if t == "X" then
+      if B.StartAlt(cls, id) then b.start = id end
+    elseif t == "S" then rec = { kind = "Spell", id = id }
     elseif t == "L" then rec = { kind = "Legendary", id = id }
     elseif t == "R" and D.rings[tonumber(id) or 0] then rec = { kind = "Rings", id = D.rings[tonumber(id)].name }
     elseif t == "T" and D.trinkets[tonumber(id) or 0] then rec = { kind = "Trinkets", id = D.trinkets[tonumber(id)].name }
@@ -628,7 +665,7 @@ function B.Decode(code)
       if nm == "Star of Mystaria" then rec = { kind = "Trinkets", id = nm }
       elseif nm and Idx(D.amulets, nm) then rec = { kind = "Amulets", id = nm } end
     end
-    if rec and B.Entry(cls, rec) and not B.Has(b, RecKey(rec)) and not IsStart(cls, rec) then
+    if rec and B.Entry(cls, rec) and not B.Has(b, RecKey(rec)) and not IsStart(cls, rec, b) then
       local sl = Slot(rec.kind)
       if count[sl] < MAX[sl] then count[sl] = count[sl] + 1; table.insert(b.items, rec) end
     end
@@ -1387,7 +1424,11 @@ function B.MakePane()
     end
     s:SetScript("OnClick", function()
       local cls = AZL.PlayerClass()
-      if this.locked then return end   -- the starting spell stays
+      if this.locked then
+        -- the starting spell stays, unless a talent may start the run with another
+        if this.startChoice == true and arg1 ~= "RightButton" then GameTooltip:Hide(); B.OpenPicker(this) end
+        return
+      end
       if arg1 == "RightButton" then
         B.ClosePicker()
         if this.entry then B.Remove(cls, B.sel, AZL.WishKey(this.entry)) end
@@ -1402,7 +1443,9 @@ function B.MakePane()
     s:SetScript("OnEnter", function()
       this:Lit(true)
       if B.picker and B.picker:IsVisible() and B.picker.owner == this then return end
-      if this.locked and this.entry then
+      if this.locked and this.entry and this.startChoice == true then
+        B.EntryTip(this, this.entry, B.StartTip(AZL.PlayerClass()))
+      elseif this.locked and this.entry then
         B.EntryTip(this, this.entry, AzT("Your starting spell: every run begins with it, so it is part of every build. A spell your talents give you at the start as well (Moonfire with 31 points in Balance, say) goes in one of the other places."))
       elseif this.entry then
         B.EntryTip(this, this.entry, AzT("Click to choose another, or None to empty the place. Right-click takes it out too. Shift-click opens its page in the book."))
@@ -1594,13 +1637,13 @@ local function Places(cls, b)
   for k = 1, 6 do spells[k] = false end
   for k = 1, 5 do jewel[k] = false end
   if not b then return spells, jewel end
-  local st = B.StartKey(cls)
+  local st = B.StartKey(cls, b)
   if st then spells[1] = B.Entry(cls, { kind = "Spell", id = st }) or false end
   local waiting = {}
   -- first the parts that have a place of their own
   for n = 1, table.getn(b.items) do
     local rec = b.items[n]
-    if not IsStart(cls, rec) then
+    if not IsStart(cls, rec, b) then
       local e = B.Entry(cls, rec)
       if e then
         local p = tonumber(rec.pos)
@@ -1680,9 +1723,11 @@ function B.Draw()
   R.jewelHead:SetText(AzT("Jewelry") .. "  " .. nj .. "/5")
   for k = 1, 6 do R.parts[k]:Fill(spells[k], "Spell") end
   -- the first place holds the starting spell for good
-  local st = B.StartKey(cls)
+  local st = B.StartKey(cls, b)
   local p1 = R.parts[1]
   p1.locked = (st ~= nil and spells[1] and spells[1].item.key == st) and true or false
+  -- (a class whose talents may start a run with another spell: the place is a choice)
+  p1.startChoice = p1.locked and B.START_ALT[cls] and true or false
   if p1.locked then p1.startTag:Show(); if p1.plus then p1.plus:Hide() end else p1.startTag:Hide() end
   for k = 1, 5 do R.parts[6 + k]:Fill(jewel[k] or nil, SLOT_KINDS[k]) end
   local p, lines = B.Profile(cls, b)
@@ -1971,7 +2016,8 @@ function B.SetupButton(btn, entry)
     btn.mark:SetTexture(nil)
     return
   end
-  btn.isStart = (entry.kind == "Spell" and entry.item.key == B.StartKey(cls)) and true or false
+  -- (a class whose talents may start a run with another spell: its own may also go elsewhere)
+  btn.isStart = (entry.kind == "Spell" and entry.item.key == B.StartKey(cls) and not B.START_ALT[cls]) and true or false
   if btn.isStart then
     btn.text:SetText(AzT("Starting spell: in every build")); btn.text:SetTextColor(1, 0.82, 0)
     btn.mark:SetTexture(nil)
@@ -2114,7 +2160,7 @@ function B.DrawPicker()
     else
       local title, col = Z.EntryTitle(e)
       local key = Z.WishKey(e)
-      local inBuild = b and (B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls))) and key ~= curKey
+      local inBuild = b and not p.startMode and (B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls, b))) and key ~= curKey
       r.entry = e; r.inBuild = inBuild and true or false
       r.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark")); r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); r.icon:Show()
       r.text:SetText(title)
@@ -2166,6 +2212,12 @@ function B.Pick(entry)
   local old = p.owner and p.owner.entry
   local key = Z.WishKey(entry)
   if old and Z.WishKey(old) == key then B.CloseMenu(); return end
+  if p.startMode then
+    B.CloseMenu()
+    GameTooltip:Hide()
+    B.SetStart(cls, B.sel, entry.item.key)
+    return
+  end
   if B.Has(b, key) then return end
   B.CloseMenu()
   GameTooltip:Hide()
@@ -2215,9 +2267,23 @@ function B.OpenPicker(btn)
     B.picker = p
   end
   p.owner = btn
-  p.list = Choices(cls, btn.slot, btn.entry and true or false)
-  local heads = { Spell = "Choose a spell", Rings = "Choose a ring", Trinkets = "Choose a trinket", Neck = "Choose an amulet" }
-  p.head:SetText(AzT(heads[btn.slot] or "Choose a spell"))
+  -- the starting spell's place: the class's own, or one a talent starts the run with instead
+  p.startMode = (btn.startChoice == true)
+  if p.startMode then
+    p.list = {}
+    local own = B.Entry(cls, { kind = "Spell", id = B.DefaultStart(cls) })
+    if own then table.insert(p.list, own) end
+    local alts = B.START_ALT[cls] or {}
+    for k = 1, table.getn(alts) do
+      local e = B.Entry(cls, { kind = "Spell", id = alts[k].key })
+      if e then table.insert(p.list, e) end
+    end
+    p.head:SetText(AzT("Choose your starting spell"))
+  else
+    p.list = Choices(cls, btn.slot, btn.entry and true or false)
+    local heads = { Spell = "Choose a spell", Rings = "Choose a ring", Trinkets = "Choose a trinket", Neck = "Choose an amulet" }
+    p.head:SetText(AzT(heads[btn.slot] or "Choose a spell"))
+  end
   -- open with the part already there in sight
   p.offset = 0
   if btn.entry then
@@ -2258,11 +2324,26 @@ local function MenuRow(menu, i)
   return r
 end
 
+-- the starting place's word for a class whose talents may change it: which talent starts
+-- the run with which spell
+function B.StartTip(cls)
+  local Z = AZL
+  local lines = {}
+  local alts = B.START_ALT[cls] or {}
+  for k = 1, table.getn(alts) do
+    local e = B.Entry(cls, { kind = "Spell", id = alts[k].key })
+    local tal = AzG(alts[k].talent)
+    if alts[k].talent2 then tal = AzT("%s or %s", tal, AzG(alts[k].talent2)) end
+    table.insert(lines, AzT("%s: starts with %s", tal, e and AzG(e.item.name) or alts[k].key))
+  end
+  return AzT("Your starting spell: every run begins with it. A talent can start the run with another one instead: click to choose it.") .. "\n\n" .. table.concat(lines, "\n")
+end
+
 -- the list of builds: tick = in it; a click puts the part in or takes it out; a full
 -- place asks which part to replace
 function B.OpenMenu(btn, entry, mode, place)
   local Z = AZL
-  if entry and entry.kind == "Spell" and entry.item.key == B.StartKey(Z.PlayerClass()) then return end
+  if entry and entry.kind == "Spell" and entry.item.key == B.StartKey(Z.PlayerClass()) and not B.START_ALT[Z.PlayerClass()] then return end
   if not mode and B.menu and B.menu:IsVisible() and B.menuOwner == btn then B.CloseMenu(); return end
   local menu = B.menu
   if B.picker then B.picker:Hide() end
@@ -2618,6 +2699,49 @@ end
 -- The player opens the window whose model the book holds: it gets its model back first,
 -- then opens as always.
 -- ---------- once the saved settings are there ----------
+-- A run's first seconds tell which spell it began with: the game lists the hero's spells,
+-- and before any level-up that is the starting spell alone. A talent's other one (Shred in
+-- place of Wrath, say) goes into the loaded build as its starting spell, and back again.
+function B.NoteStart()
+  if type(AzerlootDB) ~= "table" then return end
+  local ph = AzlPhase and AzlPhase() or (AZS_GetPhase and AZS_GetPhase())
+  if ph ~= "playing" then
+    if ph == "ready" or ph == nil then B.startSeen = nil end
+    return
+  end
+  if B.startSeen then return end
+  local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() end)
+  t = ok and tonumber(t) or nil
+  if not t then return end
+  if t > 30 then B.startSeen = true; return end   -- (joined late, or after a reload: no telling)
+  local sp = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
+  local cls = AZL.PlayerClass()
+  if not B.START_ALT[cls] then B.startSeen = true; return end
+  local info, own, found = AZL.ClassInfo(cls), {}, {}
+  for i = 1, table.getn(info.spells) do own[info.spells[i].key] = true end
+  for i = 1, table.getn(sp) do if own[sp[i].key] then table.insert(found, sp[i].key) end end
+  if table.getn(found) == 0 then return end   -- (not listed yet)
+  B.startSeen = true
+  if table.getn(found) ~= 1 then return end   -- (a talent gave a second spell too: no telling)
+  local key = found[1]
+  if key ~= B.DefaultStart(cls) and not B.StartAlt(cls, key) then return end
+  local t2 = B.All(cls)
+  local i = t2.active
+  local b = i and t2.list[i]
+  if not b or B.StartKey(cls, b) == key then return end
+  B.SetStart(cls, i, key)
+  local e = B.Entry(cls, { kind = "Spell", id = key })
+  AZL.Print(AzT("This run began with %s: it is now the starting spell of your build \"%s\".", e and AzG(e.item.name) or key, b.name))
+end
+local watchStart = CreateFrame("Frame")
+local wsAcc = 0
+watchStart:SetScript("OnUpdate", function()
+  wsAcc = wsAcc + (arg1 or 0)
+  if wsAcc < 1 then return end
+  wsAcc = 0
+  B.NoteStart()
+end)
+
 local starter = CreateFrame("Frame")
 starter:RegisterEvent("VARIABLES_LOADED")
 starter:SetScript("OnEvent", function()
