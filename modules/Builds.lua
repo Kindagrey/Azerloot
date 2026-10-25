@@ -2773,16 +2773,21 @@ end
 -- place of Wrath, say) goes into the loaded build as its starting spell, and back again.
 function B.NoteStart()
   if type(AzerlootDB) ~= "table" then return end
-  local ph = AzlPhase and AzlPhase() or (AZS_GetPhase and AZS_GetPhase())
+  -- (the game's own phase: the kept spell list of the run before must not stand in for it)
+  local ph = AZS_GetPhase and AZS_GetPhase() or nil
+  local now = GetTime and GetTime() or 0
   if ph ~= "playing" then
-    if ph == "ready" or ph == nil then B.startSeen = nil end
+    if ph ~= "choosing" and ph ~= "paused" then B.startSeen = nil; B.runAt = nil end
     return
   end
+  B.runAt = B.runAt or now   -- (when this run was first seen playing)
   if B.startSeen then return end
   local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() end)
   t = ok and tonumber(t) or nil
   if not t then return end
   if t > 30 then B.startSeen = true; return end   -- (joined late, or after a reload: no telling)
+  -- the list must be this run's: the game keeps the last run's until it sends the new one
+  if not (tonumber(AZS_SPELLS_UPDATED) and AZS_SPELLS_UPDATED >= B.runAt - 3) then return end
   local sp = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
   local cls = AZL.PlayerClass()
   if not B.START_ALT[cls] then B.startSeen = true; return end
@@ -2804,7 +2809,7 @@ end
 function B.AskStart()
   local q = B.startAsk
   if not q then return nil end
-  local ph = AzlPhase and AzlPhase() or (AZS_GetPhase and AZS_GetPhase())
+  local ph = AZS_GetPhase and AZS_GetPhase() or nil
   if not (ph == "playing" or ph == "choosing" or ph == "paused") or q.cls ~= AZL.PlayerClass() then B.startAsk = nil; return nil end
   local t = B.All(q.cls)
   local b = t.active and t.list[t.active]
