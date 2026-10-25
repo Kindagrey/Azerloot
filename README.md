@@ -1,6 +1,6 @@
 # 📖 Azerloot
 
-**The loot book for [Azeroth Survivors](https://discord.gg/CXAvQ6ZTXe)** – every boss drop, ring, trinket and amulet, a build planner, a chronicle of your runs and a wishlist that ticks itself. 
+**The loot book for [Azeroth Survivors](https://discord.gg/azerothsurvivors)** – every boss drop, ring, trinket and amulet, a build planner, a chronicle of your runs and a wishlist that ticks itself. 
 
 ## ✨ What's inside
 * 💍 **Jewelry** – every ring, trinket, basic amulet and class amulet, with its value at every rarity.
@@ -46,7 +46,7 @@
 | Click the window's head | pick one of your builds |
 
 ## 💬 Feedback
-Azeroth Survivors Discord: https://discord.gg/CXAvQ6ZTXe
+Azeroth Survivors Discord: https://discord.gg/azerothsurvivors
 
 ## ©️ Copyright
 Copyright © 2026 Kindagrey. **All rights reserved.** Azerloot is free to download and use for your own play. Changing it, building on it, or publishing copies of it anywhere else (changed or not) needs Kindagrey's written permission. Details in [LICENSE.txt](LICENSE.txt).

@@ -103,7 +103,7 @@ FILES
 
 
 Works with the default UI and with SurvivorsDragonUi (round and square minimaps).
-Azeroth Survivors Discord: https://discord.gg/CXAvQ6ZTXe by aethus meow meow
+Azeroth Survivors Discord: https://discord.gg/azerothsurvivors by aethus meow meow
 
 
 COPYRIGHT
