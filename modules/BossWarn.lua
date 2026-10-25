@@ -1103,10 +1103,6 @@ end
 
 function W.Slash(msg)
   if msg == "warnmove" then W.MoveMode(); return true end
-  if msg == "bosstest" then
-    Alert(AzT("%d%% health!", 70), AzT("New attack, %s.", AzName("Shadow Fissure")), "Spell_Shadow_CreepingPlague")
-    return true
-  end
   return false
 end
 
@@ -1115,7 +1111,7 @@ local ticker = CreateFrame("Frame")
 ticker:RegisterEvent("VARIABLES_LOADED")
 ticker:SetScript("OnEvent", function()
   local d = DB()
-  d.bossLog, d.bossLogOn, d.soundLogOn = nil, nil, nil
+  d.bossLog, d.bossLogOn, d.soundLogOn, d.lootlog = nil, nil, nil, nil
 end)
 local acc = 0
 ticker:SetScript("OnUpdate", function()
