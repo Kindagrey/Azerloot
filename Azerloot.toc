@@ -6,9 +6,10 @@
 ## Notes-esES: Todo el botín de jefes, anillos, abalorios y amuletos, un planificador de builds, una crónica de tus partidas y una lista que se marca sola. Para Azeroth Survivors, de Kindagrey.
 ## Notes-ptBR: Todo o saque de chefes, anéis, berloques e amuletos, um planejador de builds, uma crônica das suas partidas e uma lista que se marca sozinha. Para Azeroth Survivors, por Kindagrey.
 ## Author: Kindagrey
-## Version: 2.5.2
+## Version: 2.5.3
 ## SavedVariables: AzerlootDB
 core\Locale.lua
+core\BigTex.lua
 locales\Strings.lua
 locales\GameText.lua
 locales\JewelryNames.lua

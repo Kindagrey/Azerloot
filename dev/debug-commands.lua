@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Kindagrey. All rights reserved. See LICENSE.txt.
 -- Azerloot's debugging commands, kept for us only: not loaded by the addon, not in the release.
 -- To use one, paste it back into SlashCmdList["AZERLOOT"] in core/Azerloot.lua (worn, probe,
 -- lootlog) or into W.Slash in modules/BossWarn.lua (bosstest) for a test build. The boss and

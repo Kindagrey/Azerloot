@@ -35,6 +35,8 @@ local function Text(parent, role, size, c, layer)
   return fs
 end
 local function Tex(parent, file, layer)
+  -- (a picture over 512 pixels comes in pieces, core\BigTex.lua)
+  if AzlBigTexName and AzlBigTexName(file) then return AzlBigTex(parent, file, layer) end
   local t = parent:CreateTexture(nil, layer or "ARTWORK")
   t:SetTexture(file)
   return t
@@ -1227,13 +1229,14 @@ function ST.Build()
   local dim = F:CreateTexture(nil, "BACKGROUND"); dim:SetTexture(WHITE); dim:SetVertexColor(0, 0, 0); dim:SetAlpha(0.16); dim:SetAllPoints(F)
   Edge(F, 0, BRASS, 1, 2)
   Edge(F, 5, { 0.47, 0.33, 0.12 }, 1, 1)
-  local cl, cr, ct, cb = 19 / 1024, 99 / 1024, 11 / 512, 91 / 512
+  -- (the corner's part of the corners' left half, corners_1: 512 x 512)
+  local cl, cr, ct, cb = 19 / 512, 99 / 512, 11 / 512, 91 / 512
   -- (at the foot only: the banner's own gold ends crown the top)
   local corners = {
     { "BOTTOMLEFT", 1, 1, cl, cr, cb, ct }, { "BOTTOMRIGHT", -1, 1, cr, cl, cb, ct },
   }
   for _, c in ipairs(corners) do
-    local t = F:CreateTexture(nil, "OVERLAY"); t:SetTexture(MEDIA .. "corners.tga")
+    local t = F:CreateTexture(nil, "OVERLAY"); t:SetTexture(MEDIA .. "corners_1.tga")
     t:SetWidth(34); t:SetHeight(34); t:SetPoint(c[1], F, c[1], c[2], c[3])
     t:SetTexCoord(c[4], c[5], c[6], c[7])
   end
