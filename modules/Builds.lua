@@ -2776,26 +2776,33 @@ function B.NoteStart()
   -- (the game's own phase: the kept spell list of the run before must not stand in for it)
   local ph = AZS_GetPhase and AZS_GetPhase() or nil
   local now = GetTime and GetTime() or 0
-  if ph ~= "playing" then
+  -- (the game sends the hero's spells already while the run stands ready, before it starts)
+  if ph ~= "playing" and ph ~= "ready" then
     if ph ~= "choosing" and ph ~= "paused" then B.startSeen = nil; B.runAt = nil end
     return
   end
-  B.runAt = B.runAt or now   -- (when this run was first seen playing)
-  if B.startSeen then return end
+  B.runAt = B.runAt or now   -- (when this run was first seen, ready or playing)
+  -- (read once per list the game sends: a newer one in the first seconds is read again)
+  if B.startSeen == "done" or (B.startSeen and B.startSeen == AZS_SPELLS_UPDATED) then return end
   local ok, t = pcall(function() return AZS_GetRunTime and AZS_GetRunTime() end)
-  t = ok and tonumber(t) or nil
-  if not t then return end
-  if t > 30 then B.startSeen = true; return end   -- (joined late, or after a reload: no telling)
-  -- the list must be this run's: the game keeps the last run's until it sends the new one
-  if not (tonumber(AZS_SPELLS_UPDATED) and AZS_SPELLS_UPDATED >= B.runAt - 3) then return end
+  t = ok and tonumber(t) or 0
+  if ph == "ready" then t = 0 end
+  if t > 30 then B.startSeen = "done"; return end   -- (joined late, or after a reload: no telling)
+  -- the list must be this run's start: the game keeps the last run's until it sends the new
+  -- one (sent while the run stands ready, or even before), and at the start every spell is at
+  -- its first rank: a list with a higher one is the run before's, or this one under way
+  local spl = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
+  for i = 1, table.getn(spl) do
+    if (tonumber(spl[i].rank) or 1) > 1 then return end
+  end
   local sp = type(AZS_SPELLS) == "table" and AZS_SPELLS or {}
   local cls = AZL.PlayerClass()
-  if not B.START_ALT[cls] then B.startSeen = true; return end
+  if not B.START_ALT[cls] then B.startSeen = "done"; return end
   local info, own, found = AZL.ClassInfo(cls), {}, {}
   for i = 1, table.getn(info.spells) do own[info.spells[i].key] = true end
   for i = 1, table.getn(sp) do if own[sp[i].key] then table.insert(found, sp[i].key) end end
   if table.getn(found) == 0 then return end   -- (not listed yet)
-  B.startSeen = true
+  B.startSeen = AZS_SPELLS_UPDATED or "done"
   B.startFound = found   -- (for /azl startinfo)
   -- other talents may hand over more spells at the start (Swipe and Shred at 20 points in
   -- Feral, Moonfire with Force of Nature): the class's own starting spell missing and one
@@ -2835,7 +2842,7 @@ function B.AskStart()
   local q = B.startAsk
   if not q then return nil end
   local ph = AZS_GetPhase and AZS_GetPhase() or nil
-  if not (ph == "playing" or ph == "choosing" or ph == "paused") or q.cls ~= AZL.PlayerClass() then B.startAsk = nil; return nil end
+  if not (ph == "ready" or ph == "playing" or ph == "choosing" or ph == "paused") or q.cls ~= AZL.PlayerClass() then B.startAsk = nil; return nil end
   local t = B.All(q.cls)
   local b = t.active and t.list[t.active]
   if not b or B.StartKey(q.cls, b) == q.key then return nil end
