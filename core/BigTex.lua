@@ -36,7 +36,22 @@ local function Point(xi, yi)
 end
 
 local Proto = {}
-local Meta = { __index = Proto }
+-- (anything else a texture is asked, its place is asked: GetLeft, GetTop and the like)
+local Meta = { __index = function(o, k)
+  if Proto[k] then return Proto[k] end
+  if type(k) ~= "string" or not string.find(k, "^%u") then return nil end   -- (its own fields)
+  return function(self, a, b, c, d, e)
+    local f = self.area[k]
+    if f then return f(self.area, a, b, c, d, e) end
+  end
+end }
+
+-- the region to anchor to: a stand-in's place, else the region itself (another region set
+-- against a stand-in is set against its place)
+function AzlRegion(r)
+  if type(r) == "table" and r.area and r.pieces then return r.area end
+  return r
+end
 
 -- a stand-in for one big picture on `parent` in `layer`
 function AzlBigTex(parent, file, layer)
@@ -138,8 +153,11 @@ function Proto:Layout()
 end
 
 -- what a texture takes, handed on: the place to the frame, the looks to the pieces
-function Proto:SetPoint(a, b, c, d, e) self.area:SetPoint(a, b, c, d, e) end
-function Proto:SetAllPoints(f) self.area:SetAllPoints(f) end
+function Proto:SetPoint(a, b, c, d, e)
+  if type(b) == "number" or b == nil then self.area:SetPoint(a, b, c, d, e); return end
+  self.area:SetPoint(a, AzlRegion(b), c, d, e)
+end
+function Proto:SetAllPoints(f) self.area:SetAllPoints(AzlRegion(f)) end
 function Proto:ClearAllPoints() self.area:ClearAllPoints() end
 function Proto:SetWidth(w) self.area:SetWidth(w) end
 function Proto:SetHeight(h) self.area:SetHeight(h) end

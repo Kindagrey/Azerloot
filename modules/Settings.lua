@@ -714,7 +714,7 @@ BUILD.booksize = function(f)
       l:SetPoint("TOPLEFT", page, "TOPLEFT", x0, -(16 + j * 6) * BOOK_W / 150)
     end
   end
-  Lines(pl, 9 * BOOK_W / 150); Lines(pr, 6 * BOOK_W / 150)
+  Lines(AzlRegion(pl), 9 * BOOK_W / 150); Lines(AzlRegion(pr), 6 * BOOK_W / 150)
   f.bk = bk
   -- 100%: a fine gold frame over everything
   local fr = CreateFrame("Frame", nil, f); fr:SetWidth(BOOK_W); fr:SetHeight(BOOK_H); fr:SetPoint("CENTER", f, "CENTER", 0, 0)
@@ -1248,13 +1248,13 @@ function ST.Build()
   local emt = Tex(em, MEDIA .. "emblem_book.tga", "ARTWORK"); emt:SetAllPoints(em)
   local title = Text(F, "head", 21, GOLD)
   title:SetShadowColor(0, 0, 0, 1); title:SetShadowOffset(1, -1)
-  title:SetPoint("CENTER", bar, "CENTER", 0, 1)   -- (in the middle of the banner)
+  title:SetPoint("CENTER", AzlRegion(bar), "CENTER", 0, 1)   -- (in the middle of the banner)
   title:SetText(AzT("Settings"))
   F.title = title
   -- the gold cross of the book's own bar, lit under the mouse
   local close = CreateFrame("Button", nil, F)
   close:SetWidth(19); close:SetHeight(19)
-  close:SetPoint("RIGHT", bar, "RIGHT", -51.5, 0)   -- (on the red band, clear of the gold end)
+  close:SetPoint("RIGHT", AzlRegion(bar), "RIGHT", -51.5, 0)   -- (on the red band, clear of the gold end)
   close:SetFrameLevel(F:GetFrameLevel() + 4)
   local ct = Tex(close, MEDIA .. "close.tga", "ARTWORK"); ct:SetAllPoints(close)
   local cd = Tex(close, MEDIA .. "btn_disc.tga", "BORDER"); cd:SetWidth(24); cd:SetHeight(24); cd:SetPoint("CENTER", close, "CENTER", 0, 0); cd:Hide()
