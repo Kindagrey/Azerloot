@@ -10,8 +10,6 @@
 -- back, a stampede) come to an addon as CHAT_MSG_RAID_BOSS_EMOTE: while the warner is on, the
 -- game's banners are switched off (its own setting "Show Banners", given back when the warner
 -- is switched off or the game is left) and their words come in the warner's alert instead.
--- "/azl bosslog" writes down for one run what else the game tells an addon in a fight (to
--- find out whether a boss's casts can be seen); the lines go to AzerlootDB.bossLog.
 
 AzlW = {}
 local W = AzlW
@@ -234,8 +232,6 @@ function W.PlaySoundOf(sd)
   if not sd or not (sd.file or sd.name) then return end
   local ok = sd.file and PlaySoundFile and pcall(PlaySoundFile, sd.file)
   if not ok and sd.name and PlaySound then pcall(PlaySound, sd.name) end
-  -- (the boss log notes every sound the warner asked the game for, and when)
-  if W.LogSound then W.LogSound(sd, ok) end
 end
 -- (true: the boss in 10 seconds, as before)
 function W.Sound(what)
@@ -407,7 +403,6 @@ local function Alert(text, sub, icon, sound, low)
     if table.getn(f.queue) < ((kind == "small") and 2 or 3) then table.insert(f.queue, { text, sub, icon, sound }); how = "queued"
     else how = "DROPPED" end
   end
-  if W.LogShown then W.LogShown(how, text, sub, kind, sound) end
   -- no room for the words: their sound is heard all the same
   if how == "DROPPED" and sound then W.Sound(sound) end
   if how ~= "shown" then return end
@@ -536,7 +531,6 @@ local REVIVE_ICON = "Spell_Holy_Resurrection"
 -- player's language, even while its own banners are hidden
 function W.OnBanner(b)
   if type(b) ~= "table" or type(b.text) ~= "string" or b.text == "" then return end
-  if W.SoundLogBanner then W.SoundLogBanner(b) end
   W.NoteLang(b.name)
   if not W.AlertsOn() or not DB().bannersTaken then return end
   if b.name and b.name ~= "" and Said(b.name, "banner") then return end
@@ -1107,134 +1101,7 @@ function W.Update()
   end
 end
 
--- ---------- /azl bosslog: what the game tells an addon in a fight ----------
-local LOG_EVENTS = {
-  "CHAT_MSG_SPELL_CREATURE_VS_SELF_DAMAGE", "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE",
-  "CHAT_MSG_SPELL_CREATURE_VS_PARTY_DAMAGE", "CHAT_MSG_SPELL_CREATURE_VS_SELF_BUFF",
-  "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF", "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE",
-  "CHAT_MSG_SPELL_PERIODIC_CREATURE_DAMAGE", "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE",
-  "CHAT_MSG_COMBAT_CREATURE_VS_SELF_HITS", "CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES",
-  "CHAT_MSG_MONSTER_YELL", "CHAT_MSG_MONSTER_EMOTE", "CHAT_MSG_MONSTER_SAY", "CHAT_MSG_RAID_BOSS_EMOTE",
-  "CHAT_MSG_RAID_WARNING", "CHAT_MSG_SYSTEM", "UI_INFO_MESSAGE", "UI_ERROR_MESSAGE",
-  "SPELLCAST_START", "SPELLCAST_STOP", "UNIT_SPELLCAST_START", "PLAYER_TARGET_CHANGED", "CHAT_MSG_ADDON",
-}
-local logF
-local function Log(line)
-  local d = DB()
-  if type(d.bossLog) ~= "table" then d.bossLog = {} end
-  local t = AZS_GetRunTime and AZS_GetRunTime() or 0
-  table.insert(d.bossLog, string.format("%7.1f  %s", tonumber(t) or 0, line))
-  while table.getn(d.bossLog) > 3000 do table.remove(d.bossLog, 1) end
-end
--- what the warner itself put on the screen (or queued, or had no room for), so a run's log
--- shows every call beside the game's line it came from
-function W.LogShown(how, text, sub, kind, sound)
-  if not (DB().bossLogOn or DB().soundLogOn) then return end
-  Log(">> " .. how .. " " .. tostring(kind) .. (sound and " +sound" or "") .. ": "
-    .. tostring(text) .. (sub and sub ~= "" and ("  /  " .. tostring(sub)) or ""))
-end
-function W.LogSound(sd, ok)
-  if not (DB().bossLogOn or DB().soundLogOn) then return end
-  Log("~~ sound " .. tostring(sd.key) .. (ok and " (file)" or " (by name)"))
-end
--- the fights' every tick and hit filled the log in two minutes: only those naming a boss stay
-local NOISE = { "^CHAT_MSG_SPELL_PERIODIC", "^CHAT_MSG_SPELL_AURA_GONE", "^CHAT_MSG_COMBAT_CREATURE_VS_SELF",
-  "^PLAYER_TARGET_CHANGED" }
-local function Noise(ev, text)
-  for i = 1, table.getn(NOISE) do
-    if string.find(ev, NOISE[i]) then
-      if ev == "PLAYER_TARGET_CHANGED" or type(text) ~= "string" then return true end
-      Lookup("")
-      local low = string.lower(text)
-      for k in pairs(byName) do
-        if string.find(low, k, 1, true) then return false end
-      end
-      return true
-    end
-  end
-  return false
-end
-local lastUnits = ""
-function W.StartLog()
-  if not logF and AZS_RegisterBannerHandler then
-    -- (the game's banners too, with their kind)
-    pcall(AZS_RegisterBannerHandler, function(b)
-      if DB().bossLogOn and type(b) == "table" then
-        Log("banner " .. tostring(b.kind) .. " [" .. tostring(b.name) .. "]: " .. tostring(b.text))
-      end
-    end)
-  end
-  if not logF then
-    logF = CreateFrame("Frame")
-    for i = 1, table.getn(LOG_EVENTS) do pcall(logF.RegisterEvent, logF, LOG_EVENTS[i]) end
-    -- and every other event that carries a sentence (the game's banners might come so)
-    local listed = {}
-    for i = 1, table.getn(LOG_EVENTS) do listed[LOG_EVENTS[i]] = true end
-    if logF.RegisterAllEvents then pcall(logF.RegisterAllEvents, logF) end
-    logF:SetScript("OnEvent", function()
-      if not DB().bossLogOn then return end
-      if not listed[event] then
-        if type(arg1) ~= "string" or not string.find(arg1, "%a %a") or string.len(arg1) > 200 then return end
-      end
-      -- the hero's own hits, the pets' and the small foes' deaths fill the log too fast
-      if type(arg1) == "string" and (string.find(arg1, "[Yy]our ") or string.find(event, "PET")
-        or (string.find(event, "DEATH") and not Lookup((string.gsub(arg1, " dies%.$", ""))))) then return end
-      if event == "CHAT_MSG_ADDON" then
-        -- the game's own lines: only the bosses' (the rest come every moment)
-        if arg1 == "AZSUNITS" and type(arg2) == "string" then
-          local b = {}
-          for e in string.gfind(arg2, "[^;]+") do
-            if string.find(e, "^boss,") or string.find(e, "^final,") then table.insert(b, e) end
-          end
-          local s = table.concat(b, " | ")
-          if s ~= lastUnits then lastUnits = s; if s ~= "" then Log("units: " .. s) end end
-        elseif arg1 == "AZSBOSSES" then
-          -- (the schedule, when it changes)
-          local s = arg1 .. ": " .. tostring(arg2)
-          if s ~= W.lastLine then W.lastLine = s; Log(s) end
-        elseif arg1 and string.sub(arg1, 1, 3) ~= "AZS" then
-          Log("addon " .. tostring(arg1) .. ": " .. tostring(arg2))
-        end
-        return
-      end
-      if Noise(event, arg1) then return end
-      Log(event .. ": " .. tostring(arg1) .. (arg2 and ("  [" .. tostring(arg2) .. "]") or ""))
-    end)
-  end
-end
--- /azl soundlog: a whole run's warnings, the game's banners and every sound asked for, nothing
--- else (the boss log's other lines would fill it in minutes)
-function W.SoundLogBanner(b)
-  if not DB().soundLogOn or DB().bossLogOn or type(b) ~= "table" then return end
-  Log("banner " .. tostring(b.kind) .. " [" .. tostring(b.name) .. "]: " .. tostring(b.text))
-end
 function W.Slash(msg)
-  if msg == "soundlog" then
-    local d = DB()
-    d.soundLogOn = not d.soundLogOn
-    if d.soundLogOn then
-      d.bossLog = {}
-      local function CV(n) local ok, v = pcall(function() return GetCVar and GetCVar(n) end); return ok and tostring(v) or "?" end
-      Log("sound settings: MasterSoundEffects " .. CV("MasterSoundEffects") .. ", MasterVolume " .. CV("MasterVolume")
-        .. ", SoundVolume " .. CV("SoundVolume") .. "; warnings " .. tostring(W.AlertsOn()) .. ", banners taken " .. tostring(d.bannersTaken and true or false))
-      AZL.Print(AzT("Sound log on: play a run, then type /azl soundlog again and /reload. The lines are kept in your saved variables (AzerlootDB.bossLog)."))
-    else
-      AZL.Print(AzT("Sound log off: %d lines kept. /reload writes them to your saved variables.", table.getn(d.bossLog or {})))
-    end
-    return true
-  end
-  if msg == "bosslog" then
-    local d = DB()
-    d.bossLogOn = not d.bossLogOn
-    if d.bossLogOn then
-      d.bossLog = {}
-      W.StartLog()
-      AZL.Print(AzT("Boss log on: fight a boss, then type /azl bosslog again and /reload. The lines are kept in your saved variables (AzerlootDB.bossLog)."))
-    else
-      AZL.Print(AzT("Boss log off: %d lines kept. /reload writes them to your saved variables.", table.getn(d.bossLog or {})))
-    end
-    return true
-  end
   if msg == "warnmove" then W.MoveMode(); return true end
   if msg == "bosstest" then
     Alert(AzT("%d%% health!", 70), AzT("New attack, %s.", AzName("Shadow Fissure")), "Spell_Shadow_CreepingPlague")
@@ -1244,12 +1111,17 @@ function W.Slash(msg)
 end
 
 local ticker = CreateFrame("Frame")
+-- (the debugging logs of earlier versions, and their lines, are gone from the saved settings)
+ticker:RegisterEvent("VARIABLES_LOADED")
+ticker:SetScript("OnEvent", function()
+  local d = DB()
+  d.bossLog, d.bossLogOn, d.soundLogOn = nil, nil, nil
+end)
 local acc = 0
 ticker:SetScript("OnUpdate", function()
   acc = acc + (arg1 or 0)
   if acc < 0.2 then return end
   acc = 0
-  if DB().bossLogOn then W.StartLog() end
   W.Banners()
   W.Update()
 end)
