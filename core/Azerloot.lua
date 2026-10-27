@@ -282,12 +282,13 @@ local function IsFound(entry, worn)
     -- several spells share an amulet's name: it counts for the spell the hero knows
     local amuIcon = Azerloot_AmuletIcons and Azerloot_AmuletIcons[entry.item.amulet]
     local wearing = worn.names[entry.item.amulet] or (amuIcon and worn.icons.neck[IconKey(amuIcon)])
-    if wearing and entry.class and entry.class.key == PlayerClass() then
-      -- the amulet's own lines name its spell; only when they cannot be read, the known spell
+    if entry.class and entry.class.key == PlayerClass() then
+      -- the amulet's own lines name its spell, whatever name the piece came with; only when
+      -- they cannot be read, the known spell of those whose amulet bears its name
       local wk = WornAmuletKey and WornAmuletKey()
       if wk then
         if wk == entry.item.key then return true, false end
-      elseif KnowsSpell(entry.item.key) then
+      elseif wearing and KnowsSpell(entry.item.key) then
         return true, false
       end
     end
@@ -1037,6 +1038,34 @@ WornAmuletKey = function()
   local tex = GetInventoryItemTexture and GetInventoryItemTexture("player", 2)
   if tex then icon = IconKey(tex) end
   if not (name or icon) then return nil end
+  -- a basic amulet names no spell of the class
+  for i = 1, table.getn(D.amulets) do if name and D.amulets[i].name == name then return nil end end
+  -- A class amulet's name does not tell its spell for sure: the game may give a spell's
+  -- amulet another of the class's names (Polymorph's as The Eternal Talisman, the name of Ice
+  -- Barrier's). Its own lines name the spell: those decide first, among all the class's
+  -- spells, if the piece is a class amulet at all (a name or an icon of the class's amulets).
+  local isClass = false
+  for i = 1, table.getn(info.spells) do
+    local am = info.spells[i].amulet
+    if name and am == name then isClass = true end
+    local ai = icon and Azerloot_AmuletIcons and Azerloot_AmuletIcons[am or ""]
+    if ai and IconKey(ai) == icon then isClass = true end
+  end
+  if isClass then
+    local text = wornCache.NeckText()
+    local best, bl = nil, 0
+    for i = 1, table.getn(info.spells) do
+      local sp = info.spells[i]
+      local names = { sp.name, AzG(sp.name) }
+      for k = 1, 2 do
+        local nm = names[k]
+        if type(nm) == "string" and nm ~= "" and string.find(text, nm, 1, true) and string.len(nm) > bl then
+          best, bl = sp.key, string.len(nm)
+        end
+      end
+    end
+    if best then return best end
+  end
   -- the class spells whose amulet it is: by its name, else by its icon
   local cand = {}
   for i = 1, table.getn(info.spells) do
@@ -5772,7 +5801,14 @@ RefreshTracker = function()
       r.band:Hide(); r.count:Hide(); r.status:Hide(); r.ask:Hide(); r.needed = false
       r.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark"))
       local title, col = EntryTitle(e)
-      if e.kind == "Legendary" then title = title .. " (" .. AzG(e.item.name) .. ")" end
+      if e.kind == "Legendary" then
+        -- the worn one under the name the game gave it (another of the class's names, maybe)
+        if wk and wk == e.item.key then
+          local _, _, wn = string.find((GetInventoryItemLink and GetInventoryItemLink("player", 2)) or "", "%[(.-)%]")
+          if wn and wn ~= "" then title = wn end
+        end
+        title = title .. " (" .. AzG(e.item.name) .. ")"
+      end
       local rank
       if e.kind == "Spell" then
         -- the spell's rank in this run, as the game counts it: one up with every upgrade
