@@ -168,6 +168,8 @@ function C.Snap()
   L.caches = tonumber(R.chest) or L.caches
   L.level = (UnitLevel and UnitLevel("player")) or L.level
   if type(AZS_ZONE) == "table" and AZS_ZONE.zone and AZS_ZONE.zone ~= "" then L.zone = AZS_ZONE.zone end
+  -- the Heroic level the run is on (since the game's update of 27 October; 0: Normal)
+  if type(AZS_ZONE) == "table" and tonumber(AZS_ZONE.heroic) then L.heroic = tonumber(AZS_ZONE.heroic) end
   C.SnapParty(L)
 end
 
@@ -255,6 +257,7 @@ function C.Record(phase)
     hero = S.hero or (UnitName and UnitName("player")), race = S.race, zone = S.zone or L.zone,
     build = L.build, spells = L.spells, jewels = L.jewels, stats = L.stats, loot = L.loot,
     lootNew = L.lootNew, party = L.party, partyDmg = L.partyDmg, partyDps = L.partyDps,
+    heroic = (L.heroic and L.heroic > 0) and L.heroic or nil,
   }
   -- the summary as the game gave it, for anything it tells that is not shown yet
   if type(sum) == "table" then
@@ -708,6 +711,12 @@ function C.Row(P)
   r:SetScript("OnClick", function() if this.run then C.sel = this.run; C.Draw() end end)
   return r
 end
+-- "Heroic III": the level in the game's own numerals
+local ROMAN = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" }
+function C.Heroic(n)
+  return AzT("Heroic") .. " " .. (ROMAN[n] or tostring(n))
+end
+
 function C.FillRow(r, run)
   r.run = run
   r.date:SetText(C.Date(run.at))
@@ -1296,7 +1305,8 @@ function C.DrawRight(cls)
   C.FxSet(run.won and "heal" or "blood")
   local best = C.BestOf(cls, C.Runs(cls))
   if best and best.id == run.id then R.seal:Show() else R.seal:Hide() end
-  R.sub:SetText(C.ZoneName(run.zone) .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
+  R.sub:SetText(C.ZoneName(run.zone) .. (run.heroic and ("  ·  " .. C.Heroic(run.heroic)) or "")
+    .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
   -- a co-op run: the party's damage per second after the others (each hero on hovering it)
   local nS = table.getn(SUMMARY) + (run.party and 1 or 0)
   C.PlaceRows(nS)

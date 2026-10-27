@@ -1306,10 +1306,10 @@ local function EntrySections(entry, bright)
       for i = 1, table.getn(src) do
         table.insert(where, { AzT("%s in %s, arriving after %s.", AzG(src[i].boss.name), AzG(src[i].zone.name), Minutes(src[i].boss.minute)), soft })
       end
-      table.insert(where, { AzT("Each kill gives it a %s%% chance; once it drops it stays in your collection.", entry.zone.chance), soft })
+      table.insert(where, { AzT("Each kill gives it a %s%% chance on Normal (Heroic raises it); once it drops it stays in your collection.", entry.zone.chance), soft })
       table.insert(secs, { AzT("Where it drops"), where })
     else
-      table.insert(secs, { AzT("Where it drops"), { { AzT("%s in %s, arriving after %s. Each kill gives it a %s%% chance; once it drops it stays in your collection.",
+      table.insert(secs, { AzT("Where it drops"), { { AzT("%s in %s, arriving after %s. Each kill gives it a %s%% chance on Normal (Heroic raises it); once it drops it stays in your collection.",
         AzG(entry.boss.name), AzG(entry.zone.name), Minutes(entry.boss.minute), entry.zone.chance), soft } } })
     end
     local got = Collected(entry.class)[it.name]
@@ -2019,13 +2019,27 @@ end
 -- what an attack does, from its shape in the game: sizes in yards, times in seconds
 -- (short: the wounded boss's turns one line each, its new attacks by name only; the
 -- tooltip tells them in full)
+-- towers and gazes: since the game's update of 27 October only on Heroic, when its twist is
+-- "Old mechanics" (on Normal the boss leaves them out)
+function AzlHeroicOnly(a)
+  return type(a) == "table" and (a.kind == "towers" or a.kind == "gaze")
+end
+
 function AzlDangerText(a, short)
+  if AzlHeroicOnly(a) then
+    return AzlDangerText1(a, short) .. " " .. AzT("Only on Heroic with Old mechanics.")
+  end
+  return AzlDangerText1(a, short)
+end
+
+function AzlDangerText1(a, short)
   if a.phases then
     local lines = {}
     for k = 1, table.getn(a.phases) do
       local ph, what = a.phases[k], nil
       if ph.adds then what = AzT("Calls in %s helpers.", ph.adds)
       elseif ph.a and ph.a.kind == "stance" then what = AzlStanceText(ph.a, short)
+      elseif ph.a and short and AzlHeroicOnly(ph.a) then what = AzT("New attack on Heroic with Old mechanics, %s.", AzlDangerName(ph.a))
       elseif ph.a and short then what = AzT("New attack, %s.", AzlDangerName(ph.a))
       elseif ph.a then what = AzT("New attack, %s: %s", AzlDangerName(ph.a), AzlDangerText(ph.a)) end
       table.insert(lines, AzT("%d%% health: %s", ph.pct, what or "?"))
@@ -3146,9 +3160,9 @@ local function BuildBossView(Strip)
     return v
   end
   B.health = Stat("Health", 0, 0, INK_GOOD, { 0.02, 0.14, 0 },   -- the green of the Jewelry effects
-    "The boss's health in a run with the standard options, for one hero. In co-op it has more, sized to the heroes still standing.")
+    "The boss's health on Normal, for one hero. Heroic gives it more, and in co-op it has more, sized to the heroes still standing.")
   B.hit = Stat("Hit", 160, 0, { 0.86, 0.1, 0.06 }, { 0.2, 0, 0 },
-    "The damage of one of its ordinary hits, as the game's own boss table gives it.")
+    "The damage of one of its ordinary hits on Normal, as the game's own boss table gives it. Heroic makes it hit harder.")
   B.speed = Stat("Speed", 0, -18, { 1, 0.78, 0.08 }, { 0.25, 0.12, 0 },
     "How fast it moves, in yards per second.")
   B.spawns = Stat("Spawns", 160, -18, PAGE_RARITY.Legendary, { 0.22, 0.07, 0 },   -- the legendary orange
