@@ -170,6 +170,8 @@ function C.Snap()
   if type(AZS_ZONE) == "table" and AZS_ZONE.zone and AZS_ZONE.zone ~= "" then L.zone = AZS_ZONE.zone end
   -- the Heroic level the run is on (since the game's update of 27 October; 0: Normal)
   if type(AZS_ZONE) == "table" and tonumber(AZS_ZONE.heroic) then L.heroic = tonumber(AZS_ZONE.heroic) end
+  -- and its affixes ("sanguine,explosive", in English; since 0.125)
+  if type(AZS_ZONE) == "table" and type(AZS_ZONE.affixes) == "string" then L.affixes = AZS_ZONE.affixes end
   C.SnapParty(L)
 end
 
@@ -258,6 +260,7 @@ function C.Record(phase)
     build = L.build, spells = L.spells, jewels = L.jewels, stats = L.stats, loot = L.loot,
     lootNew = L.lootNew, party = L.party, partyDmg = L.partyDmg, partyDps = L.partyDps,
     heroic = (L.heroic and L.heroic > 0) and L.heroic or nil,
+    affixes = (L.heroic and L.heroic > 0 and L.affixes and L.affixes ~= "") and L.affixes or nil,
   }
   -- the summary as the game gave it, for anything it tells that is not shown yet
   if type(sum) == "table" then
@@ -717,6 +720,24 @@ function C.Heroic(n)
   return AzT("Heroic") .. " " .. (ROMAN[n] or tostring(n))
 end
 
+-- the Heroic affixes, as the game names and tells them
+local AFFIX = {
+  bolstering = { "Bolstering", "A death makes the enemies near it tougher and stronger, stacking." },
+  sanguine = { "Sanguine", "A slain elite leaves a pool that heals enemies standing in it." },
+  explosive = { "Explosive", "Orbs come out of the horde: only direct hits hurt them, so kill them before they burst." },
+}
+-- a run's affixes: each { name, what it does }, in the player's language
+function C.Affixes(run)
+  local out = {}
+  if type(run) ~= "table" or type(run.affixes) ~= "string" then return out end
+  for k in string.gfind(run.affixes, "[^,%s]+") do
+    local a = AFFIX[string.lower(k)]
+    if a then table.insert(out, { AzT(a[1]), AzT(a[2]) })
+    else table.insert(out, { k, nil }) end   -- (one the game added later: its own word)
+  end
+  return out
+end
+
 function C.FillRow(r, run)
   r.run = run
   r.date:SetText(C.Date(run.at))
@@ -1043,6 +1064,24 @@ function C.MakeRight(P)
   local sub = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 12))
   sub:SetPoint("TOP", res, "BOTTOM", 0, -9)   -- room for the effects behind the heading
   R.sub = sub
+  -- hovering the line of a Heroic run: its level and what each affix does
+  local subHover = CreateFrame("Frame", nil, P)
+  subHover:SetPoint("TOPLEFT", sub, "TOPLEFT", -4, 3); subHover:SetPoint("BOTTOMRIGHT", sub, "BOTTOMRIGHT", 4, -3)
+  subHover:EnableMouse(true)
+  subHover:SetScript("OnEnter", function()
+    local run = R.subRun
+    if not run or not sub:IsShown() then return end
+    GameTooltip:SetOwner(this, "ANCHOR_BOTTOM")
+    GameTooltip:AddLine(C.Heroic(run.heroic), 1, 0.82, 0)
+    local aff = C.Affixes(run)
+    for i = 1, table.getn(aff) do
+      GameTooltip:AddLine(aff[i][1], 1, 1, 1)
+      if aff[i][2] then GameTooltip:AddLine(aff[i][2], 0.75, 0.75, 0.75, 1) end
+    end
+    GameTooltip:Show()
+  end)
+  subHover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  R.subHover = subHover
   -- behind the heading: blood for a run lost, a healing light for one survived
   C.MakeFx(P, res)
   -- the best run's star, beside its heading
@@ -1286,6 +1325,7 @@ function C.DrawRight(cls)
   local parts = { R.result, R.sub, R.sumHead, R.buildHead, R.buildLine, R.miss, R.lootHead, R.loot }
   if not run then
     for k = 1, table.getn(parts) do parts[k]:Hide() end
+    if R.subHover then R.subHover:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
     R.partyTip:Hide()
     for k = 1, 6 do R.spells[k]:Hide() end
@@ -1305,8 +1345,25 @@ function C.DrawRight(cls)
   C.FxSet(run.won and "heal" or "blood")
   local best = C.BestOf(cls, C.Runs(cls))
   if best and best.id == run.id then R.seal:Show() else R.seal:Hide() end
-  R.sub:SetText(C.ZoneName(run.zone) .. (run.heroic and ("  ·  " .. C.Heroic(run.heroic)) or "")
-    .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
+  -- "Zul'Gurub · Heroic III: Sanguine, Explosive · date · Co-op"; the affixes left out when
+  -- the line would run off the page (hovering it tells them all)
+  local aff = C.Affixes(run)
+  local function Sub(withAff)
+    local h = ""
+    if run.heroic then
+      h = "  ·  " .. C.Heroic(run.heroic)
+      if withAff and table.getn(aff) > 0 then
+        local n = {}
+        for i = 1, table.getn(aff) do n[i] = aff[i][1] end
+        h = h .. ": " .. table.concat(n, ", ")
+      end
+    end
+    R.sub:SetText(C.ZoneName(run.zone) .. h .. "  ·  " .. C.Date(run.at, true) .. (run.party and ("  ·  " .. AzT("Co-op")) or ""))
+  end
+  Sub(true)
+  if (R.sub:GetStringWidth() or 0) > 2 * PAGE_MID - 30 then Sub(false) end
+  R.subRun = run.heroic and run or nil
+  if R.subRun then R.subHover:Show() else R.subHover:Hide() end
   -- a co-op run: the party's damage per second after the others (each hero on hovering it)
   local nS = table.getn(SUMMARY) + (run.party and 1 or 0)
   C.PlaceRows(nS)

@@ -370,6 +370,8 @@ local function Box(kind)
     this:SetAlpha(math.max(0, math.min(1, shown / 0.3, this.left / 0.8)))
   end)
   f:Hide()
+  -- kept over the game's level-up and jewelry cards (its AZS_SetOnTopOfScreens, since 0.126)
+  if AZS_SetOnTopOfScreens then pcall(AZS_SetOnTopOfScreens, f, true) end
   boxes[kind] = f
   if kind == "main" then alert = f end
   return f

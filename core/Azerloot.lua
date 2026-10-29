@@ -4837,6 +4837,9 @@ local function BuildTracker()
   -- as high as the interface goes, so it stays in view over level-up and treasure screens
   tracker:SetFrameStrata("FULLSCREEN_DIALOG")
   tracker:SetToplevel(true)
+  -- and over the game's level-up and jewelry cards, with the boss bar under it (the game's
+  -- AZS_SetOnTopOfScreens, since 0.126)
+  if AZS_SetOnTopOfScreens then pcall(AZS_SetOnTopOfScreens, tracker, true) end
   tracker:SetBackdrop({
     bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
