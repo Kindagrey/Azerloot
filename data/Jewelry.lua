@@ -26,7 +26,7 @@ Azerloot_Data.rings = {
     values = { "+21% area of effect", "+29% area of effect", "+38% area of effect", "+50% area of effect", "+67% area of effect" },
     again = "Picked again, it grows by nearly the pick's whole worth every time." },
   { name = "Seal of the Damned", icon = "INV_Jewelry_Ring_51Naxxramas", cat = "Damage over time speed",
-    values = { "Your damage over time spells tick 15% faster", "Your damage over time spells tick 21% faster", "Your damage over time spells tick 27% faster", "Your damage over time spells tick 36% faster", "Your damage over time spells tick 40% faster" },
+    values = { "Your damage over time spells tick 15% faster", "Your damage over time spells tick 21% faster", "Your damage over time spells tick 27% faster", "Your damage over time spells tick 36% faster", "Your damage over time spells tick 48% faster" },
     again = "Picked again, it grows toward Your damage over time spells tick 100% faster, each pick less as it nears it." },
   { name = "Blooddrinker's Band", icon = "INV_Jewelry_Ring_49Naxxramas", cat = "Leech",
     values = { "1.5% of all damage dealt heals you", "2.1% of all damage dealt heals you", "2.7% of all damage dealt heals you", "3.0% of all damage dealt heals you", "3.0% of all damage dealt heals you" },
