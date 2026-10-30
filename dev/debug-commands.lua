@@ -92,3 +92,17 @@
     Alert(AzT("%d%% health!", 70), AzT("New attack, %s.", AzName("Shadow Fissure")), "Spell_Shadow_CreepingPlague")
     return true
   end
+
+-- fitlog (wishlist window shrinking near the screen's sides, 30 October): /azl fitlog toggles
+-- AzerlootDB.fitlog. In SlashCmdList["AZERLOOT"], after the AzlW.Slash line:
+--   if msg == "fitlog" then AzerlootDB.fitlog = not AzerlootDB.fitlog; Print("fitlog " .. (AzerlootDB.fitlog and "on" or "off")); return end
+-- In AzlTextHeight's checker, after AzlLines[it.key] = real:
+--   if AzerlootDB and AzerlootDB.fitlog and real ~= it.guess then
+--     DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffffcc00fitlog|r lines %d->%d h=%.1f x=%.0f..%.0f \"%s\"", it.guess, real, h,
+--       it.fs:GetLeft() or -1, it.fs:GetRight() or -1, string.sub(string.gsub(it.fs:GetText() or "", "|", "||"), 1, 40)))
+--   end
+-- In AzlFitTracker, before "if not want then return end":
+--   if AzerlootDB and AzerlootDB.fitlog and want then
+--     DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffffcc00fitlog|r sh=%.0f top=%.0f room=%.0f h=%.0f fit=%.3f cur=%.3f base=%.2f lines=%s want=%s L=%.0f R=%.0f",
+--       sh, fromTop, room, h, fit, cur, base, tostring(F.lines), tostring(want), tracker:GetLeft() or -1, tracker:GetRight() or -1))
+--   end
