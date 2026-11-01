@@ -120,6 +120,10 @@ local function G(s, d, depth)
   if string.find(core, "^[%d%.,%%%+%-x]+$") then return s end
   local hit = d.exact[core]
   if hit then return lead .. hit .. trail end
+  -- a name inside a text that only the book carries (the Shaman's Rockbiter Weapon in
+  -- "Rockbiter Weapon: +4 targets")
+  local own = depth > 0 and d.ui and d.ui[core]
+  if own then return lead .. own .. trail end
   if depth < 4 then
     for i = 1, table.getn(d.tpl) do
       local t = d.tpl[i]
@@ -141,6 +145,7 @@ function AzG(s)
   if lg == "en" then return s end
   local d = Azerloot_GT and Azerloot_GT[lg]
   if not d then return s end
+  if d.ui == nil then d.ui = (Azerloot_UI and Azerloot_UI[lg]) or false end
   memo[lg] = memo[lg] or {}
   local m = memo[lg][s]
   if m then return m end

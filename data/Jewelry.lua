@@ -260,10 +260,12 @@ Azerloot_Data.classes = {
       amulet = "Cinderheart Pendant", effects = { "Fire Nova: +50% area", "Fire Nova: +25% damage", "Fire Nova's hits stun for 1.5 sec" } },
     { key = "healing_wave", name = "Healing Wave", icon = "Spell_Nature_MagicImmunity" },
     -- the game's 0.135: Call of Flame is gone; Stormstrike and Rockbiter Weapon are new
-    -- (Rockbiter Weapon only through the talent Rockbiter Initiation, and without a necklace)
+    -- (Rockbiter Weapon only through the talent Rockbiter Initiation; a melee strike, its
+    -- necklace the Medallion of the Bladestorm, as for Cleave and Shred)
     { key = "stormstrike", name = "Stormstrike", icon = "Spell_Holy_SealOfMight",
       amulet = "Eye of the Tempest", effects = { "Every fourth Stormstrike strikes again for 100% damage. At rank 5 and 10, the follow-up gains one additional target." } },
-    { key = "rockbiter", name = "Rockbiter Weapon", icon = "Spell_Nature_RockBiter" },
+    { key = "rockbiter", name = "Rockbiter Weapon", icon = "Spell_Nature_RockBiter",
+      amulet = "Medallion of the Bladestorm", effects = { "Rockbiter Weapon: +4 targets", "Rockbiter Weapon: +50% damage", "Rockbiter Weapon's hits burn and bleed for 80% more over 6 sec" } },
   } },
   { key = "mage", name = "Mage", color = "69CCF0", spells = {
     { key = "fireball", name = "Fireball", icon = "Spell_Fire_FlameBolt",
