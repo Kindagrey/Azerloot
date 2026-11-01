@@ -715,6 +715,10 @@ end
 -- numbers from the game's spell list (cooldown 16 sec)
 AZL_SPELL_TEXT = {
   demonic_empowerment = "Your demons deal 40% more damage for 8 sec. Cast once enemies are within 30 yd and a demon fights for you.",
+  -- the Shaman's of the game's 0.135 (the game's own spell list has another text for them
+  -- until the class is played: then its own words are read and kept)
+  stormstrike = "A Nature strike on the nearest enemy within 10 yd, bosses and elites first.",
+  rockbiter = "A quick melee swing at two enemies within 10 yd. Learned only through the talent Rockbiter Initiation, which starts every run with it instead of Lightning Bolt.",
 }
 local function SpellDesc(key, force)
   local id = SPELL_ID[key]
@@ -793,7 +797,7 @@ local SPELL_QUOTE = {
   frost_shock = "Cold enough to stop a charge.", lightning_shield = "Touch me and find out.",
   magma_totem = "The ground itself rises.", searing_totem = "A small flame with a long reach.",
   fire_nova = "The totem's last word.", healing_wave = "The tide returns what it took.",
-  call_of_flame = "The fire answers its kin.",
+  stormstrike = "The storm rides the blade.", rockbiter = "Stone bites deeper than steel.",
   fireball = "The classic never fades.", frostbolt = "Cold, slow and certain.",
   arcane_missiles = "Pure magic, poured out.", frost_nova = "Hold still. Forever, if you like.",
   arcane_explosion = "Too close is too late.", blizzard = "Winter on demand.",

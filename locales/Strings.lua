@@ -5,6 +5,10 @@
 Azerloot_UI = {}
 Azerloot_UI.de = {
   -- the game's 0.135 (the Shaman): its words for them, and what the necklaces do
+  ["A Nature strike on the nearest enemy within 10 yd, bosses and elites first."] = "Ein Naturschlag gegen den nächsten Gegner im Umkreis von 10 m, Bosse und Elitegegner zuerst.",
+  ["A quick melee swing at two enemies within 10 yd. Learned only through the talent Rockbiter Initiation, which starts every run with it instead of Lightning Bolt."] = "Ein schneller Nahkampfhieb gegen zwei Gegner im Umkreis von 10 m. Nur über das Talent Felsbeißer-Einweihung erlernt, das jeden Lauf damit statt mit Blitzschlag beginnt.",
+  ["The storm rides the blade."] = "Der Sturm reitet auf der Klinge.",
+  ["Stone bites deeper than steel."] = "Stein beißt tiefer als Stahl.",
   ["Frost Shock slows by 70% for 6 sec"] = "Frostschock verlangsamt um 70% für 6 Sek.",
   ["Frost Shock deals 75% more damage to already chilled enemies"] = "Frostschock verursacht 75% mehr Schaden an bereits unterkühlten Gegnern",
   ["Earth Shock deals 75% more damage to enemies below 35% health"] = "Erdschock verursacht 75% mehr Schaden an Gegnern unter 35% Gesundheit",
@@ -883,6 +887,10 @@ Azerloot_UI.de = {
 }
 Azerloot_UI.fr = {
   -- the game's 0.135 (the Shaman): its words for them, and what the necklaces do
+  ["A Nature strike on the nearest enemy within 10 yd, bosses and elites first."] = "Une frappe de Nature sur l'ennemi le plus proche à moins de 10 m, boss et élites d'abord.",
+  ["A quick melee swing at two enemies within 10 yd. Learned only through the talent Rockbiter Initiation, which starts every run with it instead of Lightning Bolt."] = "Un coup rapide en mêlée sur deux ennemis à moins de 10 m. Appris uniquement par le talent Initiation Croque-roc, qui commence chaque partie avec lui au lieu d'Éclair.",
+  ["The storm rides the blade."] = "La tempête chevauche la lame.",
+  ["Stone bites deeper than steel."] = "La pierre mord plus profond que l'acier.",
   ["Frost Shock slows by 70% for 6 sec"] = "Horion de givre ralentit de 70% pendant 6 s",
   ["Frost Shock deals 75% more damage to already chilled enemies"] = "Horion de givre inflige 75% de dégâts en plus aux ennemis déjà glacés",
   ["Earth Shock deals 75% more damage to enemies below 35% health"] = "Horion de terre inflige 75% de dégâts en plus aux ennemis sous 35% de leurs PV",
@@ -1760,6 +1768,10 @@ Azerloot_UI.fr = {
 }
 Azerloot_UI.es = {
   -- the game's 0.135 (the Shaman): its words for them, and what the necklaces do
+  ["A Nature strike on the nearest enemy within 10 yd, bosses and elites first."] = "Un golpe de Naturaleza al enemigo más cercano a menos de 10 m, primero jefes y élites.",
+  ["A quick melee swing at two enemies within 10 yd. Learned only through the talent Rockbiter Initiation, which starts every run with it instead of Lightning Bolt."] = "Un golpe cuerpo a cuerpo rápido a dos enemigos a menos de 10 m. Solo se aprende con el talento Iniciación Muerdepiedras, que empieza cada partida con él en lugar de Descarga de relámpagos.",
+  ["The storm rides the blade."] = "La tormenta cabalga en la hoja.",
+  ["Stone bites deeper than steel."] = "La piedra muerde más hondo que el acero.",
   ["Frost Shock slows by 70% for 6 sec"] = "Choque de Escarcha ralentiza un 70% durante 6 s",
   ["Frost Shock deals 75% more damage to already chilled enemies"] = "Choque de Escarcha inflige un 75% más de daño a los enemigos ya congelados",
   ["Earth Shock deals 75% more damage to enemies below 35% health"] = "Choque de tierra inflige un 75% más de daño a los enemigos con menos de un 35% de salud",
@@ -2650,6 +2662,10 @@ Azerloot_UI.es = {
 }
 Azerloot_UI.pt = {
   -- the game's 0.135 (the Shaman): its words for them, and what the necklaces do
+  ["A Nature strike on the nearest enemy within 10 yd, bosses and elites first."] = "Um golpe de Natureza no inimigo mais próximo a até 10 m, chefes e elites primeiro.",
+  ["A quick melee swing at two enemies within 10 yd. Learned only through the talent Rockbiter Initiation, which starts every run with it instead of Lightning Bolt."] = "Um golpe corpo a corpo rápido em dois inimigos a até 10 m. Aprendido apenas pelo talento Iniciação Mordepedra, que começa cada partida com ele em vez de Raio.",
+  ["The storm rides the blade."] = "A tempestade cavalga a lâmina.",
+  ["Stone bites deeper than steel."] = "A pedra morde mais fundo que o aço.",
   ["Frost Shock slows by 70% for 6 sec"] = "Choque Gélido reduz a velocidade em 70% por 6 s",
   ["Frost Shock deals 75% more damage to already chilled enemies"] = "Choque Gélido causa 75% a mais de dano a inimigos já congelados",
   ["Earth Shock deals 75% more damage to enemies below 35% health"] = "Choque Terreno causa 75% a mais de dano a inimigos com menos de 35% de vida",
