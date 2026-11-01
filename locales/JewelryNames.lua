@@ -693,10 +693,10 @@ Azerloot_AmuletIcons = {
   ["Breath of the Black Dragon"] = "INV_Jewelry_Necklace_19",
   ["The Eternal Talisman"] = "INV_Jewelry_Necklace_21",
   ["Amulet of the Ancients"] = "INV_Jewelry_Necklace_23",
-  -- the Shaman's necklaces of the game's 0.135: the game names no picture of their own for
-  -- them, so (as far as can be told) they wear those of the necklaces their spells had before
-  ["Cinderheart Pendant"] = "INV_Jewelry_Necklace_AhnQiraj_03",
-  ["Winter's Embrace"] = "INV_Jewelry_Necklace_16",
-  ["Earthshatter Seal"] = "INV_Jewelry_Necklace_16",
-  ["Emberwake Pendant"] = "INV_Jewelry_Necklace_28Naxxramas",
+  -- the Shaman's necklaces of the game's 0.135 (their pictures from the game's own code)
+  ["Cinderheart Pendant"] = "INV_Jewelry_Necklace_AhnQiraj_04",
+  ["Winter's Embrace"] = "INV_Jewelry_Necklace_19",
+  ["Earthshatter Seal"] = "INV_Jewelry_Necklace_28Naxxramas",
+  ["Emberwake Pendant"] = "INV_Jewelry_Necklace_AhnQiraj_03",
+  ["Eye of the Tempest"] = "INV_Jewelry_Necklace_16",
 }

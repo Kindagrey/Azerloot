@@ -243,14 +243,14 @@ Azerloot_Data.classes = {
       amulet = "Eye of the Splitting Sky", effects = { "Lightning Bolt: +1 target", "Lightning Bolt: +20% damage", "Lightning Bolt's hits leap to 2 more enemies for 30%" } },
     { key = "chain_lightning", name = "Chain Lightning", icon = "Spell_Nature_ChainLightning",
       amulet = "Talisman of the Tempest", effects = { "Chain Lightning: +4 targets", "Chain Lightning: +20% damage", "Chains lose nothing on each jump" } },
-    -- the game's 0.135: the Shocks and Fire Nova have necklaces of their own (rank-1 numbers
-    -- not known yet: the page names what they do); Lightning Shield and Healing Wave have none
+    -- the game's 0.135: the Shocks, Fire Nova and Stormstrike have necklaces of their own (their
+    -- rank-1 numbers from the game's own code); Lightning Shield and Healing Wave have none
     { key = "earth_shock", name = "Earth Shock", icon = "Spell_Nature_EarthShock",
-      amulet = "Earthshatter Seal", effects = { "Earth Shock deals more damage to wounded enemies", "A kill with Earth Shock halves its remaining cooldown" } },
+      amulet = "Earthshatter Seal", effects = { "Earth Shock deals 75% more damage to enemies below 35% health", "A kill with Earth Shock cuts its remaining cooldown by 50%" } },
     { key = "flame_shock", name = "Flame Shock", icon = "Spell_Fire_FlameShock",
-      amulet = "Emberwake Pendant", effects = { "Flame Shock: more damage over time", "Each tick of Flame Shock also hits 2 nearby enemies" } },
+      amulet = "Emberwake Pendant", effects = { "Flame Shock: +40% damage", "Each tick of Flame Shock also hits 2 nearby enemies within 6 yd for 50% damage" } },
     { key = "frost_shock", name = "Frost Shock", icon = "Spell_Frost_FrostShock",
-      amulet = "Winter's Embrace", effects = { "Frost Shock slows strongly", "Frost Shock deals more damage to already chilled enemies" } },
+      amulet = "Winter's Embrace", effects = { "Frost Shock slows by 70% for 6 sec", "Frost Shock deals 75% more damage to already chilled enemies" } },
     { key = "lightning_shield", name = "Lightning Shield", icon = "Spell_Nature_LightningShield" },
     { key = "magma_totem", name = "Magma Totem", icon = "Spell_Fire_SelfDestruct",
       amulet = "Amulet of the Ancients", effects = { "Magma Totem: +100% duration", "Magma Totem: +50% area", "Magma Totem: +50% damage", "Every totem pulse heals you 1% of max health" } },
@@ -262,7 +262,7 @@ Azerloot_Data.classes = {
     -- the game's 0.135: Call of Flame is gone; Stormstrike and Rockbiter Weapon are new
     -- (Rockbiter Weapon only through the talent Rockbiter Initiation, and without a necklace)
     { key = "stormstrike", name = "Stormstrike", icon = "Spell_Holy_SealOfMight",
-      amulet = "Eye of the Tempest", effects = { "Every fourth Stormstrike strikes again", "At ranks 5 and 10 the second strike hits one more enemy" } },
+      amulet = "Eye of the Tempest", effects = { "Every fourth Stormstrike strikes again for 100% damage. At rank 5 and 10, the follow-up gains one additional target." } },
     { key = "rockbiter", name = "Rockbiter Weapon", icon = "Spell_Nature_RockBiter" },
   } },
   { key = "mage", name = "Mage", color = "69CCF0", spells = {
