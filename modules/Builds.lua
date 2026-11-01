@@ -98,6 +98,7 @@ B.START_ALT = {
   priest = { { key = "sw_pain", talent = "Shadowy Apparitions" } },
   mage = { { key = "arcane_missiles", talent = "Arcane Power" }, { key = "frostbolt", talent = "Summon Water Elemental" } },
   druid = { { key = "shred", talent = "Cat Form" }, },
+  shaman = { { key = "rockbiter", talent = "Rockbiter Initiation" } },
 }
 B.START_ALT.druid[1].talent2 = "Dire Bear Form"
 function B.StartAlt(cls, key)
@@ -175,6 +176,26 @@ function B.MoveStar(items)
   if not star then return end
   if nt < MAX.Trinkets and not twice then items[star].kind = "Trinkets"
   else table.remove(items, star) end
+end
+-- spells the game took away (the Shaman's Call of Flame in its 0.135) and class amulets a
+-- spell no longer has (Lightning Shield's, Healing Wave's): they leave the builds, so the
+-- places are free again
+function B.DropGone()
+  if type(AzerlootDB) ~= "table" or type(AzerlootDB.builds) ~= "table" then return end
+  for cls, t in pairs(AzerlootDB.builds) do
+    if type(t) == "table" and type(t.list) == "table" and AZL.ClassInfo(cls) then
+      for i = 1, NBUILDS do
+        local b = t.list[i]
+        if type(b) == "table" and type(b.items) == "table" then
+          for n = table.getn(b.items), 1, -1 do
+            local rec = b.items[n]
+            if (rec.kind == "Spell" or rec.kind == "Legendary") and not B.Entry(cls, rec) then table.remove(b.items, n) end
+          end
+          if b.start and not B.StartAlt(cls, b.start) then b.start = nil end
+        end
+      end
+    end
+  end
 end
 function B.MigrateStar()
   if type(AzerlootDB) ~= "table" or type(AzerlootDB.builds) ~= "table" then return end
@@ -447,6 +468,12 @@ local KIND = {
   ["Talisman of the Tempest"] = { h = 3, b = 1, s = 0, c = 0, r = 30 },
   ["The Eternal Talisman"] = { h = 0, b = 1, s = 2, c = 0, buff = true },
   ["Amulet of the Ancients"] = { h = 2, b = 1, s = 1, c = 0, r = 8 },
+  -- the Shaman's own since the game's 0.135
+  ["Eye of the Tempest"] = { h = 2, b = 3, s = 0, c = 0, r = 10 },
+  ["Cinderheart Pendant"] = { h = 3, b = 1, s = 0, c = 2, r = 8 },
+  ["Winter's Embrace"] = { h = 1, b = 2, s = 0, c = 2, r = 30 },
+  ["Earthshatter Seal"] = { h = 1, b = 3, s = 0, c = 0, r = 30 },
+  ["Emberwake Pendant"] = { h = 2, b = 2, s = 0, c = 0, r = 30, dot = true },
 }
 local OWN = {
   rend = { r = 5 }, rupture = { r = 5 }, consecration = { r = 8 }, immolation_trap = { r = 8 },
@@ -465,6 +492,7 @@ local OWN = {
   multi_shot = { h = 2, b = 2, r = 35 }, auto_shot = { r = 35 }, aimed_shot = { r = 35 }, volley = { r = 35 },
   pyroblast = { b = 3 }, mind_flay = { r = 20, b = 2 }, searing_totem = { r = 30, h = 1, b = 2 },
   execute = { b = 3 }, eviscerate = { b = 3 }, backstab = { b = 3 },
+  rockbiter = { h = 1, b = 2, r = 10 }, stormstrike = { r = 10 },
 }
 -- the jewelry, by what it gives
 local CAT = {
@@ -2707,4 +2735,5 @@ starter:SetScript("OnEvent", function()
   B.MigrateSpecs()
   B.StripStart()
   B.MigrateStar()
+  B.DropGone()
 end)

@@ -151,7 +151,11 @@ function AzG(s)
     for seg in (string.gfind or string.gmatch)(s .. "\n", "(.-)\n") do table.insert(parts, G(seg, d, 0)) end
     out = table.concat(parts, "\n")
   else
-    out = G(s, d, 0)
+    -- a word of the game's the book carries itself (newer than its tables: the Shaman's
+    -- Stormstrike, its necklaces and what they do), before the tables' patterns can take it
+    -- apart ("Eye of the Tempest" is no "X of Y")
+    local own = Azerloot_UI and Azerloot_UI[lg] and Azerloot_UI[lg][s]
+    if own and not (d.exact and d.exact[s]) then out = own else out = G(s, d, 0) end
     if out == s and string.find(s, ", ") then
       local parts = {}
       for seg in (string.gfind or string.gmatch)(s .. ", ", "(.-), ") do table.insert(parts, G(seg, d, 0)) end
