@@ -932,8 +932,11 @@ local SLOT_WORD = {
   HEADSLOT = "Head", NECKSLOT = "Neck", SHOULDERSLOT = "Shoulder", CHESTSLOT = "Chest", WRISTSLOT = "Wrist",
   HANDSSLOT = "Hands", WAISTSLOT = "Waist", LEGSSLOT = "Legs", FEETSLOT = "Feet", FINGER0SLOT = "Finger",
   FINGER1SLOT = "Finger", TRINKET0SLOT = "Trinket", TRINKET1SLOT = "Trinket", MAINHANDSLOT = "Main Hand",
-  SECONDARYHANDSLOT = "Off Hand", RANGEDSLOT = "Ranged",
+  SECONDARYHANDSLOT = "Off Hand", RANGEDSLOT = "Ranged", RELICSLOT = "Relic",
 }
+-- the classes whose ranged place holds a relic (libram, totem, idol), as the game's own
+-- character window shows it
+local RELIC = { paladin = true, shaman = true, druid = true }
 local function Pct(v) return string.format("%+.0f%%", (tonumber(v) or 0) * 100) end
 local function Num(v) return tonumber(v) or 0 end
 -- the twelve numbers of the character pane: label, value, what it means, what the gear adds
@@ -984,6 +987,7 @@ local MORE = {
   { "Melee", function(s) return Pct(s.auto) end, "auto" },
   { "Pet Damage", function(s) return Pct(s.pet) end, "pet" },
 }
+B.MORE = MORE
 -- The game sends its numbers only now and then (with its character window open, during a
 -- run), and a reload forgets them: the last ones it sent are kept per class until new come.
 -- the classes with a painted emblem of their own (media\\textures\\emblem_<class>.tga)
@@ -1111,8 +1115,11 @@ function B.MakeDoll(P)
   local sh = Z.Engraved(Z.Heading(Z.Font(P, "GameFontNormal", Z.INK), 15))
   sh:SetPoint("TOPLEFT", ui.left, "TOPLEFT", 22, -300)
   sh:SetText(AzT("Run Stats"))
+  local shq = P:CreateTexture(nil, "OVERLAY"); shq:SetWidth(14); shq:SetHeight(14)
+  shq:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
+  shq:SetPoint("LEFT", sh, "RIGHT", 3, 0)
   local shb = CreateFrame("Frame", nil, P)
-  shb:SetPoint("TOPLEFT", sh, "TOPLEFT", -2, 2); shb:SetWidth(120); shb:SetHeight(20)
+  shb:SetPoint("TOPLEFT", sh, "TOPLEFT", -2, 2); shb:SetPoint("BOTTOMRIGHT", shq, "BOTTOMRIGHT", 2, -3)
   shb:EnableMouse(true)
   shb:SetScript("OnEnter", function()
     local s, old = RunStats()
@@ -1216,8 +1223,13 @@ function B.DrawDoll()
   local lvl = UnitLevel and UnitLevel("player") or 1
   D.level:SetText(AzT("Level %d %s", tonumber(lvl) or 1, AzG(Z.ClassInfo(cls).name)))
   D.emblem:SetTexture(Z.MEDIA .. "emblem_" .. (EMBLEM[cls] and cls or "warrior") .. ".tga")
+  local relic = RELIC[cls] or (UnitHasRelicSlot and UnitHasRelicSlot("player")) and true or false
   for k = 1, table.getn(D.slots) do
     local b = D.slots[k]
+    if b.id == 18 then
+      b.empty = "Interface\\PaperDoll\\UI-PaperDoll-Slot-" .. (relic and "Relic" or "Ranged")
+      b.word = relic and "RELICSLOT" or "RANGEDSLOT"
+    end
     local tex = GetInventoryItemTexture and GetInventoryItemTexture("player", b.id)
     if type(tex) == "string" then
       b.icon:SetTexture(tex); b.icon:SetVertexColor(1, 1, 1); b.icon:SetAlpha(1)

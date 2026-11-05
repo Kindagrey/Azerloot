@@ -240,7 +240,7 @@ function C.Record(phase)
     local old = nil
     for k = 1, table.getn(bk.runs) do if bk.runs[k].id == L.cont then old = bk.runs[k] end end
     if old then
-      C.Continue(old, S, L, sum)
+      if old.won then C.Continue(old, S, L, sum) else C.Resume(old, S, L, sum, phase) end
       C.Note(bk, old)
       L.last = old.id
       C.sel = old
@@ -276,6 +276,19 @@ function C.Record(phase)
   if AZL.state.module == "Chronicle" and C.pane and C.pane:IsVisible() then C.Draw() end
 end
 
+-- A run written down as fallen goes on after all (in co-op a friend brought the hero back):
+-- it is still the same run, with the numbers of its real end and that end's result. (Only
+-- a run survived goes on into endless mode; the game says so in the summary's "endl".)
+function C.Resume(run, S, L, sum, phase)
+  local o = run.official
+  C.Continue(run, S, L, sum)
+  run.official, run.endless = o, nil
+  local reached = type(sum) == "table" and tonumber(sum.endl) == 1
+  run.won = reached or C.Won(S.result, phase)
+  run.result = Plain(S.result) and S.result or phase
+  if reached then run.endless = true end
+end
+
 -- A run carried on in endless mode: what it reached at its official end is kept (time and
 -- result), and its numbers become those of the whole fight. Survived or fallen stays as the
 -- official end had it.
@@ -303,8 +316,10 @@ function C.Continue(run, S, L, sum)
 end
 
 -- the best run (survived beats fallen, then longer, then more kills) and the records stay
+-- the best run: survived beats fallen, then the higher level (a fair measure across zones and
+-- classes, where damage is not: a hero who clears the screen deals far more), then the longer
 local function Score(r)
-  return (r.won and 1e12 or 0) + (tonumber(r.t) or 0) * 1e6 + (tonumber(r.kills) or 0)
+  return (r.won and 1e12 or 0) + (tonumber(r.level) or 0) * 1e7 + (tonumber(r.t) or 0)
 end
 C.Score = Score
 -- the records, in their order on the page: four on top, three under them
@@ -349,6 +364,7 @@ function C.Tick()
   end
   if fighting then
     L.active = true
+    L.endAt, L.phase = nil, nil
     C.Snap()
   elseif ph == "dead" and L.active and not L.done and Downed() then
     L.endAt, L.phase = nil, ph
@@ -366,7 +382,7 @@ ev:RegisterEvent("CHAT_MSG_ADDON")
 ev:SetScript("OnEvent", function()
   if arg1 ~= "AZSEND" then return end
   local L = C.Live()
-  if L.active and not L.done then C.Record(L.phase or (AZS_GetPhase and AZS_GetPhase()) or "dead") end
+  if L.active and not L.done and not Downed() then C.Record(L.phase or (AZS_GetPhase and AZS_GetPhase()) or "dead") end
 end)
 
 -- ---------- for the builds pages: how a build has done ----------
@@ -783,6 +799,16 @@ function C.Row(P)
 end
 -- "Heroic III": the level in the game's own numerals
 local ROMAN = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" }
+-- a piece's rank from the number after its name ("Band of Accuria VI"; none is rank 1,
+-- "X+" is past ten, where the game stops counting in the name)
+function C.JewelRankOf(name)
+  local _, _, rn, plus = string.find(name or "", "%s([IVX]+)(%+?)$")
+  if not rn then return "1" end
+  for i = 1, table.getn(ROMAN) do
+    if ROMAN[i] == rn then return tostring(i) .. plus end
+  end
+  return "1"
+end
 function C.Heroic(n)
   return AzT("Heroic") .. " " .. (ROMAN[n] or tostring(n))
 end
@@ -1158,22 +1184,46 @@ function C.MakeRight(P)
 
   R.sumHead = C.Head(P, ui.right, -52)
   R.sumHead:SetText(AzT("Summary"))
-  -- the run's own numbers, at its end, in the heading's tooltip
+  -- the run's own numbers, at its end, in the heading's tooltip; the game's "?" after the
+  -- heading tells that it has one
+  local q = P:CreateTexture(nil, "OVERLAY"); q:SetWidth(14); q:SetHeight(14)
+  q:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
+  q:SetPoint("LEFT", R.sumHead, "RIGHT", 3, 0)
+  R.sumHelp = q
   local sh = CreateFrame("Frame", nil, P)
-  sh:SetWidth(120); sh:SetHeight(18); sh:SetPoint("CENTER", R.sumHead, "CENTER", 0, 0)
+  sh:SetHeight(18)
+  sh:SetPoint("LEFT", R.sumHead, "LEFT", -4, 0); sh:SetPoint("RIGHT", q, "RIGHT", 2, 0)
   sh:EnableMouse(true)
   sh:SetScript("OnEnter", function()
     local r = C.sel
     if not (r and r.stats and AzlB.STATS) then return end
-    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    C.TipBeside(R.sumPin)
     GameTooltip:AddLine(AzT("Run Stats"), 1, 0.82, 0)
     for k = 1, table.getn(AzlB.STATS) do
       local s = AzlB.STATS[k]
       GameTooltip:AddDoubleLine(AzT(s[1]), s[2](r.stats), 0.85, 0.85, 0.85, 1, 1, 1)
     end
+    -- the rest (luck, lifesteal and the others), the last ones only where raised
+    local more = AzlB.MORE or {}
+    for k = 1, table.getn(more) do
+      local m = more[k]
+      if m[3] == true or (tonumber(r.stats[m[3]]) or 0) ~= 0 then
+        GameTooltip:AddDoubleLine(AzT(m[1]), m[2](r.stats), 0.85, 0.85, 0.85, 1, 1, 1)
+      end
+    end
     GameTooltip:Show()
   end)
   sh:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  R.sumHover = sh
+  -- the tooltips of this page open beside the book, level with what is hovered and going
+  -- down: above it they ran under the game's timer at the top of the screen
+  local pin = CreateFrame("Frame", nil, P); pin:SetWidth(1); pin:SetHeight(1)
+  pin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, -44)
+  R.sumPin = pin
+  local ppin = CreateFrame("Frame", nil, P); ppin:SetWidth(1); ppin:SetHeight(1)
+  R.partyPin = ppin
+  local tpin = CreateFrame("Frame", nil, P); tpin:SetWidth(1); tpin:SetHeight(1)
+  R.timePin = tpin
   R.rows = {}
   -- (a co-op run's own place after the others: every hero's damage per second on hovering it)
   local pt = CreateFrame("Frame", nil, P)
@@ -1186,6 +1236,24 @@ function C.MakeRight(P)
   end)
   pt:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.partyTip = pt
+  local tt = CreateFrame("Frame", nil, P)
+  tt:SetWidth(150); tt:SetHeight(16)
+  tt:EnableMouse(true)
+  tt:SetScript("OnEnter", function()
+    local r = C.sel
+    if not (r and r.endless) then return end
+    C.TipBeside(R.timePin)
+    GameTooltip:AddLine(AzT("Endless mode"), 1, 0.82, 0)
+    if r.official and tonumber(r.official.t) then
+      GameTooltip:AddLine(AzT("The run ended at %s; the hero fought on for %s more in endless mode.",
+        C.Time(r.official.t), C.Time((tonumber(r.t) or 0) - r.official.t)), 0.85, 0.85, 0.85, 1)
+    else
+      GameTooltip:AddLine(AzT("The run went on into endless mode; the time is the whole fight."), 0.85, 0.85, 0.85, 1)
+    end
+    GameTooltip:Show()
+  end)
+  tt:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  R.timeTip = tt
   for k = 1, table.getn(SUMMARY) + 1 do
     local l = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
     local v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
@@ -1504,14 +1572,14 @@ function C.DrawRight(cls)
   end
   for k = 1, 5 do
     local f, j, place = R.jewels[k], at[k], C.JEWEL_PLACES[k]
-    f.num:SetText(AzlSlotWord(place[1]) .. (place[2] and " 2" or ""))
+    f.num:SetText(j and AzT("Rank %s", C.JewelRankOf(j.raw or j.n)) or "")
     if j then
       -- the picture the game showed for it, else the book's own
       local nm = C.CleanJewel(j.n)
       f.icon:SetTexture(j.ic or ("Interface\\Icons\\" .. C.JewelIcon(nm)))
       f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); f.icon:SetAlpha(1)
       f.tipTitle = j.raw or AzG(nm)
-      f.tipText = AzT("Worn at the end of the run.")
+      f.tipText = AzlSlotWord(place[1]) .. (place[2] and " 2" or "") .. "\n" .. AzT("Worn at the end of the run.")
       f.x:Hide()
     else
       -- an empty place: the game's own empty slot, faint
@@ -1578,13 +1646,24 @@ function C.PlaceRows(n)
     R.rows[k].v:ClearAllPoints(); R.rows[k].v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", x + 140, y)
     if k == table.getn(SUMMARY) + 1 then
       R.partyTip:ClearAllPoints(); R.partyTip:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x - 4, y + 2)
+      R.partyPin:ClearAllPoints(); R.partyPin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, y + 2)
+    end
+    if k == 1 then
+      R.timeTip:ClearAllPoints(); R.timeTip:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x - 4, y + 2)
+      R.timePin:ClearAllPoints(); R.timePin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, y + 2)
     end
   end
 end
 
 -- a co-op run's party: every hero, the most damage first, in their class's colour
+-- a tooltip beside the book's right page: its upper left corner at the pin (a point on the
+-- page's right edge), going down
+function C.TipBeside(pin)
+  GameTooltip:SetOwner(pin, "ANCHOR_BOTTOMRIGHT", 6, 0)
+end
+
 function C.PartyTip(owner, r)
-  GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+  C.TipBeside(C.R.partyPin or owner)
   GameTooltip:AddLine(AzT("Party DPS"), 1, 0.82, 0)
   local total = tonumber(r.partyDmg) or 0
   if total <= 0 then for i = 1, table.getn(r.party) do total = total + (tonumber(r.party[i].d) or 0) end end
@@ -1710,6 +1789,36 @@ function C.Tidy()
   end
   for cls, bk in pairs(AzerlootDB.chronicle) do
     if type(bk) == "table" then bk.tally = nil end   -- (counts of a statistics page since taken out)
+  end
+  -- co-op runs an earlier version cut at a fall and then carried on as if in endless mode:
+  -- one run again, survived if the game says it reached endless mode ("endl")
+  for cls, bk in pairs(AzerlootDB.chronicle) do
+    if type(bk) == "table" and type(bk.runs) == "table" then
+      for k = 1, table.getn(bk.runs) do
+        local r = bk.runs[k]
+        if r.endless and type(r.official) == "table" and not r.official.won then
+          local reached = type(r.raw) == "table" and tonumber(r.raw.endl) == 1
+          r.official = nil
+          r.endless = reached or nil
+          r.won = reached and true or false
+        end
+      end
+    end
+  end
+  -- the best run measured anew (survived, then level, then time), once
+  if (AzerlootDB.chronicleScore or 0) < 2 then
+    for cls, bk in pairs(AzerlootDB.chronicle) do
+      if type(bk) == "table" and type(bk.runs) == "table" then
+        local old = bk.best
+        bk.best = nil
+        for k = table.getn(bk.runs), 1, -1 do C.Note(bk, bk.runs[k]) end
+        -- a best run older than the fifty kept still competes
+        local kept = false
+        for k = 1, table.getn(bk.runs) do if old and bk.runs[k].id == old.id then kept = true end end
+        if old and not kept and (not bk.best or Score(old) > Score(bk.best)) then bk.best = old end
+      end
+    end
+    AzerlootDB.chronicleScore = 2
   end
   -- the DPS record, for runs written before it was kept
   for cls, bk in pairs(AzerlootDB.chronicle) do
