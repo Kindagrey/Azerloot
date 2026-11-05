@@ -699,4 +699,6 @@ Azerloot_AmuletIcons = {
   ["Earthshatter Seal"] = "INV_Jewelry_Necklace_28Naxxramas",
   ["Emberwake Pendant"] = "INV_Jewelry_Necklace_AhnQiraj_03",
   ["Eye of the Tempest"] = "INV_Jewelry_Necklace_16",
+  ["Heart of the Earthbreaker"] = "INV_Jewelry_Necklace_18",
+  ["Heart of the Packlord"] = "INV_Jewelry_Necklace_AhnQiraj_03",
 }

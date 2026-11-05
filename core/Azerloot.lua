@@ -14,23 +14,24 @@ local RIBBON = "Interface\\AddOns\\Azerloot\\media\\textures\\wax.tga"  -- wishl
 local GLOW = "Interface\\AddOns\\Azerloot\\media\\textures\\glow.tga"  -- soft oval, no hard edges
 local RARITY = { "Common", "Uncommon", "Rare", "Epic", "Legendary" }
 -- bright rarity colours for dark wood and tooltips, deep "ink" ones for the parchment
+-- (the Tier 0.5 sets of Scholomance are epic pieces, in the game's own purple)
 local RARITY_COLOR = {
   Common = { 1, 1, 1 }, Uncommon = { 0.12, 1, 0 }, Rare = { 0, 0.44, 0.87 },
-  Epic = { 0.64, 0.21, 0.93 }, Legendary = { 1, 0.5, 0 }, PvP = { 0.93, 0.2, 0.16 },
+  Epic = { 0.64, 0.21, 0.93 }, Legendary = { 1, 0.5, 0 }, PvP = { 0.93, 0.2, 0.16 }, ["Tier 0.5"] = { 0.64, 0.21, 0.93 },
 }
 local INK_RARITY = {
   Common = { 0.12, 0.1, 0.08 }, Uncommon = { 0.03, 0.34, 0 }, Rare = { 0, 0.2, 0.56 },
-  Epic = { 0.36, 0.04, 0.56 }, Legendary = { 0.6, 0.24, 0 }, PvP = { 0.55, 0.05, 0.03 },
+  Epic = { 0.36, 0.04, 0.56 }, Legendary = { 0.6, 0.24, 0 }, PvP = { 0.55, 0.05, 0.03 }, ["Tier 0.5"] = { 0.36, 0.04, 0.56 },
 }
 -- rarity colours for bright text on the parchment, each set off by a dark edge
 local PAGE_RARITY = {
   Common = { 0.9, 0.88, 0.84 }, Uncommon = { 0.2, 0.82, 0.05 }, Rare = { 0.12, 0.52, 1 },
-  Epic = { 0.68, 0.25, 0.98 }, Legendary = { 1, 0.5, 0.02 }, PvP = { 0.95, 0.22, 0.16 },
+  Epic = { 0.68, 0.25, 0.98 }, Legendary = { 1, 0.5, 0.02 }, PvP = { 0.95, 0.22, 0.16 }, ["Tier 0.5"] = { 0.68, 0.25, 0.98 },
 }
 -- lighter rarity colours that stand out on the dark wood banners
 local WOOD_RARITY = {
   Common = { 1, 1, 1 }, Uncommon = { 0.4, 1, 0.3 }, Rare = { 0.45, 0.72, 1 },
-  Epic = { 0.82, 0.55, 1 }, Legendary = { 1, 0.66, 0.2 }, PvP = { 1, 0.48, 0.42 },
+  Epic = { 0.82, 0.55, 1 }, Legendary = { 1, 0.66, 0.2 }, PvP = { 1, 0.48, 0.42 }, ["Tier 0.5"] = { 0.82, 0.55, 1 },
 }
 local INK = { 0.2, 0.1, 0.02 }         -- headings and values on parchment
 local INK_GOOD = { 0.18, 0.74, 0.05 }  -- effect lines: the uncommon green, set off by a dark edge
@@ -453,7 +454,7 @@ local function SpellEntries(cls)
 end
 
 -- every class spell's id in the game (from its spell table)
-local SPELL_ID = { cleave = 845, whirlwind = 1680, thunder_clap = 6343, mortal_strike = 12294, execute = 5308, demo_shout = 1160, battle_shout = 6673, bloodthirst = 23881, rend = 772, shield_slam = 23922, bloodrage = 2687, consecration = 26573, exorcism = 879, hammer_of_wrath = 24275, holy_shock = 25912, holy_wrath = 2812, judgement = 20271, hammer_of_justice = 853, holy_light = 635, divine_shield = 642, holy_shield = 20925, redemption = 7328, auto_shot = 75, arcane_shot = 3044, multi_shot = 2643, serpent_sting = 1978, volley = 1510, explosive_trap = 13812, concussive_shot = 5116, aimed_shot = 19434, immolation_trap = 13797, frost_trap = 13810, hunters_mark = 1130, sinister_strike = 1752, eviscerate = 2098, blade_flurry = 13877, rupture = 1943, kidney_shot = 408, gouge = 1776, ghostly_strike = 14278, adrenaline_rush = 13750, backstab = 53, slice_and_dice = 5171, seal_fate = 14186, smite = 585, sw_pain = 589, mind_blast = 8092, holy_nova = 15237, pw_shield = 17, renew = 139, holy_fire = 14914, mind_flay = 15407, psychic_scream = 8122, devouring_plague = 2944, lightwell = 724, lightning_bolt = 403, chain_lightning = 421, earth_shock = 8042, flame_shock = 8050, frost_shock = 8056, lightning_shield = 324, magma_totem = 8190, searing_totem = 3599, fire_nova = 1535, healing_wave = 331, stormstrike = 17364, rockbiter = 8017, fireball = 133, frostbolt = 116, arcane_missiles = 7269, frost_nova = 122, arcane_explosion = 1449, blizzard = 10, flamestrike = 2120, fire_blast = 2136, cone_of_cold = 120, blast_wave = 11113, pyroblast = 11366, ice_barrier = 11426, polymorph = 118, shadow_bolt = 686, corruption = 172, immolate = 348, curse_of_agony = 980, rain_of_fire = 5740, hellfire = 1949, death_coil = 6789, searing_pain = 5676, drain_life = 689, fear = 5782, soul_fire = 6353, demonic_empowerment = 18708, wrath = 5176, moonfire = 8921, starfire = 2912, hurricane = 16914, insect_swarm = 5570, entangling_roots = 339, rejuvenation = 774, regrowth = 8936, thorns = 467, swipe = 779, shred = 5221, faerie_fire = 770, perception = 20600, blood_fury = 23234, stoneform = 20594, shadowmeld = 20580, will_of_the_forsaken = 7744, war_stomp = 20549, escape_artist = 20589, berserking = 26635, penance = 25912, arcane_power = 12042 }
+local SPELL_ID = { cleave = 845, whirlwind = 1680, thunder_clap = 6343, mortal_strike = 12294, execute = 5308, demo_shout = 1160, battle_shout = 6673, bloodthirst = 23881, rend = 772, shield_slam = 23922, bloodrage = 2687, consecration = 26573, exorcism = 879, hammer_of_wrath = 24275, holy_shock = 25912, holy_wrath = 2812, judgement = 20271, hammer_of_justice = 853, holy_light = 635, divine_shield = 642, holy_shield = 20925, redemption = 7328, auto_shot = 75, arcane_shot = 3044, multi_shot = 2643, serpent_sting = 1978, volley = 1510, kill_command = 883, concussive_shot = 5116, aimed_shot = 19434, immolation_trap = 13797, frost_trap = 13810, hunters_mark = 1130, sinister_strike = 1752, eviscerate = 2098, blade_flurry = 13877, rupture = 1943, kidney_shot = 408, gouge = 1776, ghostly_strike = 14278, adrenaline_rush = 13750, backstab = 53, slice_and_dice = 5171, seal_fate = 14186, smite = 585, sw_pain = 589, mind_blast = 8092, holy_nova = 15237, pw_shield = 17, renew = 139, holy_fire = 14914, mind_flay = 15407, psychic_scream = 8122, devouring_plague = 2944, lightwell = 724, lightning_bolt = 403, chain_lightning = 421, earth_shock = 8042, flame_shock = 8050, frost_shock = 8056, lightning_shield = 324, magma_totem = 8190, searing_totem = 3599, fire_nova = 1535, healing_wave = 331, stormstrike = 17364, rockbiter = 8017, fireball = 133, frostbolt = 116, arcane_missiles = 7269, frost_nova = 122, arcane_explosion = 1449, blizzard = 10, flamestrike = 2120, fire_blast = 2136, cone_of_cold = 120, blast_wave = 11113, pyroblast = 11366, ice_barrier = 11426, polymorph = 118, shadow_bolt = 686, corruption = 172, immolate = 348, curse_of_agony = 980, rain_of_fire = 5740, hellfire = 1949, death_coil = 6789, searing_pain = 5676, drain_life = 689, fear = 5782, soul_fire = 6353, demonic_empowerment = 18708, wrath = 5176, moonfire = 8921, starfire = 2912, hurricane = 16914, insect_swarm = 5570, entangling_roots = 339, rejuvenation = 774, regrowth = 8936, thorns = 467, swipe = 779, shred = 5221, faerie_fire = 770, perception = 20600, blood_fury = 23234, stoneform = 20594, shadowmeld = 20580, will_of_the_forsaken = 7744, war_stomp = 20549, escape_artist = 20589, berserking = 26635, penance = 25912, arcane_power = 12042 }
 local spellScan = { bonus = {}, at = -10 }   -- the action bar's spells, read at most once a second
 local function ScanTip()
   if not AzerlootScanTip then CreateFrame("GameTooltip", "AzerlootScanTip", UIParent, "GameTooltipTemplate") end
@@ -776,7 +777,7 @@ local SPELL_QUOTE = {
   redemption = "No soul left behind.",
   auto_shot = "Every breath, another arrow.", arcane_shot = "Magic on the tip of a shaft.",
   multi_shot = "Why aim for just one?", serpent_sting = "The venom does the waiting.",
-  volley = "Let it rain arrows.", explosive_trap = "Mind your step.",
+  volley = "Let it rain arrows.", kill_command = "Go. Bring it down.",
   concussive_shot = "Slow them, then end them.", aimed_shot = "Patience hits harder.",
   immolation_trap = "A warm welcome.", frost_trap = "Cold ground, slow feet.",
   hunters_mark = "Nowhere left to hide.",
@@ -1319,6 +1320,21 @@ local function EntrySections(entry, bright)
       end
       table.insert(where, { AzT("Each kill gives it a %s%% chance on Normal (Heroic raises it); once it drops it stays in your collection.", entry.zone.chance), soft })
       table.insert(secs, { AzT("Where it drops"), where })
+    elseif entry.zone.rarity == "Tier 0.5" then
+      -- Scholomance: each boss drops one of its two pieces half the time, the missing one
+      -- first; Gandling's weapons come together
+      local how = (it.slot == "Head" or it.slot == "Shoulder" or it.slot == "Chest" or it.slot == "Waist" or it.slot == "Legs" or it.slot == "Feet" or it.slot == "Wrist" or it.slot == "Hands")
+        and AzT("Each kill drops one of its two pieces half the time, the one you are missing first; once it drops it stays in your collection.")
+        or AzT("Each kill gives it a %s%% chance on Normal (Heroic raises it), and a class with two weapons gets both together; once it drops it stays in your collection.", entry.zone.chance)
+      table.insert(secs, { AzT("Where it drops"), { { AzT("%s in %s, arriving after %s.", AzG(entry.boss.name), AzG(entry.zone.name), Minutes(entry.boss.minute)) .. " " .. how, soft } } })
+      local st = LD.sets and LD.sets[entry.class]
+      if st then
+        -- (the set's name as the game writes it, "Der Fünf Donner")
+        local sn = AzG(st.name)
+        sn = string.upper(string.sub(sn, 1, 1)) .. string.sub(sn, 2)
+        table.insert(secs, { sn, {
+          { AzT("4 pieces at 1+ stars: %s", AzG(st.bonus[1])), good }, { AzT("8 pieces at 3+ stars: %s", AzG(st.bonus[2])), good }, { AzT("8 pieces at 5 stars: %s", AzG(st.bonus[3])), good } } })
+      end
     else
       table.insert(secs, { AzT("Where it drops"), { { AzT("%s in %s, arriving after %s. Each kill gives it a %s%% chance on Normal (Heroic raises it); once it drops it stays in your collection.",
         AzG(entry.boss.name), AzG(entry.zone.name), Minutes(entry.boss.minute), entry.zone.chance), soft } } })
@@ -1737,7 +1753,7 @@ local function DrawList()
       elseif e.kind == "BossHit" then
         row.sub:SetText(AzT(e.boss.final and "Final boss" or "Boss") .. " - " .. AzG(e.zone.name) .. ", " .. Minutes(e.boss.minute))
       elseif e.kind == "Zone" then
-        row.sub:SetText((e.zone.rarity == "Legendary" and (AzG("Epic") .. " + " .. AzG("Legendary")) or AzG(e.zone.rarity)) .. " - " .. AzG(e.zone.subtitle))
+        row.sub:SetText((e.zone.rarity == "Legendary" and (AzG("Epic") .. " + " .. AzG("Legendary")) or (e.zone.rarity == "Tier 0.5" and (AzG("Epic") .. " - " .. AzG("Tier 0.5"))) or AzG(e.zone.rarity)) .. " - " .. AzG(e.zone.subtitle))
         -- too long for the banner (a long language): the name's colour tells the rarity
         -- already, so the line keeps the zone's own words only
         if (row.sub:GetStringWidth() or 0) > 236 then row.sub:SetText(AzG(e.zone.subtitle)) end
@@ -1871,7 +1887,14 @@ local function DrawZone(z, cls, drops, zi)
   else
     what = AzT("%s pieces", Hex(INK_RARITY[z.rarity]) .. AzG(z.rarity) .. "|r")
   end
-  Z.info:SetText(AzT("Drops %s for a %s. Each piece rolls on its own: %s%% of a kill.", what, Hex(ClassInk(cls)) .. AzG(ci.name) .. "|r", z.chance))
+  if z.rarity == "Tier 0.5" then
+    -- Scholomance: the set's name, one piece a kill, the missing one first
+    local st = LD.sets and LD.sets[cls]
+    what = AzT("%s pieces, the %s set", Hex(INK_RARITY.Epic) .. AzG("Epic") .. "|r", Hex(INK_RARITY.Epic) .. AzG(st and st.name or "Tier 0.5") .. "|r")
+    Z.info:SetText(AzT("Drops %s for a %s. Each boss drops one of its two pieces half the time, the one you are missing first.", what, Hex(ClassInk(cls)) .. AzG(ci.name) .. "|r"))
+  else
+    Z.info:SetText(AzT("Drops %s for a %s. Each piece rolls on its own: %s%% of a kill.", what, Hex(ClassInk(cls)) .. AzG(ci.name) .. "|r", z.chance))
+  end
   -- two lines at most above "Collected:": a third would run into its bar
   do
     local face, _, fl = Z.info:GetFont()
@@ -2022,6 +2045,7 @@ end
 function AzlDangerName(a)
   if a.phases then return AzT("When it is wounded") end
   if a.kind == "adds" then return AzT("Calls for help") end
+  if a.kind == "note" then return AzName(a.name) end
   -- (the things a boss puts around itself have no spell's name of their own)
   if a.kind == "eggs" or a.kind == "heal_wards" or a.kind == "shield_totems" then return AzT(a.name) end
   return AzName(a.name)
@@ -2050,6 +2074,7 @@ function AzlDangerText1(a, short)
       local ph, what = a.phases[k], nil
       if ph.adds then what = AzT("Calls in %s helpers.", ph.adds)
       elseif ph.a and ph.a.kind == "stance" then what = AzlStanceText(ph.a, short)
+      elseif ph.a and ph.a.kind == "note" then what = short and (AzlDangerName(ph.a) .. ".") or AzT(ph.a.text)
       elseif ph.a and short and AzlHeroicOnly(ph.a) then what = AzT("New attack on Heroic with Old mechanics, %s.", AzlDangerName(ph.a))
       elseif ph.a and short then what = AzT("New attack, %s.", AzlDangerName(ph.a))
       elseif ph.a then what = AzT("New attack, %s: %s", AzlDangerName(ph.a), AzlDangerText(ph.a)) end
@@ -2059,6 +2084,7 @@ function AzlDangerText1(a, short)
   end
   local p, N = a.p or {}, AzlNum
   local k = a.kind
+  if k == "note" then return AzT(a.text) end
   if k == "adds" then return AzT("Calls in %s helpers.", p[1])
   elseif k == "circle" then return AzT("A %s yd circle where you stand strikes %s sec later.", N(p[1]), N(p[2]))
   elseif k == "bolts" then return AzT("%s bolts land on and around you, each marked by a small circle first.", p[1])
@@ -4456,11 +4482,11 @@ local function Build()
   K.hint:SetWidth(330)
   K.hint:SetText(AzT("Click every piece the game's Collection shows you own."))
   K.hint:Show(); AzlFitText(K.hint, 326, 12, 10)   -- one line in every language, clear of the boxes
-  -- six ranks as six cards in two columns, read like a book: common to uncommon, rare to
-  -- epic, the PvP set to legendary. Each card: the rank's name in its colour over a fine
-  -- line of that colour, its count at the right, and its pieces in two lines of five
-  -- (head to legs, then feet, wrists, hands and the weapons).
-  local CW, CH, GX, GY, TOP = 160, 91, 12, 6, -59
+  -- seven ranks as seven cards in two columns, read like a book: common to uncommon, rare to
+  -- epic, the PvP set to Tier 0.5, then legendary. Each card: the rank's name in its colour
+  -- over a fine line of that colour, its count at the right, and its pieces in two lines of
+  -- five (head to legs, then feet, wrists, hands and the weapons).
+  local CW, CH, GX, GY, TOP = 160, 81, 12, 3, -56
   K.cw, K.left = CW, 26
   for r = 1, table.getn(LD.ranks) do
     local cx = 26 + ((r - 1) - math.floor((r - 1) / 2) * 2) * (CW + GX)
@@ -4484,15 +4510,15 @@ local function Build()
     local pc = WOOD_RARITY[LD.ranks[r]]
     local lab = Heading(Font(card, "GameFontNormal"), 13)
     lab:SetTextColor(pc[1], pc[2], pc[3]); lab:SetShadowColor(0, 0, 0, 1); lab:SetShadowOffset(1, -1)
-    lab:SetPoint("TOPLEFT", card, "TOPLEFT", 7, -5)
+    lab:SetPoint("TOPLEFT", card, "TOPLEFT", 7, -4)
     lab:SetText(AzG(LD.ranks[r]))
     local ul = card:CreateTexture(nil, "ARTWORK"); ul:SetTexture(WHITE); ul:SetHeight(1)
     ul:SetVertexColor(pc[1], pc[2], pc[3]); ul:SetAlpha(0.7)
-    ul:SetPoint("TOPLEFT", card, "TOPLEFT", 6, -21); ul:SetPoint("TOPRIGHT", card, "TOPRIGHT", -6, -21)
+    ul:SetPoint("TOPLEFT", card, "TOPLEFT", 6, -20); ul:SetPoint("TOPRIGHT", card, "TOPRIGHT", -6, -20)
     local cnt = Font(card, "GameFontNormalSmall", { 0.88, 0.8, 0.66 }, 11)
     cnt:SetShadowColor(0, 0, 0, 1); cnt:SetShadowOffset(1, -1)
     cnt:SetJustifyH("RIGHT")
-    cnt:SetPoint("TOPRIGHT", card, "TOPRIGHT", -7, -7)
+    cnt:SetPoint("TOPRIGHT", card, "TOPRIGHT", -7, -6)
     -- a complete rank: its board framed in gold
     card.Complete = function(self, on)
       for k = 1, 4 do if on then edges[k]:Show() else edges[k]:Hide() end end
@@ -4504,7 +4530,7 @@ local function Build()
     for c = 1, 10 do
       local b = CreateFrame("Button", nil, card)
       b:SetWidth(25); b:SetHeight(25)
-      b:SetPoint("TOPLEFT", card, "TOPLEFT", gx + ((c - 1) - math.floor((c - 1) / 5) * 5) * 29, -27 - math.floor((c - 1) / 5) * 31)
+      b:SetPoint("TOPLEFT", card, "TOPLEFT", gx + ((c - 1) - math.floor((c - 1) / 5) * 5) * 29, -25 - math.floor((c - 1) / 5) * 29)
       local edge = b:CreateTexture(nil, "BORDER"); edge:SetTexture(WHITE)
       edge:SetPoint("TOPLEFT", b, "TOPLEFT", -2, 2); edge:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 2, -2)
       b.edge = edge
@@ -4578,8 +4604,10 @@ local function Build()
     end
     K.rows[r] = row
   end
+  -- under the last row of cards: the count of all, then the note
+  local under = TOP - math.ceil(table.getn(LD.ranks) / 2) * (CH + GY) + GY
   local tl = Engraved(Font(ui.bookView, "GameFontNormal", INK_SOFT, 13))
-  tl:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -354)
+  tl:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, under - 4)
   tl:SetText(AzT("Collected:"))
   K.bar = ProgressBar(ui.bookView, 170, 10)
   K.bar:SetPoint("LEFT", tl, "RIGHT", 8, 0)
@@ -4595,14 +4623,14 @@ local function Build()
     return f
   end
   local l1 = CreateFrame("Frame", nil, ui.bookView); l1:SetHeight(14)
-  l1:SetPoint("TOP", ui.right, "TOP", 0, -376)
+  l1:SetPoint("TOP", ui.right, "TOP", 0, under - 26)
   local a1 = Part(l1, AzT("New drops")); a1:SetPoint("LEFT", l1, "LEFT", 0, 0)
   local ul1 = l1:CreateTexture(nil, "ARTWORK"); ul1:SetTexture(WHITE); ul1:SetHeight(1)
   ul1:SetVertexColor(INK_SOFT[1], INK_SOFT[2], INK_SOFT[3])
   ul1:SetPoint("TOPLEFT", a1, "BOTTOMLEFT", 0, 1); ul1:SetPoint("TOPRIGHT", a1, "BOTTOMRIGHT", 0, 1)
   local b1 = Part(l1, AzT(" tick themselves; this is for what you had")); b1:SetPoint("LEFT", a1, "RIGHT", 1, 0)
   local l2 = CreateFrame("Frame", nil, ui.bookView); l2:SetHeight(14)
-  l2:SetPoint("TOP", ui.right, "TOP", 0, -392)
+  l2:SetPoint("TOP", ui.right, "TOP", 0, under - 42)
   local a2 = Part(l2, AzT("before")); a2:SetPoint("LEFT", l2, "LEFT", 0, 0)
   local ul = l2:CreateTexture(nil, "ARTWORK"); ul:SetTexture(WHITE); ul:SetHeight(1)
   ul:SetVertexColor(INK_SOFT[1], INK_SOFT[2], INK_SOFT[3])

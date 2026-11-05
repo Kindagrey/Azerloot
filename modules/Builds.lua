@@ -474,10 +474,13 @@ local KIND = {
   ["Winter's Embrace"] = { h = 1, b = 2, s = 0, c = 2, r = 30 },
   ["Earthshatter Seal"] = { h = 1, b = 3, s = 0, c = 0, r = 30 },
   ["Emberwake Pendant"] = { h = 2, b = 2, s = 0, c = 0, r = 30, dot = true },
+  -- the game's 0.140
+  ["Heart of the Earthbreaker"] = { h = 2, b = 2, s = 0, c = 1, r = 10 },
+  ["Heart of the Packlord"] = { h = 2, b = 3, s = 0, c = 1, r = 10 },
 }
 local OWN = {
   rend = { r = 5 }, rupture = { r = 5 }, consecration = { r = 8 }, immolation_trap = { r = 8 },
-  frost_trap = { r = 8, c = 3 }, explosive_trap = { r = 8 }, magma_totem = { r = 8 }, swipe = { r = 5 },
+  frost_trap = { r = 8, c = 3 }, kill_command = { b = 3, r = 10 }, magma_totem = { r = 8 }, swipe = { r = 5 },
   shred = { r = 5 }, holy_shield = { r = 5, h = 1 }, hunters_mark = { b = 2, h = 1 }, faerie_fire = { b = 2 },
   holy_light = { s = 3, b = 0 }, healing_wave = { s = 3, b = 0 }, regrowth = { s = 3, b = 0 },
   rejuvenation = { s = 3, b = 0 }, renew = { s = 3, b = 0 }, pw_shield = { s = 3, b = 0 },

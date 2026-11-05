@@ -1088,6 +1088,51 @@ function C.MakeRight(P)
   local seal = P:CreateTexture(nil, "OVERLAY"); seal:SetWidth(20); seal:SetHeight(20)
   seal:SetTexture(STAR); seal:SetPoint("LEFT", res, "RIGHT", 6, 1); seal:Hide()
   R.seal = seal
+  -- in the page's upper right corner: one button that takes the run out of the chronicle (a
+  -- second click within a few seconds confirms); the best run and the records are found
+  -- again among the runs left
+  local rm = CreateFrame("Button", nil, P)
+  rm:SetHeight(22); rm:SetWidth(90)
+  rm:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", -30, -3)
+  Z.DropShadow(rm, rm, 2, -3, 3, 0.6)
+  local rmb = Z.Tex(rm, "button.tga", "BORDER"); rmb:SetAllPoints(rm)
+  local rmt = Z.Carved(Z.Font(rm, "GameFontNormal", { 0.95, 0.9, 0.78 }, 10))
+  rmt:SetShadowColor(0, 0, 0, 1)
+  rmt:SetPoint("CENTER", rm, "CENTER", 0, 0)
+  rm.text = rmt
+  Z.Highlight(rm, 0.2, 3)
+  rm.Reset = function(self)
+    self.armed = false
+    self.text:SetText(AzT("Remove run")); self.text:SetTextColor(0.95, 0.9, 0.78)
+    self:SetWidth(self.text:GetStringWidth() + 24)
+  end
+  rm:SetScript("OnClick", function()
+    if not C.sel then return end
+    if not this.armed then
+      this.armed = 3
+      this.text:SetText(AzT("Click again")); this.text:SetTextColor(1, 0.45, 0.35)
+      this:SetWidth(this.text:GetStringWidth() + 24)
+      return
+    end
+    this:Reset()
+    C.Remove(Z.PlayerClass(), C.sel)
+    C.sel = nil
+    C.Draw()
+  end)
+  rm:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_BOTTOM")
+    GameTooltip:AddLine(AzT("Remove run"), 1, 0.82, 0)
+    GameTooltip:AddLine(AzT("Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."), 0.8, 0.8, 0.8, 1)
+    GameTooltip:Show()
+  end)
+  rm:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  rm:SetScript("OnUpdate", function()
+    if not this.armed then return end
+    this.armed = this.armed - arg1
+    if this.armed <= 0 then this:Reset() end
+  end)
+  rm:Reset()
+  R.remove = rm
 
   R.sumHead = C.Head(P, ui.right, -52)
   R.sumHead:SetText(AzT("Summary"))
@@ -1332,10 +1377,12 @@ function C.DrawRight(cls)
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
     R.seal:Hide(); R.none:Show()
+    if R.remove then R.remove:Hide() end
     C.FxSet(nil)
     return
   end
   R.none:Hide()
+  if R.remove then R.remove:Reset(); R.remove:Show() end
   for k = 1, table.getn(parts) do parts[k]:Show() end
   if run.won then
     R.result:SetText(AzT("Survived")); R.result:SetTextColor(0.1, 0.45, 0.04)
@@ -1562,6 +1609,25 @@ function C.ClearDemo(cls)
   -- a real run noted while the samples were in: its marks count again
   for k = table.getn(bk.runs), 1, -1 do C.Note(bk, bk.runs[k]) end
   C.sel, C.filter, C.page = nil, nil, 1
+end
+
+-- one run taken out by hand: it goes from the runs, and from the best run and the records
+-- it had set, which are then found again among the runs left (a best run older than the
+-- fifty kept can only go, nothing older is there to take its place)
+function C.Remove(cls, run)
+  local bk = C.Book(cls)
+  if type(run) ~= "table" or not run.id then return end
+  local keep = {}
+  for k = 1, table.getn(bk.runs) do
+    if bk.runs[k].id ~= run.id then table.insert(keep, bk.runs[k]) end
+  end
+  bk.runs = keep
+  if bk.best and bk.best.id == run.id then bk.best = nil end
+  if type(bk.rec) == "table" then
+    for f, rc in pairs(bk.rec) do if type(rc) == "table" and rc.id == run.id then bk.rec[f] = nil end end
+  end
+  for k = table.getn(keep), 1, -1 do C.Note(bk, keep[k]) end
+  if C.page and C.page > 1 and (C.page - 1) * ROWS >= table.getn(C.Runs(cls)) then C.page = C.page - 1 end
 end
 
 -- runs left by the game's own button, written down by an earlier version: they go, and the

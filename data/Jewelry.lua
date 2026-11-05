@@ -144,7 +144,7 @@ Azerloot_Data.classes = {
   } },
   { key = "paladin", name = "Paladin", color = "F58CBA", spells = {
     { key = "consecration", name = "Consecration", icon = "Spell_Holy_InnerFire",
-      amulet = "Amulet of the Inferno", effects = { "Consecration: +50% area", "Consecration: +100% duration", "Consecration: +50% damage", "Enemies Consecration kills explode for 30% of their max health" } },
+      amulet = "Amulet of the Inferno", effects = { "Consecration: +50% area", "Consecration: +100% duration", "Enemies Consecration kills explode for 30% of their max health" } },
     { key = "exorcism", name = "Exorcism", icon = "Spell_Holy_Excorcism_02",
       amulet = "Eye of the Splitting Sky", effects = { "Exorcism: +1 target", "Exorcism: +20% damage", "Exorcism's hits leap to 2 more enemies for 30%" } },
     { key = "hammer_of_wrath", name = "Hammer of Wrath", icon = "Ability_ThunderClap",
@@ -177,8 +177,10 @@ Azerloot_Data.classes = {
       amulet = "Pendant of the Plague", effects = { "Serpent Sting: +3 targets", "Serpent Sting: +90% damage", "Enemies that die with Serpent Sting on them explode for 20% of their max health" } },
     { key = "volley", name = "Volley", icon = "Ability_Marksmanship",
       amulet = "Amulet of the Inferno", effects = { "Volley: +50% area", "Volley: +100% duration", "Volley: +50% damage", "Enemies Volley kills explode for 30% of their max health" } },
-    { key = "explosive_trap", name = "Explosive Trap", icon = "Spell_Fire_SelfDestruct",
-      amulet = "Heart of the Earthshaker", effects = { "Explosive Trap: +60% area", "Explosive Trap: +35% damage", "Explosive Trap's hits stun for 1.5 sec" } },
+    -- the game's 0.140: Kill Command in place of Explosive Trap, with the Heart of the
+    -- Packlord (its Wolf line from the game's notes; the Raptor's numbers not yet known)
+    { key = "kill_command", name = "Kill Command", icon = "Ability_Hunter_BeastCall",
+      amulet = "Heart of the Packlord", effects = { "Wolf: Howl makes 6 nearby enemies take 15% more damage from you", "Devilsaur Matriarch: Kill Command unleashes a devastating shockwave" } },
     { key = "concussive_shot", name = "Concussive Shot", icon = "Spell_Frost_Stun",
       amulet = "Eye of the Splitting Sky", effects = { "Concussive Shot: +1 target", "Concussive Shot: +20% damage", "Concussive Shot's hits leap to 2 more enemies for 30%" } },
     { key = "aimed_shot", name = "Aimed Shot", icon = "INV_Spear_07",
@@ -224,7 +226,7 @@ Azerloot_Data.classes = {
     { key = "holy_nova", name = "Holy Nova", icon = "Spell_Holy_HolyNova",
       amulet = "Heart of the Earthshaker", effects = { "Holy Nova: +60% area", "Holy Nova: +35% damage", "Holy Nova's hits stun for 1.5 sec" } },
     { key = "pw_shield", name = "Power Word: Shield", icon = "Spell_Holy_PowerWordShield",
-      amulet = "The Eternal Talisman", effects = { "Power Word: Shield: +26% absorb", "Power Word: Shield: -35% cooldown", "A broken shield bursts for 50% of what it absorbed on enemies within 10 yd" } },
+      amulet = "The Eternal Talisman", effects = { "Power Word: Shield: +50% absorb cap", "Power Word: Shield: -35% cooldown", "A broken shield bursts for 50% of what it absorbed on enemies within 10 yd" } },
     { key = "renew", name = "Renew", icon = "Spell_Holy_Renew",
       amulet = "The Eternal Talisman", effects = { "Renew becomes Vampiric Renew", "Renew: +26% healing", "Renew: -35% cooldown", "While Renew heals you, 5% of the damage you deal heals you too" } },
     { key = "holy_fire", name = "Holy Fire", icon = "Spell_Holy_SearingLight",
@@ -260,12 +262,12 @@ Azerloot_Data.classes = {
       amulet = "Cinderheart Pendant", effects = { "Fire Nova: +50% area", "Fire Nova: +25% damage", "Fire Nova's hits stun for 1.5 sec" } },
     { key = "healing_wave", name = "Healing Wave", icon = "Spell_Nature_MagicImmunity" },
     -- the game's 0.135: Call of Flame is gone; Stormstrike and Rockbiter Weapon are new
-    -- (Rockbiter Weapon only through the talent Rockbiter Initiation; a melee strike, its
-    -- necklace the Medallion of the Bladestorm, as for Cleave and Shred)
+    -- (Rockbiter Weapon only through the talent Rockbiter Initiation; since the game's 0.140
+    -- with the Heart of the Earthbreaker of its own)
     { key = "stormstrike", name = "Stormstrike", icon = "Spell_Holy_SealOfMight",
-      amulet = "Eye of the Tempest", effects = { "Every fourth Stormstrike strikes again for 100% damage. At rank 5 and 10, the follow-up gains one additional target." } },
+      amulet = "Eye of the Tempest", effects = { "Stormstrike: +35% damage to bosses and elites" } },
     { key = "rockbiter", name = "Rockbiter Weapon", icon = "Spell_Nature_RockBiter",
-      amulet = "Medallion of the Bladestorm", effects = { "Rockbiter Weapon: +4 targets", "Rockbiter Weapon: +50% damage", "Rockbiter Weapon's hits burn and bleed for 80% more over 6 sec" } },
+      amulet = "Heart of the Earthbreaker", effects = { "Rockbiter Weapon's primary hit unleashes a seismic shockwave, dealing 30% damage to enemies within 4 yd." } },
   } },
   { key = "mage", name = "Mage", color = "69CCF0", spells = {
     { key = "fireball", name = "Fireball", icon = "Spell_Fire_FlameBolt",
@@ -291,7 +293,7 @@ Azerloot_Data.classes = {
     { key = "pyroblast", name = "Pyroblast", icon = "Spell_Fire_Fireball02",
       amulet = "Eye of the Splitting Sky", effects = { "Pyroblast: +1 target", "Pyroblast: +20% damage", "Pyroblast's hits leap to 2 more enemies for 30%" } },
     { key = "ice_barrier", name = "Ice Barrier", icon = "Spell_Ice_Lament",
-      amulet = "The Eternal Talisman", effects = { "Ice Barrier: +26% absorb", "Ice Barrier: -35% cooldown", "Ice Barrier: +100% absorb", "A broken shield bursts for 50% of what it absorbed on enemies within 10 yd" } },
+      amulet = "The Eternal Talisman", effects = { "Ice Barrier: +100% absorb cap", "Ice Barrier: -35% cooldown", "A broken shield bursts for 50% of what it absorbed on enemies within 10 yd" } },
     { key = "polymorph", name = "Polymorph", icon = "Spell_Nature_Polymorph",
       amulet = "Charm of the Fated Hour", effects = { "Polymorph: +60% damage", "Polymorph: +40% area", "Polymorph explodes a second time for 50% of its damage" } },
   } },

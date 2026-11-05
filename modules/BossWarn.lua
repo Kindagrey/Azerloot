@@ -149,6 +149,8 @@ W.G = G
 local function TurnText(ph)
   if ph.adds then return AzT("Calls in %s helpers.", ph.adds) end
   if ph.a and ph.a.kind == "stance" and AzlStanceText then return AzlStanceText(ph.a, true) end
+  -- (a scripted boss's turn, told by its name: "The Last Examination.")
+  if ph.a and ph.a.kind == "note" then return AzlDangerName(ph.a) .. "." end
   if ph.a then return AzT("New attack, %s.", AzlDangerName(ph.a)) end
   return ""
 end
@@ -820,6 +822,8 @@ local SHORT = {
   ["Houndmaster Loksey"] = "last", ["Scarlet Commander Mograine"] = "last", ["High Inquisitor Whitemane"] = "last",
   ["General Angerforge"] = "last", ["Emperor Dagran Thaurissan"] = "last", ["Majordomo Executus"] = "last",
   ["Princess Huhuran"] = "last", ["Warchief Rend Blackhand"] = "Rend",
+  ["Kirtonos the Herald"] = "first", ["Doctor Theolen Krastinov"] = "last", ["Lord Alexei Barov"] = "last",
+  ["Darkmaster Gandling"] = "last",
 }
 function W.ShortName(b)
   if not b then return nil end

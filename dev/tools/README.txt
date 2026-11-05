@@ -6,3 +6,10 @@ Tools for us (not in the release). Paths in the scripts point to /home/claude/wo
 - env.lua / load.lua: a loose WoW stand-in that loads the whole addon for quick tests
 The Shaman's necklaces (0.135): each has a record (spell key, icon, strength/100, a function that builds its
 effects); found from the necklace's name via xref.py, the functions read with objdump -d -M intel.
+0.140 (Scholomance): gen_boss3.py reads the boss table (Z = the zone table's address, found by the
+"Elwynn Forest"/"Duskwood" string refs; the Scholomance bosses are scripted and have no abilities
+there); gen_scholo.py builds the Tier 0.5 zone's drops, names and set bonuses from t05.json (the
+item table found by the item ids 21999.. as u32) and the loc; dbc.py/storm.py read Spell.dbc and
+ItemDisplayInfo.dbc from patch.MPQ (StormLib built from github.com/ladislav-zezula/StormLib with the
+bundled libs; patch.MPQ = the five parts of G:\AzerothSurvivors\split joined); gen_gt.py merges the
+loc into locales/GameText.lua as gen_tt.py does for Tooltips.lua.
