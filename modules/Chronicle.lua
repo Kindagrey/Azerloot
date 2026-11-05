@@ -668,7 +668,7 @@ function C.Icon(P, size)
   local face = x:GetFont()
   if face then x:SetFont(face, 14, "OUTLINE") end
   x:SetTextColor(0.85, 0.12, 0.08); x:SetText("x")
-  x:SetPoint("CENTER", f, "CENTER", 0, 1); x:Hide()
+  x:SetPoint("CENTER", f, "CENTER", 1, 2); x:Hide()   -- (the glyph sits a little low and left in its box)
   f.x = x
   f:EnableMouse(true)
   f:SetScript("OnEnter", function()
