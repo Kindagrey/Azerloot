@@ -773,7 +773,7 @@ local function SpellDesc(key, force)
       local saved = type(AzerlootDB) == "table" and type(AzerlootDB.spellDesc) == "table" and AzerlootDB.spellDesc[key]
       if saved then d = AzG(saved)
       elseif AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key])
-      elseif AzLang() ~= "en" then d = AzT("The game describes a spell only to its own class. Play that class once, and its text is kept here.") end
+      elseif AzLang() ~= "en" then d = AzT("Not read yet. Play a run with this class once: the game tells the book what its spells do, and the words are kept here.") end
     end
   end
   tip:Hide()
@@ -783,7 +783,7 @@ local function SpellDesc(key, force)
     local saved = type(AzerlootDB) == "table" and type(AzerlootDB.spellDesc) == "table" and AzerlootDB.spellDesc[key]
     if saved then d = AzG(saved)
     elseif AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key])
-    else d = AzT("The game describes a spell only to its own class. Play that class once, and its text is kept here.") end
+    else d = AzT("Not read yet. Play a run with this class once: the game tells the book what its spells do, and the words are kept here.") end
   end
   spellCache.desc[key] = d or false
   if d then spellCache.info[key] = info end
