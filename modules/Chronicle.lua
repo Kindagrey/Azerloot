@@ -663,6 +663,13 @@ function C.Icon(P, size)
   local n = Z.Engraved(Z.Font(f, "GameFontNormalSmall", Z.INK_SOFT, 10))
   n:SetPoint("TOP", f, "BOTTOM", 0, -3)
   f.num = n
+  -- a place nothing filled: a small red x in its middle
+  local x = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  local face = x:GetFont()
+  if face then x:SetFont(face, 14, "OUTLINE") end
+  x:SetTextColor(0.85, 0.12, 0.08); x:SetText("x")
+  x:SetPoint("CENTER", f, "CENTER", 0, 1); x:Hide()
+  f.x = x
   f:EnableMouse(true)
   f:SetScript("OnEnter", function()
     if not this.tipTitle then return end
@@ -701,8 +708,65 @@ function C.Row(P)
   local lv = Z.Engraved(Z.Font(r, "GameFontNormalSmall", Z.INK_SOFT, 11))
   lv:SetPoint("RIGHT", r, "RIGHT", -4, 0)
   r.lv = lv
+  -- at the row's right end, shown while the row is hovered or chosen: a small red x that
+  -- takes the run out of the chronicle (a second click within a few seconds confirms); the
+  -- best run and the records are found again among the runs left
+  local rx = CreateFrame("Button", nil, r)
+  rx:SetWidth(18); rx:SetHeight(18); rx:SetPoint("LEFT", r, "RIGHT", 8, 0)
+  local xt = rx:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+  local face = xt:GetFont()
+  if face then xt:SetFont(face, 14, "OUTLINE") end
+  xt:SetPoint("CENTER", rx, "CENTER", 0, 1); xt:SetText("x")
+  rx.text = xt
+  rx.Reset = function(self)
+    self.armed = nil
+    self.text:SetText("x"); self.text:SetTextColor(0.62, 0.1, 0.06)
+  end
+  rx:SetScript("OnClick", function()
+    local run = this:GetParent().run
+    if not run then return end
+    if not this.armed then
+      this.armed = 3
+      this.text:SetText("x"); this.text:SetTextColor(1, 0.25, 0.15)
+      GameTooltip:Hide()
+      GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+      GameTooltip:AddLine(AzT("Click again"), 1, 0.45, 0.35)
+      GameTooltip:Show()
+      return
+    end
+    this:Reset(); this:Hide()
+    GameTooltip:Hide()
+    C.Remove(Z.PlayerClass(), run)
+    if C.sel == run then C.sel = nil end
+    C.Draw()
+  end)
+  rx:SetScript("OnEnter", function()
+    this:GetParent().hv:Show(); this:Show()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    if this.armed then
+      GameTooltip:AddLine(AzT("Click again"), 1, 0.45, 0.35)
+    else
+      GameTooltip:AddLine(AzT("Remove run"), 1, 0.82, 0)
+      GameTooltip:AddLine(AzT("Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."), 0.8, 0.8, 0.8, 1)
+    end
+    GameTooltip:Show()
+  end)
+  rx:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+    local row = this:GetParent()
+    row.hv:Hide()
+    if not row.sel:IsShown() then this:Hide() end
+  end)
+  rx:SetScript("OnUpdate", function()
+    if not this.armed then return end
+    this.armed = this.armed - (arg1 or 0)
+    if this.armed <= 0 then this:Reset() end
+  end)
+  rx:Reset(); rx:Hide()
+  r.rx = rx
   r:SetScript("OnEnter", function()
     this.hv:Show()
+    if this.run then this.rx:Show() end
     if this.tag then
       GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
       GameTooltip:AddLine(this.tag, 1, 0.82, 0)
@@ -710,7 +774,10 @@ function C.Row(P)
       GameTooltip:Show()
     end
   end)
-  r:SetScript("OnLeave", function() this.hv:Hide(); GameTooltip:Hide() end)
+  r:SetScript("OnLeave", function()
+    this.hv:Hide(); GameTooltip:Hide()
+    if not this.sel:IsShown() then this.rx:Reset(); this.rx:Hide() end
+  end)
   r:SetScript("OnClick", function() if this.run then C.sel = this.run; C.Draw() end end)
   return r
 end
@@ -744,7 +811,7 @@ function C.FillRow(r, run)
   r.zone:SetText(C.ZoneName(run.zone))
   r.time:SetText(C.Time(run.t))
   r.lv:SetText(run.level and AzT("Lv %d", run.level) or "")
-  if run == C.sel then r.sel:Show() else r.sel:Hide() end
+  if run == C.sel then r.sel:Show(); r.rx:Show() else r.sel:Hide(); r.rx:Reset(); r.rx:Hide() end
 end
 
 function C.MakeLeft(P)
@@ -1088,55 +1155,6 @@ function C.MakeRight(P)
   local seal = P:CreateTexture(nil, "OVERLAY"); seal:SetWidth(20); seal:SetHeight(20)
   seal:SetTexture(STAR); seal:SetPoint("LEFT", res, "RIGHT", 6, 1); seal:Hide()
   R.seal = seal
-  -- at the left page's lower right corner, beside the page-turn buttons and away from the
-  -- blood and light behind the heading: one button that takes the chosen run out of the
-  -- chronicle (a second click within a few seconds confirms); the best run and the records
-  -- are found again among the runs left
-  local rm = CreateFrame("Button", nil, P)
-  rm:SetHeight(22); rm:SetWidth(90)
-  rm:SetPoint("BOTTOMRIGHT", ui.left, "BOTTOMRIGHT", -2, 2)
-  Z.DropShadow(rm, rm, 2, -3, 3, 0.6)
-  local rmb = Z.Tex(rm, "button.tga", "BORDER"); rmb:SetAllPoints(rm)
-  local rmt = Z.Carved(Z.Font(rm, "GameFontNormal", { 0.95, 0.9, 0.78 }, 10))
-  rmt:SetShadowColor(0, 0, 0, 1)
-  rmt:SetPoint("CENTER", rm, "CENTER", 0, 0)
-  rm.text = rmt
-  Z.Highlight(rm, 0.2, 3)
-  rm.Reset = function(self)
-    self.armed = false
-    self.text:SetText(AzT("Remove run")); self.text:SetTextColor(0.95, 0.9, 0.78)
-    -- (the room right of the ">" button is 100 px: a longer word is set smaller)
-    if AzlFitText then AzlFitText(self.text, 84, 10, 8) end
-    self:SetWidth(self.text:GetStringWidth() + 16)
-  end
-  rm:SetScript("OnClick", function()
-    if not C.sel then return end
-    if not this.armed then
-      this.armed = 3
-      this.text:SetText(AzT("Click again")); this.text:SetTextColor(1, 0.45, 0.35)
-      if AzlFitText then AzlFitText(this.text, 84, 10, 8) end
-      this:SetWidth(this.text:GetStringWidth() + 16)
-      return
-    end
-    this:Reset()
-    C.Remove(Z.PlayerClass(), C.sel)
-    C.sel = nil
-    C.Draw()
-  end)
-  rm:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_BOTTOM")
-    GameTooltip:AddLine(AzT("Remove run"), 1, 0.82, 0)
-    GameTooltip:AddLine(AzT("Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."), 0.8, 0.8, 0.8, 1)
-    GameTooltip:Show()
-  end)
-  rm:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  rm:SetScript("OnUpdate", function()
-    if not this.armed then return end
-    this.armed = this.armed - arg1
-    if this.armed <= 0 then this:Reset() end
-  end)
-  rm:Reset()
-  R.remove = rm
 
   R.sumHead = C.Head(P, ui.right, -52)
   R.sumHead:SetText(AzT("Summary"))
@@ -1174,8 +1192,10 @@ function C.MakeRight(P)
     R.rows[k] = { l = l, v = v }
   end
   C.PlaceRows(table.getn(SUMMARY))
-  -- after the party's number: the hero who dealt the most damage, in the class's colour
-  local top = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
+  -- after the party's number: the hero who dealt the most damage, in the page's green ink
+  -- (a class's own colour is hard to read on the parchment)
+  local top = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
+  top:SetShadowColor(0.02, 0.14, 0, 1)
   top:SetPoint("LEFT", R.rows[table.getn(SUMMARY) + 1].v, "RIGHT", 6, 0)
   top:SetWidth(150); top:SetJustifyH("LEFT")
   R.partyTop = top
@@ -1188,13 +1208,6 @@ function C.MakeRight(P)
   for k = 1, 6 do
     local f = C.Icon(P, 28)
     f:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 145 + (k - 1) * 50 + 6, -208)
-    -- a place no spell filled: the square stays, faint, with a small red x in its middle
-    local x = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    local face = x:GetFont()
-    if face then x:SetFont(face, 14, "OUTLINE") end
-    x:SetTextColor(0.85, 0.12, 0.08); x:SetText("x")
-    x:SetPoint("CENTER", f, "CENTER", 0, 1); x:Hide()
-    f.x = x
     R.spells[k] = f
   end
   R.jewels = {}
@@ -1393,12 +1406,10 @@ function C.DrawRight(cls)
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
     R.seal:Hide(); R.none:Show()
-    if R.remove then R.remove:Hide() end
     C.FxSet(nil)
     return
   end
   R.none:Hide()
-  if R.remove then R.remove:Reset(); R.remove:Show() end
   for k = 1, table.getn(parts) do parts[k]:Show() end
   if run.won then
     R.result:SetText(AzT("Survived")); R.result:SetTextColor(0.1, 0.45, 0.04)
@@ -1441,9 +1452,7 @@ function C.DrawRight(cls)
       if h and h.n and (not best or (tonumber(h.d) or 0) > (tonumber(best.d) or 0)) then best = h end
     end
     if best then
-      local cc = best.c and RAID_CLASS_COLORS and RAID_CLASS_COLORS[string.upper(best.c)]
-      local col = cc and string.format("|cff%02x%02x%02x", math.floor(cc.r * 255 + 0.5), math.floor(cc.g * 255 + 0.5), math.floor(cc.b * 255 + 0.5)) or "|cffffffff"
-      R.partyTop:SetText("-  " .. col .. best.n .. "|r")
+      R.partyTop:SetText("-  " .. best.n)
       if AzlFitText then AzlFitText(R.partyTop, 150, 12, 9) end
     end
   end
@@ -1503,11 +1512,13 @@ function C.DrawRight(cls)
       f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); f.icon:SetAlpha(1)
       f.tipTitle = j.raw or AzG(nm)
       f.tipText = AzT("Worn at the end of the run.")
+      f.x:Hide()
     else
       -- an empty place: the game's own empty slot, faint
       f.icon:SetTexture(place[3]); f.icon:SetTexCoord(0, 1, 0, 1); f.icon:SetAlpha(0.45)
       f.tipTitle = AzlSlotWord(place[1]) .. (place[2] and " 2" or "")
       f.tipText = AzT("Empty at the end of the run.")
+      f.x:Show()
     end
     f:Show()
   end
