@@ -1088,12 +1088,13 @@ function C.MakeRight(P)
   local seal = P:CreateTexture(nil, "OVERLAY"); seal:SetWidth(20); seal:SetHeight(20)
   seal:SetTexture(STAR); seal:SetPoint("LEFT", res, "RIGHT", 6, 1); seal:Hide()
   R.seal = seal
-  -- in the page's upper right corner: one button that takes the run out of the chronicle (a
-  -- second click within a few seconds confirms); the best run and the records are found
-  -- again among the runs left
+  -- at the left page's lower right corner, beside the page-turn buttons and away from the
+  -- blood and light behind the heading: one button that takes the chosen run out of the
+  -- chronicle (a second click within a few seconds confirms); the best run and the records
+  -- are found again among the runs left
   local rm = CreateFrame("Button", nil, P)
   rm:SetHeight(22); rm:SetWidth(90)
-  rm:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", -30, -3)
+  rm:SetPoint("BOTTOMRIGHT", ui.left, "BOTTOMRIGHT", -2, 2)
   Z.DropShadow(rm, rm, 2, -3, 3, 0.6)
   local rmb = Z.Tex(rm, "button.tga", "BORDER"); rmb:SetAllPoints(rm)
   local rmt = Z.Carved(Z.Font(rm, "GameFontNormal", { 0.95, 0.9, 0.78 }, 10))
@@ -1104,14 +1105,17 @@ function C.MakeRight(P)
   rm.Reset = function(self)
     self.armed = false
     self.text:SetText(AzT("Remove run")); self.text:SetTextColor(0.95, 0.9, 0.78)
-    self:SetWidth(self.text:GetStringWidth() + 24)
+    -- (the room right of the ">" button is 100 px: a longer word is set smaller)
+    if AzlFitText then AzlFitText(self.text, 84, 10, 8) end
+    self:SetWidth(self.text:GetStringWidth() + 16)
   end
   rm:SetScript("OnClick", function()
     if not C.sel then return end
     if not this.armed then
       this.armed = 3
       this.text:SetText(AzT("Click again")); this.text:SetTextColor(1, 0.45, 0.35)
-      this:SetWidth(this.text:GetStringWidth() + 24)
+      if AzlFitText then AzlFitText(this.text, 84, 10, 8) end
+      this:SetWidth(this.text:GetStringWidth() + 16)
       return
     end
     this:Reset()
@@ -1155,7 +1159,7 @@ function C.MakeRight(P)
   R.rows = {}
   -- (a co-op run's own place after the others: every hero's damage per second on hovering it)
   local pt = CreateFrame("Frame", nil, P)
-  pt:SetWidth(150); pt:SetHeight(16)
+  pt:SetWidth(300); pt:SetHeight(16)
   pt:EnableMouse(true)
   pt:SetScript("OnEnter", function()
     local r = C.sel
@@ -1170,6 +1174,11 @@ function C.MakeRight(P)
     R.rows[k] = { l = l, v = v }
   end
   C.PlaceRows(table.getn(SUMMARY))
+  -- after the party's number: the hero who dealt the most damage, in the class's colour
+  local top = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
+  top:SetPoint("LEFT", R.rows[table.getn(SUMMARY) + 1].v, "RIGHT", 6, 0)
+  top:SetWidth(150); top:SetJustifyH("LEFT")
+  R.partyTop = top
 
   R.buildHead = C.Head(P, ui.right, -166)
   local bl = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
@@ -1179,6 +1188,13 @@ function C.MakeRight(P)
   for k = 1, 6 do
     local f = C.Icon(P, 28)
     f:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 145 + (k - 1) * 50 + 6, -208)
+    -- a place no spell filled: the square stays, faint, with a small red x in its middle
+    local x = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local face = x:GetFont()
+    if face then x:SetFont(face, 14, "OUTLINE") end
+    x:SetTextColor(0.85, 0.12, 0.08); x:SetText("x")
+    x:SetPoint("CENTER", f, "CENTER", 0, 1); x:Hide()
+    f.x = x
     R.spells[k] = f
   end
   R.jewels = {}
@@ -1191,11 +1207,11 @@ function C.MakeRight(P)
   miss:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -304); miss:SetWidth(310)
   R.miss = miss
 
-  R.lootHead = C.Head(P, ui.right, -340)
+  R.lootHead = C.Head(P, ui.right, -346)
   R.lootHead:SetText(AzT("Boss Loot"))
   -- the boss loot as icons, side by side and centred, two rows at most
   local lt = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 12))
-  lt:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -368); lt:SetWidth(310)
+  lt:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -374); lt:SetWidth(310)
   R.loot = lt
   R.lootIcons = {}
   for k = 1, C.LOOT_MAX do
@@ -1372,7 +1388,7 @@ function C.DrawRight(cls)
     for k = 1, table.getn(parts) do parts[k]:Hide() end
     if R.subHover then R.subHover:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
-    R.partyTip:Hide()
+    R.partyTip:Hide(); R.partyTop:SetText("")
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1417,6 +1433,20 @@ function C.DrawRight(cls)
   local extra = R.rows[table.getn(SUMMARY) + 1]
   extra.l:Hide(); extra.v:Hide()
   if run.party then R.partyTip:Show() else R.partyTip:Hide() end
+  R.partyTop:SetText("")
+  if run.party then
+    local best = nil
+    for i = 1, table.getn(run.party) do
+      local h = run.party[i]
+      if h and h.n and (not best or (tonumber(h.d) or 0) > (tonumber(best.d) or 0)) then best = h end
+    end
+    if best then
+      local cc = best.c and RAID_CLASS_COLORS and RAID_CLASS_COLORS[string.upper(best.c)]
+      local col = cc and string.format("|cff%02x%02x%02x", math.floor(cc.r * 255 + 0.5), math.floor(cc.g * 255 + 0.5), math.floor(cc.b * 255 + 0.5)) or "|cffffffff"
+      R.partyTop:SetText("-  " .. col .. best.n .. "|r")
+      if AzlFitText then AzlFitText(R.partyTop, 150, 12, 9) end
+    end
+  end
   for k = 1, nS do
     local row = R.rows[k]
     if SUMMARY[k] then
@@ -1442,13 +1472,20 @@ function C.DrawRight(cls)
     if s then
       local info = C.SpellInfo(cls, s.k)
       f.icon:SetTexture("Interface\\Icons\\" .. (info and info.icon or "INV_Misc_QuestionMark"))
+      f.icon:SetVertexColor(1, 1, 1); f.icon:SetAlpha(1)
       f.num:SetText((s.r and s.r > 0) and AzT("Rank %s", s.r) or "")
       f.tipTitle = AzG(info and info.name or s.k)
       f.tipText = (s.r and s.r > 0) and AzT("Rank %s at the end of the run.", s.r) or nil
-      f:Show()
+      f.x:Hide()
     else
-      f:Hide()
+      -- an empty place, as the jewelry's: a faint dark square with a red x
+      f.icon:SetTexture(Z.WHITE); f.icon:SetVertexColor(0.16, 0.09, 0.03); f.icon:SetAlpha(0.3)
+      f.num:SetText("")
+      f.tipTitle = AzT("Empty spell slot")
+      f.tipText = AzT("Empty at the end of the run.")
+      f.x:Show()
     end
+    f:Show()
   end
   -- the jewelry in the builds' order: Ring, Ring 2, Trinket, Trinket 2, Amulet
   local jw, at = run.jewels or {}, {}
@@ -1497,7 +1534,7 @@ function C.DrawRight(cls)
       local col = k - 1 - row * per
       local w = inRow * size + (inRow - 1) * gap
       f:ClearAllPoints()
-      f:SetPoint("TOPLEFT", Z.ui.right, "TOPLEFT", PAGE_MID - w / 2 + col * (size + gap), -368 - row * (size + 12))
+      f:SetPoint("TOPLEFT", Z.ui.right, "TOPLEFT", PAGE_MID - w / 2 + col * (size + gap), -374 - row * (size + 12))
       local piece, zone = C.FindPiece(cls, loot[k])
       f.piece = piece or { name = loot[k] }
       f.zoneName = zone and zone.name

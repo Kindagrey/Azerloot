@@ -5,6 +5,7 @@
 Azerloot_UI = {}
 Azerloot_UI.de = {
   ["Remove run"] = "Run entfernen",
+  ["Empty spell slot"] = "Leerer Zauberplatz",
   ["Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."] = "Nimmt diesen Run für immer aus deiner Chronik. Der beste Run und die Rekorde werden unter den übrigen Runs neu ermittelt. Zum Bestätigen innerhalb von 3 Sekunden zweimal klicken.",
   -- the game's 0.140: Scholomance, its mechanics and the Tier 0.5 sets; Kill Command
   ["Shadow Bolt Volley"] = "Schattenblitzsalve",
@@ -943,6 +944,7 @@ Azerloot_UI.de = {
 }
 Azerloot_UI.fr = {
   ["Remove run"] = "Retirer la partie",
+  ["Empty spell slot"] = "Emplacement de sort vide",
   ["Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."] = "Retire cette partie de votre chronique pour de bon. La meilleure partie et les records sont retrouvés parmi les parties restantes. Cliquez deux fois en 3 secondes pour confirmer.",
   -- the game's 0.140: Scholomance, its mechanics and the Tier 0.5 sets; Kill Command
   ["Shadow Bolt Volley"] = "Volée de traits de l'ombre",
@@ -1880,6 +1882,7 @@ Azerloot_UI.fr = {
 }
 Azerloot_UI.es = {
   ["Remove run"] = "Quitar partida",
+  ["Empty spell slot"] = "Hueco de hechizo vacío",
   ["Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."] = "Quita esta partida de tu crónica para siempre. La mejor partida y los récords se recalculan entre las partidas restantes. Haz clic dos veces en 3 segundos para confirmar.",
   -- the game's 0.140: Scholomance, its mechanics and the Tier 0.5 sets; Kill Command
   ["Shadow Bolt Volley"] = "Descarga de Rayos de las Sombras",
@@ -2830,6 +2833,7 @@ Azerloot_UI.es = {
 }
 Azerloot_UI.pt = {
   ["Remove run"] = "Remover partida",
+  ["Empty spell slot"] = "Espaço de feitiço vazio",
   ["Takes this run out of your chronicle for good. The best run and the records are found again among the runs left. Click twice within 3 seconds to confirm."] = "Remove esta partida da sua crônica para sempre. A melhor partida e os recordes são refeitos entre as partidas restantes. Clique duas vezes em 3 segundos para confirmar.",
   -- the game's 0.140: Scholomance, its mechanics and the Tier 0.5 sets; Kill Command
   ["Shadow Bolt Volley"] = "Rajada de Seta das Sombras",
