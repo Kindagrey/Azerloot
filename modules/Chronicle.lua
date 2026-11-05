@@ -712,7 +712,7 @@ function C.Row(P)
   -- takes the run out of the chronicle (a second click within a few seconds confirms); the
   -- best run and the records are found again among the runs left
   local rx = CreateFrame("Button", nil, r)
-  rx:SetWidth(18); rx:SetHeight(18); rx:SetPoint("LEFT", r, "RIGHT", 4, 0)
+  rx:SetWidth(18); rx:SetHeight(18); rx:SetPoint("LEFT", r, "RIGHT", 1, 2)
   local xt = rx:CreateFontString(nil, "OVERLAY", "GameFontNormal")
   local face = xt:GetFont()
   if face then xt:SetFont(face, 14, "OUTLINE") end
