@@ -1366,6 +1366,7 @@ local ZONE_ICONS = {
   sm = "Spell_Holy_SealOfMight",             -- the Scarlet Crusade
   av = "INV_Jewelry_FrostwolfTrinket_01",    -- the frozen wilds of the Frostwolves
   brm = "Spell_Fire_Volcano",                -- the burning mountain
+  scholomance = "INV_Jewelry_Talisman_12",   -- the Headmaster's Charge
   aq = "INV_Misc_AhnQirajTrinket_01",        -- the scarab of Ahn'Qiraj
   naxx = "INV_Trinket_Naxxramas01",          -- the Scourge's floating citadel
 }
@@ -2009,6 +2010,11 @@ local BOSS_BIO = {
   ["High Inquisitor Whitemane"] = "The Crusade's high inquisitor, who raises the fallen at her altar.",
   ["Noth the Plaguebringer"] = "A necromancer of the Cult of the Damned, spreading plague for his master.",
   ["Sapphiron"] = "Kel'Thuzad's frost wyrm, risen from the bones of a blue dragon.",
+  ["Kirtonos the Herald"] = "A vampiric herald of the Cult of the Damned, swooping down on whoever rings the bell.",
+  ["Ras Frostwhisper"] = "A lich of the Scholomance, once a Kirin Tor mage, now cold to the bone.",
+  ["Doctor Theolen Krastinov"] = "The Butcher of Scholomance, carving his students apart in the name of science.",
+  ["Lord Alexei Barov"] = "The lord of Caer Darrow, who sold his house to the Cult and was raised to serve it.",
+  ["Darkmaster Gandling"] = "The headmaster of Scholomance, teaching necromancy to the Lich King's recruits.",
 }
 
 -- ---------- a boss's attacks, as the game's code has them (data\BossLoot.lua) ----------
