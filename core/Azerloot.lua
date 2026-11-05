@@ -610,6 +610,8 @@ local function ReadSpellTip(tip)
   local all = string.gsub(table.concat(texts, "\n"), "|c%x%x%x%x%x%x%x%x", "")
   all = string.gsub(all, "|r", "")
   local lang = TTLang(all)
+  -- a short tooltip without any label (the spellbook's): the game's own language
+  if not lang and AzLang() ~= "en" and TT[AzLang()] then lang = AzLang() end
   local labels = (lang and TT[lang] and TT[lang].labels) or {}
   local bonusLabel = labels.bonuses or "Your bonuses: "
   local upLabel = labels.upgrades or "Upgrades: "
@@ -739,6 +741,26 @@ local function SpellDesc(key, force)
   tip:ClearLines()
   local ok = pcall(function() tip:SetHyperlink("enchant:" .. id) end)
   local info = ok and (tip:NumLines() or 0) > 1 and ReadSpellTip(tip) or nil
+  -- the game's 0.140 no longer answers an "enchant:" link; the hero's own spells are still
+  -- in the spellbook (every spell of the class, learned or not), with the game's own text
+  if not info and GetSpellName and GetSpellTexture then
+    local icon = nil
+    local own = ClassInfo(PlayerClass()).spells
+    for i = 1, table.getn(own) do if own[i].key == key then icon = string.lower(own[i].icon) end end
+    if icon then
+      for i = 1, 100 do
+        local nm = GetSpellName(i, BOOKTYPE_SPELL or "spell")
+        if not nm then break end
+        local tex = GetSpellTexture(i, BOOKTYPE_SPELL or "spell")
+        if type(tex) == "string" and string.lower((string.gsub(tex, "^.*\\", ""))) == icon then
+          tip:ClearLines()
+          local ok2 = pcall(function() tip:SetSpell(i, BOOKTYPE_SPELL or "spell") end)
+          if ok2 and (tip:NumLines() or 0) > 1 then info = ReadSpellTip(tip) end
+          break
+        end
+      end
+    end
+  end
   local d = info and info.desc
   if info then
     if info.game and info.en then
@@ -755,7 +777,14 @@ local function SpellDesc(key, force)
     end
   end
   tip:Hide()
-  if not d and AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key]) end
+  if not d then
+    -- no tooltip at all (another class's spell in the game's 0.140): the text kept from a
+    -- run of that class, else the book's own words, else a word on how to get it
+    local saved = type(AzerlootDB) == "table" and type(AzerlootDB.spellDesc) == "table" and AzerlootDB.spellDesc[key]
+    if saved then d = AzG(saved)
+    elseif AZL_SPELL_TEXT[key] then d = AzT(AZL_SPELL_TEXT[key])
+    else d = AzT("The game describes a spell only to its own class. Play that class once, and its text is kept here.") end
+  end
   spellCache.desc[key] = d or false
   if d then spellCache.info[key] = info end
   return d
