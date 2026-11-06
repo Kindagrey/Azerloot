@@ -73,8 +73,11 @@ function B.Entry(cls, rec)
   return nil
 end
 
--- Banish: up to three cards (spells or jewelry) a build does not want; when the game offers
--- one, the player banishes it (the game's talents allow it a few times a run). b.ban[1..3].
+-- Banish: up to three cards (spells or jewelry) to banish when the game offers them (its
+-- talents allow it a few times a run). A banished card is gone from the level-up choices for
+-- the rest of the run, upgrades included: so a build may banish its own spells too (the
+-- starting one as well) and keeps them, while the choices narrow to the upgrades it wants.
+-- b.ban[1..3].
 B.NBAN = 3
 function B.Banned(b, key)
   if not (b and type(b.ban) == "table") then return nil end
@@ -86,8 +89,8 @@ function B.BanCount(b)
   if b and type(b.ban) == "table" then for k = 1, B.NBAN do if b.ban[k] then n = n + 1 end end end
   return n
 end
--- a part into banish place k of build i (nil empties it); not one the build holds, nor its
--- starting spell, nor one banished in another place already
+-- a part into banish place k of build i (nil empties it); any card, the build's own too,
+-- only not one banished in another place already
 function B.SetBan(cls, i, k, entry)
   local b = B.Get(cls, i)
   if not (b and k and k >= 1 and k <= B.NBAN) then return end
@@ -95,8 +98,6 @@ function B.SetBan(cls, i, k, entry)
   if entry then
     local rec = FromEntry(entry)
     local key = RecKey(rec)
-    if rec.kind == "Spell" and rec.id == B.StartKey(cls, b) then return end
-    if B.Has(b, key) then return end
     local at = B.Banned(b, key)
     if at and at ~= k then return end
     b.ban[k] = rec
@@ -279,7 +280,6 @@ function B.Add(cls, i, entry, oldKey, pos)
   local rec = FromEntry(entry)
   if IsStart(cls, rec, b) then return true end
   if B.Has(b, RecKey(rec)) then return true end
-  if B.Banned(b, RecKey(rec)) then return nil end
   local at
   if oldKey then
     at = B.Has(b, oldKey)
@@ -761,12 +761,6 @@ function B.Decode(code)
     if rec and B.Entry(cls, rec) and not B.Has(b, RecKey(rec)) and not IsStart(cls, rec, b) then
       local sl = Slot(rec.kind)
       if count[sl] < MAX[sl] then count[sl] = count[sl] + 1; table.insert(b.items, rec) end
-    end
-  end
-  if type(b.ban) == "table" then
-    for k = 1, B.NBAN do
-      local br = b.ban[k]
-      if br and (B.Has(b, RecKey(br)) or IsStart(cls, br, b)) then b.ban[k] = nil end
     end
   end
   return cls, b
@@ -1636,11 +1630,11 @@ function B.MakePane()
       this:Lit(true)
       if B.picker and B.picker:IsVisible() and B.picker.owner == this then return end
       if this.entry then
-        B.EntryTip(this, this.entry, AzT("Banished by this build. When the game offers it, banish it. Click to choose another, right-click empties the place."))
+        B.EntryTip(this, this.entry, AzT("Banish it when the game offers it: no more upgrades for it, so the ones you want come more often. A spell you have stays. Click to choose another, right-click empties the place."))
       else
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
         GameTooltip:AddLine(AzT("Empty banish slot"), 1, 0.82, 0)
-        GameTooltip:AddLine(AzT("Cards this build does not want: banish them when the game offers them."), 0.8, 0.8, 0.8, 1)
+        GameTooltip:AddLine(AzT("Banish these when the game offers them: fewer choices at a level-up, so the upgrades you want come more often."), 0.8, 0.8, 0.8, 1)
         GameTooltip:AddLine(AzT("Click the + to choose one from a short list."), 0.8, 0.8, 0.8, 1)
         GameTooltip:Show()
       end
@@ -2269,17 +2263,14 @@ local function Choices(cls, slot, filled)
   return out
 end
 
--- a banish place: the class's spells (not its starting one), or all the jewelry
+-- a banish place: the class's spells (its starting one too), or all the jewelry
 local function BanChoices(cls, tab, filled)
   local Z = AZL
   local out = {}
   local function Put(list) for i = 1, table.getn(list) do table.insert(out, list[i]) end end
   if filled then table.insert(out, { none = true }) end
   if tab == "Spell" then
-    local b = B.Get(cls, B.sel or 0)
-    local st = B.StartKey(cls, b)
-    local all = Z.SpellEntries(cls)
-    for i = 1, table.getn(all) do if all[i].item.key ~= st then table.insert(out, all[i]) end end
+    Put(Z.SpellEntries(cls))
   else
     table.insert(out, { head = AzT("Rings") }); Put(Z.ItemEntries("Rings"))
     table.insert(out, { head = AzT("Trinkets") }); Put(Z.ItemEntries("Trinkets"))
@@ -2370,11 +2361,10 @@ function B.DrawPicker()
       if p.startMode then
         inBuild = false
       elseif p.owner and p.owner.slot == "Ban" then
-        if held then inBuild, hint = true, AzT("Already in this build")
-        elseif banned and key ~= curKey then inBuild, hint = true, AzT("Already banished in this build") end
+        -- (a part the build holds may be banished too: only one already banished is out)
+        if banned and key ~= curKey then inBuild, hint = true, AzT("Already banished in this build") end
       else
-        if held and key ~= curKey then inBuild, hint = true, AzT("Already in this build")
-        elseif banned then inBuild, hint = true, AzT("Banished in this build") end
+        if held and key ~= curKey then inBuild, hint = true, AzT("Already in this build") end
       end
       r.entry = e; r.inBuild = inBuild and true or false; r.hint = hint
       r.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark")); r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); r.icon:Show()
@@ -2436,13 +2426,13 @@ function B.Pick(entry)
   end
   if p.owner and p.owner.slot == "Ban" then
     local at = B.Banned(b, key)
-    if B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls, b)) or (at and at ~= p.owner.banIdx) then return end
+    if at and at ~= p.owner.banIdx then return end
     B.CloseMenu()
     GameTooltip:Hide()
     B.SetBan(cls, B.sel, p.owner.banIdx, entry)
     return
   end
-  if B.Has(b, key) or B.Banned(b, key) then return end
+  if B.Has(b, key) then return end
   B.CloseMenu()
   GameTooltip:Hide()
   B.Add(cls, B.sel, entry, old and Z.WishKey(old) or nil, p.owner and p.owner.place)
@@ -2926,7 +2916,7 @@ function B.TrackerBans(tr, W, y, b)
         local title, col = Z.EntryTitle(this.entry)
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
         GameTooltip:AddLine(title, col[1], col[2], col[3])
-        GameTooltip:AddLine(AzT("Cards this build does not want: banish them when the game offers them."), 0.85, 0.85, 0.85, 1)
+        GameTooltip:AddLine(AzT("Banish these when the game offers them: fewer choices at a level-up, so the upgrades you want come more often."), 0.85, 0.85, 0.85, 1)
         GameTooltip:Show()
       end)
       f:SetScript("OnLeave", function() GameTooltip:Hide() end)
