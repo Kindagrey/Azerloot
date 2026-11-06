@@ -914,6 +914,7 @@ function C.MakeLeft(P)
     self.text:ClearAllPoints(); self.text:SetPoint("CENTER", self, "CENTER", -7, 0)
   end
   fb:SetLabel(AzT("All builds"))
+  if AzlBreathe then AzlBreathe(fb, fb.text) end
   Lf.filter = fb
   local cnt = Z.Engraved(Z.Font(P, "GameFontNormalSmall", Z.INK_SOFT, 11))
   cnt:SetPoint("LEFT", ui.left, "TOPLEFT", PAGE_MID - 150, -134)
@@ -1248,6 +1249,17 @@ function C.MakeRight(P)
   end)
   gb:SetHeight(20)
   gb:SetPoint("LEFT", ui.right, "TOPLEFT", PAGE_MID - 150, -52 - 8)
+  -- the same small red arrow as the build filter's: down to open the party, up to go back
+  local gar = gb:CreateTexture(nil, "OVERLAY"); gar:SetTexture(Z.MEDIA .. "arrow_down.tga")
+  gar:SetWidth(12); gar:SetHeight(12); gar:SetPoint("RIGHT", gb, "RIGHT", -8, -1)
+  gb.arrow = gar
+  local gset = gb.SetLabel
+  gb.SetLabel = function(self, txt, c)
+    gset(self, txt, c)
+    self:SetWidth(self:GetWidth() + 14)
+    self.text:ClearAllPoints(); self.text:SetPoint("CENTER", self, "CENTER", -7, 0)
+  end
+  gb:SetLabel(AzT("Party"))
   if AzlBreathe then AzlBreathe(gb, gb.text) end
   gb:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, "ANCHOR_TOP")
@@ -1597,6 +1609,7 @@ function C.DrawRight(cls)
   local party = run.party and C.partyView
   if run.party then
     R.partyBtn:SetLabel(AzT(party and "Summary" or "Party")); R.partyBtn:SetHeight(20); R.partyBtn:Show()
+    if party then R.partyBtn.arrow:SetTexCoord(0, 1, 1, 0) else R.partyBtn.arrow:SetTexCoord(0, 1, 0, 1) end
     R.sumHead.l1:ClearAllPoints()
     R.sumHead.l1:SetPoint("LEFT", R.partyBtn, "RIGHT", 6, 0); R.sumHead.l1:SetPoint("RIGHT", R.sumHead, "LEFT", -8, 0)
   else
