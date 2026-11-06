@@ -1802,9 +1802,9 @@ function C.MakeParty(P)
     local h = {}
     h.n = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 11)); h.n:SetJustifyH("LEFT")
     h.v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 11)); h.v:SetJustifyH("RIGHT")
-    local bg = P:CreateTexture(nil, "ARTWORK"); bg:SetTexture(Z.WHITE); bg:SetVertexColor(0.16, 0.09, 0.03); bg:SetAlpha(0.9)
-    local fill = P:CreateTexture(nil, "OVERLAY"); fill:SetTexture(Z.WHITE); fill:SetVertexColor(0.8, 0.6, 0.18)
-    h.bg, h.fill = bg, fill
+    -- the bar of the wishlist window's boss health and the battle traits, in gold
+    h.bar = AzlB.XPBar(P, 136, 9, { 1, 0.74, 0.16 })
+    h.bar:Hide()
     G.heroes[k] = h
   end
   R.party = G
@@ -1814,7 +1814,7 @@ function C.DrawParty(run)
   local R, ui = C.R, AZL.ui
   local G = R.party
   G.line:Hide(); G.l:Hide(); G.v:Hide(); R.partyTip:Hide()
-  for k = 1, C.PARTY_MAX do local h = G.heroes[k]; h.n:Hide(); h.v:Hide(); h.bg:Hide(); h.fill:Hide() end
+  for k = 1, C.PARTY_MAX do local h = G.heroes[k]; h.n:Hide(); h.v:Hide(); h.bar:Hide() end
   if not run.party then return 0 end
   local heroes = {}
   for i = 1, table.getn(run.party) do if run.party[i] and run.party[i].n then table.insert(heroes, run.party[i]) end end
@@ -1847,14 +1847,12 @@ function C.DrawParty(run)
     h.n:ClearAllPoints(); h.n:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x0, hy); h.n:SetWidth(nameW)
     h.n:SetText(hero.n)
     if AzlFitText then AzlFitText(h.n, nameW, 11, 8) end
-    h.bg:ClearAllPoints(); h.bg:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX, hy - 2)
-    h.bg:SetWidth(barW); h.bg:SetHeight(8)
-    h.fill:ClearAllPoints(); h.fill:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX + 1, hy - 3)
-    h.fill:SetWidth(math.max(1, (barW - 2) * share)); h.fill:SetHeight(6)
+    h.bar:ClearAllPoints(); h.bar:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX, hy - 2)
+    h.bar:Snap(); h.bar:SetValue(share)
     h.v:ClearAllPoints(); h.v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", right, hy)
     h.v:SetText(two and C.Big(hero.p) or (C.Big(hero.p) .. "  " .. math.floor(share * 100 + 0.5) .. "%"))
     h.v:SetTextColor(col[1], col[2], col[3])
-    h.n:Show(); h.v:Show(); h.bg:Show(); h.fill:Show()
+    h.n:Show(); h.v:Show(); h.bar:Show()
   end
   return 0
 end
