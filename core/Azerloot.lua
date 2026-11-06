@@ -4807,7 +4807,20 @@ function AzlAnchorTracker()
   -- (a window on the screen's right half is kept from the right edge: when the screen's
   -- width in the interface's units changes, say with the game's UI scale, it stays on its
   -- side instead of drifting across)
-  if type(p) == "table" and p[4] == "R" and type(p[5]) == "number" and type(p[3]) == "number" then
+  -- kept by its lower edge (placed on the screen's lower half): it grows upwards, and its
+  -- top stays on the screen
+  if type(p) == "table" and type(p[6]) == "number" and type(p[3]) == "number" then
+    local b = math.max(2, p[6])
+    local h, sh = tracker:GetHeight(), UIParent:GetHeight()
+    if type(h) == "number" and type(sh) == "number" and h > 0 and sh > 0 and b + h * sc > sh - 2 then
+      b = math.max(2, sh - 2 - h * sc)
+    end
+    if p[4] == "R" and type(p[5]) == "number" then
+      tracker:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", p[5] / sc, b / sc)
+    else
+      tracker:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", p[1] / sc, b / sc)
+    end
+  elseif type(p) == "table" and p[4] == "R" and type(p[5]) == "number" and type(p[3]) == "number" then
     tracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", p[5] / sc, y / sc)
   elseif type(p) == "table" and type(p[3]) == "number" then
     tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1] / sc, y / sc)
@@ -4925,7 +4938,9 @@ function AzlFitTracker()
   AzlAnchorTracker()
 end
 -- the window kept by its upper left corner: dragged or sized, it is pinned there again, so
--- it grows and shrinks downwards and opens at the same place in every run
+-- it grows and shrinks downwards and opens at the same place in every run. Put on the
+-- screen's lower half, it is kept by its lower edge instead and grows upwards (p[6]: its
+-- lower edge above the screen's bottom).
 function AzlPinTracker()
   if not tracker then return end
   local l, t = tracker:GetLeft(), tracker:GetTop()
@@ -4939,11 +4954,16 @@ function AzlPinTracker()
   local top = UIParent:GetTop() or UIParent:GetHeight() or t
   local r = tracker:GetRight()
   local sw = UIParent:GetRight() or UIParent:GetWidth()
+  local p
   if r and type(sw) == "number" and sw > 0 and (l + r * sc) / 2 > sw / 2 then
-    TrackerDB().trackerPos = { l, t, t - top, "R", r * sc - sw }
+    p = { l, t, t - top, "R", r * sc - sw }
   else
-    TrackerDB().trackerPos = { l, t, t - top }
+    p = { l, t, t - top }
   end
+  local bt = tracker:GetBottom()
+  local bot = UIParent:GetBottom() or 0
+  if bt and type(top) == "number" and (t + bt * sc) / 2 < (top + bot) / 2 then p[6] = bt * sc - bot end
+  TrackerDB().trackerPos = p
   if tracker.SetUserPlaced then tracker:SetUserPlaced(false) end
   AzlAnchorTracker()
 end
