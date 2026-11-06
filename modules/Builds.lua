@@ -1607,12 +1607,12 @@ function B.MakePane()
   -- Banish: three places in a row under the jewelry, between its pieces (the middle one under
   -- the first trinket, the others between the rings and between the second trinket and the
   -- amulet), so the three rows make a triangle
-  R.banHead = CenteredHead(-205)
+  R.banHead = CenteredHead(-208)
   R.bans = {}
   for k = 1, B.NBAN do
     local s = PartSlot(area, 30, true)
     s.slot, s.banIdx = "Ban", k
-    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -223)
+    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -229)   -- (centred between the two ink lines, 13 px each side)
     -- a banished card: its picture greyed, a small red x on it
     local x = s:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     local face = x:GetFont()
@@ -1651,7 +1651,7 @@ function B.MakePane()
 
   -- the profile: five bars in the style of the experience bar
   -- centred between two ink lines, as Spells and Jewelry; the bars begin 3 px below it
-  local ph2 = CenteredHead(-261)
+  local ph2 = CenteredHead(-264)
   ph2:SetText(AzT("Battle Traits"))
   local AXES = {
     { "crowds", "Crowds", { 0.92, 0.45, 0.1 }, "How well it clears the big crowds: spells that hit many enemies, areas, explosions." },
