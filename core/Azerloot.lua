@@ -975,6 +975,36 @@ local function WornLine(entry)
   return text
 end
 
+-- The green lines of the piece worn in a slot, as the game writes them in its own language
+-- (the Chronicle keeps them with a run's jewelry: what a rank gave at the run's end)
+function AzlWornLines(slot)
+  local tip = ScanTip()
+  tip:SetOwner(UIParent, "ANCHOR_NONE")
+  tip:ClearLines()
+  local ok = pcall(function() tip:SetInventoryItem("player", slot) end)
+  local found = {}
+  if ok then
+    for l = 2, (tip:NumLines() or 0) do
+      local fs = getglobal("AzerlootScanTipTextLeft" .. l)
+      local raw = fs and fs:GetText()
+      if type(raw) == "string" then
+        local whole = false
+        if fs.GetTextColor then
+          local r, g, b = fs:GetTextColor()
+          whole = type(g) == "number" and g > 0.7 and r < 0.6 and b < 0.6
+        end
+        for seg in sfind_all(raw .. "\n", "(.-)\n") do
+          local _, _, hex = string.find(seg, "|c(%x%x%x%x%x%x%x%x)")
+          local plain = string.gsub(string.gsub(seg, "|c%x%x%x%x%x%x%x%x", ""), "|r", "")
+          if plain ~= "" and ((hex and GreenCode(hex)) or (whole and not hex)) then table.insert(found, plain) end
+        end
+      end
+    end
+  end
+  tip:Hide()
+  return found
+end
+
 -- A worn piece's lines, short: the game's whole sentences ("Increases all damage you deal by
 -- 146%.") become the book's own words with the numbers the game shows now ("+146% damage").
 -- Rings and trinkets take the form of their value, amulets that of each effect, line by line.

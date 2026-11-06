@@ -130,7 +130,16 @@ function C.Snap()
     local _, _, n = string.find(link or "", "%[(.-)%]")
     if n then
       local tex = GetInventoryItemTexture and GetInventoryItemTexture("player", JEWEL_SLOTS[i])
-      table.insert(jw, { s = JEWEL_SLOTS[i], n = C.CleanJewel(n), raw = n, ic = tex })
+      local j = { s = JEWEL_SLOTS[i], n = C.CleanJewel(n), raw = n, ic = tex }
+      -- what it gives, read from its tooltip once per piece and rank
+      L.jlines = L.jlines or {}
+      local kept = L.jlines[JEWEL_SLOTS[i]]
+      if not (kept and kept.raw == n) and AzlWornLines then
+        kept = { raw = n, t = AzlWornLines(JEWEL_SLOTS[i]) }
+        L.jlines[JEWEL_SLOTS[i]] = kept
+      end
+      if kept and type(kept.t) == "table" and table.getn(kept.t) > 0 then j.t = kept.t end
+      table.insert(jw, j)
     end
   end
   if table.getn(jw) > 0 then L.jewels = jw end
@@ -662,6 +671,7 @@ function C.Head(P, page, y)
   end
   l1:SetPoint("LEFT", page, "TOPLEFT", PAGE_MID - 150, y - 8); l1:SetPoint("RIGHT", h, "LEFT", -8, 0)
   l2:SetPoint("LEFT", h, "RIGHT", 8, 0); l2:SetPoint("RIGHT", page, "TOPLEFT", PAGE_MID + 150, y - 8)
+  h.l1, h.l2 = l1, l2
   return h
 end
 
@@ -834,7 +844,7 @@ end
 function C.FillRow(r, run)
   r.run = run
   r.date:SetText(C.Date(run.at))
-  r.zone:SetText(C.ZoneName(run.zone))
+  r.zone:SetText(C.ZoneName(run.zone) .. (run.party and (" (" .. AzT("Co-op") .. ")") or ""))
   r.time:SetText(C.Time(run.t))
   r.lv:SetText(run.level and AzT("Lv %d", run.level) or "")
   if run == C.sel then r.sel:Show(); r.rx:Show() else r.sel:Hide(); r.rx:Reset(); r.rx:Hide() end
@@ -1184,16 +1194,13 @@ function C.MakeRight(P)
 
   R.sumHead = C.Head(P, ui.right, -52)
   R.sumHead:SetText(AzT("Summary"))
-  -- the run's own numbers, at its end, in the heading's tooltip; the game's "?" after the
-  -- heading tells that it has one
-  local q = P:CreateTexture(nil, "OVERLAY"); q:SetWidth(14); q:SetHeight(14)
-  q:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
-  q:SetPoint("LEFT", R.sumHead, "RIGHT", 3, 0)
-  R.sumHelp = q
-  local sh = CreateFrame("Frame", nil, P)
-  sh:SetHeight(18)
-  sh:SetPoint("LEFT", R.sumHead, "LEFT", -4, 0); sh:SetPoint("RIGHT", q, "RIGHT", 2, 0)
-  sh:EnableMouse(true)
+  -- the run's own numbers, at its end: a small wooden "Stats" button at the right end of the
+  -- heading's line shows them on hovering (or clicking)
+  local sh = AzlB.WoodButton(P, AzT("Stats"), function() local f = this:GetScript("OnEnter"); if f then f() end end)
+  sh:SetHeight(20)
+  sh:SetPoint("RIGHT", ui.right, "TOPLEFT", PAGE_MID + 150, -52 - 8)
+  R.sumHead.l2:ClearAllPoints()
+  R.sumHead.l2:SetPoint("LEFT", R.sumHead, "RIGHT", 8, 0); R.sumHead.l2:SetPoint("RIGHT", sh, "LEFT", -6, 0)
   sh:SetScript("OnEnter", function()
     local r = C.sel
     if not (r and r.stats and AzlB.STATS) then return end
@@ -1215,6 +1222,7 @@ function C.MakeRight(P)
   end)
   sh:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.sumHover = sh
+  R.sumHelp = sh
   -- the tooltips of this page open beside the book, level with what is hovered and going
   -- down: above it they ran under the game's timer at the top of the screen
   local pin = CreateFrame("Frame", nil, P); pin:SetWidth(1); pin:SetHeight(1)
@@ -1469,7 +1477,7 @@ function C.DrawRight(cls)
     for k = 1, table.getn(parts) do parts[k]:Hide() end
     if R.subHover then R.subHover:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
-    R.partyTip:Hide(); R.partyTop:SetText("")
+    R.partyTip:Hide(); R.partyTop:SetText(""); R.sumHover:Hide()
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1512,6 +1520,7 @@ function C.DrawRight(cls)
   local extra = R.rows[table.getn(SUMMARY) + 1]
   extra.l:Hide(); extra.v:Hide()
   if run.party then R.partyTip:Show() else R.partyTip:Hide() end
+  if run.stats then R.sumHover:Show() else R.sumHover:Hide() end
   R.partyTop:SetText("")
   if run.party then
     local best = nil
@@ -1579,7 +1588,8 @@ function C.DrawRight(cls)
       f.icon:SetTexture(j.ic or ("Interface\\Icons\\" .. C.JewelIcon(nm)))
       f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); f.icon:SetAlpha(1)
       f.tipTitle = j.raw or AzG(nm)
-      f.tipText = AzlSlotWord(place[1]) .. (place[2] and " 2" or "") .. "\n" .. AzT("Worn at the end of the run.")
+      local what = (type(j.t) == "table" and table.getn(j.t) > 0) and ("|cff1eff00" .. table.concat(j.t, "\n") .. "|r\n") or ""
+      f.tipText = AzlSlotWord(place[1]) .. (place[2] and " 2" or "") .. "\n" .. what .. AzT("Worn at the end of the run.")
       f.x:Hide()
     else
       -- an empty place: the game's own empty slot, faint
