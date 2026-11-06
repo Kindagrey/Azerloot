@@ -84,6 +84,11 @@ function B.Banned(b, key)
   for k = 1, B.NBAN do if b.ban[k] and RecKey(b.ban[k]) == key then return k end end
   return nil
 end
+-- marked by the player in the wishlist window: banished in this run (the game does not tell
+-- addons which cards it offers or which were banished)
+function B.BanDone(key)
+  return type(AzerlootDB) == "table" and type(AzerlootDB.banDone) == "table" and AzerlootDB.banDone[key] and true or false
+end
 function B.BanCount(b)
   local n = 0
   if b and type(b.ban) == "table" then for k = 1, B.NBAN do if b.ban[k] then n = n + 1 end end end
@@ -769,6 +774,7 @@ end
 -- ---------- a new run: the builds may be chosen ----------
 function B.NewRun()
   if type(AzerlootDB) ~= "table" then return end
+  AzerlootDB.banDone = {}
   if B.Count(AZL.PlayerClass()) > 0 then AzerlootDB.buildPick = true end
 end
 -- the choice of a build shows in the wishlist window at a run's start, for two minutes
@@ -2910,16 +2916,39 @@ function B.TrackerBans(tr, W, y, b)
       local face = x:GetFont()
       if face then x:SetFont(face, 11, "OUTLINE") end
       x:SetTextColor(1, 0.15, 0.08); x:SetText("x"); x:SetPoint("CENTER", f, "BOTTOMRIGHT", -2, 3)
-      f:EnableMouse(true)
-      f:SetScript("OnEnter", function()
-        if not this.entry then return end
-        local title, col = Z.EntryTitle(this.entry)
+      f.x = x
+      -- once banished: the game's green tick on it instead
+      local tick = f:CreateTexture(nil, "OVERLAY")
+      tick:SetWidth(14); tick:SetHeight(14); tick:SetPoint("CENTER", f, "BOTTOMRIGHT", -2, 3)
+      tick:SetTexture("Interface\\Buttons\\UI-CheckBox-Check"); tick:SetVertexColor(0.3, 1, 0.25); tick:Hide()
+      f.tick = tick
+      local fb = CreateFrame("Button", nil, f)
+      fb:SetAllPoints(f); fb:SetFrameLevel(f:GetFrameLevel() + 2)
+      fb:RegisterForClicks("LeftButtonUp")
+      fb:SetScript("OnClick", function()
+        local o = this:GetParent()
+        if not (o.entry and o.key) then return end
+        if type(AzerlootDB.banDone) ~= "table" then AzerlootDB.banDone = {} end
+        AzerlootDB.banDone[o.key] = (not AzerlootDB.banDone[o.key]) or nil
+        AZL.RefreshTracker()
+        if this:GetScript("OnEnter") then this:GetScript("OnEnter")() end
+      end)
+      fb:SetScript("OnEnter", function()
+        local o = this:GetParent()
+        if not o.entry then return end
+        local title, col = Z.EntryTitle(o.entry)
         GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
         GameTooltip:AddLine(title, col[1], col[2], col[3])
-        GameTooltip:AddLine(AzT("Banish these when the game offers them: fewer choices at a level-up, so the upgrades you want come more often."), 0.85, 0.85, 0.85, 1)
+        if B.BanDone(o.key) then
+          GameTooltip:AddLine(AzT("Banished in this run."), 0.3, 1, 0.25)
+          GameTooltip:AddLine(AzT("Click to take the mark off."), 0.7, 0.7, 0.7, 1)
+        else
+          GameTooltip:AddLine(AzT("Banish these when the game offers them: fewer choices at a level-up, so the upgrades you want come more often."), 0.85, 0.85, 0.85, 1)
+          GameTooltip:AddLine(AzT("Click once you have banished it: the game does not tell addons, so the mark is yours."), 0.7, 0.7, 0.7, 1)
+        end
         GameTooltip:Show()
       end)
-      f:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      fb:SetScript("OnLeave", function() GameTooltip:Hide() end)
       row.icons[k] = f
     end
     tr.banRow = row
@@ -2933,10 +2962,15 @@ function B.TrackerBans(tr, W, y, b)
       local f = row.icons[k]
       local e = type(b.ban) == "table" and b.ban[k] and B.Entry(cls, b.ban[k]) or nil
       f.entry = e
+      f.key = e and RecKey(b.ban[k]) or nil
       if e then
         n = n + 1
         f.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark"))
-        if f.icon.SetDesaturated then f.icon:SetDesaturated(true) end
+        -- still to banish: in colour with a red x; banished: greyed, with a green tick
+        local done = B.BanDone(f.key)
+        if f.icon.SetDesaturated then f.icon:SetDesaturated(done) end
+        f.icon:SetAlpha(done and 0.55 or 1)
+        if done then f.x:Hide(); f.tick:Show() else f.x:Show(); f.tick:Hide() end
         f:ClearAllPoints()
         if lastF then f:SetPoint("LEFT", lastF, "RIGHT", 4, 0) else f:SetPoint("LEFT", row.label, "RIGHT", 5, 0) end
         lastF = f
@@ -2950,7 +2984,7 @@ function B.TrackerBans(tr, W, y, b)
   row:ClearAllPoints(); row:SetPoint("TOPLEFT", tr, "TOPLEFT", 10, y - 4)
   row:SetWidth(W - 20)
   row:Show()
-  return y - 28
+  return y - 31   -- (the icons as far from the panel's lower edge as from its upper one)
 end
 
 -- draws the build line (and the choice) under the window's title; returns the new top

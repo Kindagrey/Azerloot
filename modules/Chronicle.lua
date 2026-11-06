@@ -166,7 +166,14 @@ function C.Snap()
           if not have then table.insert(miss, { kind = rec.kind, id = rec.id }) end
         end
       end
-      L.build = { i = all.active, uid = AzlB.Uid and AzlB.Uid(b), name = b.name, got = got, all = n, miss = miss }
+      local ban = {}
+      if type(b.ban) == "table" then
+        for k = 1, (AzlB.NBAN or 3) do
+          local br = b.ban[k]
+          if br then table.insert(ban, { kind = br.kind, id = br.id, d = AzlB.BanDone and AzlB.BanDone(AzlB.RecKey(br)) or nil }) end
+        end
+      end
+      L.build = { i = all.active, uid = AzlB.Uid and AzlB.Uid(b), name = b.name, got = got, all = n, miss = miss, ban = ban }
     end
   end
   local R = type(AZS_RUN) == "table" and AZS_RUN or {}
@@ -1299,11 +1306,31 @@ function C.MakeRight(P)
     R.rows[k] = { l = l, v = v }
   end
   C.PlaceRows(table.getn(SUMMARY))
+  C.MakeParty(P)
 
   R.buildHead = C.Head(P, ui.right, -166)
   local bl = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
   bl:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -188)
   R.buildLine = bl
+  local bh = CreateFrame("Frame", nil, P)
+  bh:SetPoint("TOPLEFT", bl, "TOPLEFT", -4, 2); bh:SetPoint("BOTTOMRIGHT", bl, "BOTTOMRIGHT", 4, -2)
+  bh:EnableMouse(true)
+  bh:SetScript("OnEnter", function()
+    local r = C.sel
+    local ban = r and r.build and type(r.build.ban) == "table" and r.build.ban or {}
+    if table.getn(ban) == 0 then return end
+    local cls = AZL.PlayerClass()
+    C.TipBeside(this)
+    GameTooltip:AddLine(AzT("Banish"), 1, 0.82, 0)
+    for k = 1, table.getn(ban) do
+      local nm = C.PartName(cls, ban[k])
+      if ban[k].d then GameTooltip:AddDoubleLine(nm, AzT("Banished in this run."), 0.9, 0.9, 0.9, 0.3, 1, 0.25)
+      else GameTooltip:AddDoubleLine(nm, AzT("Not marked"), 0.9, 0.9, 0.9, 0.6, 0.6, 0.6) end
+    end
+    GameTooltip:Show()
+  end)
+  bh:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  R.buildHover = bh
   R.spells = {}
   for k = 1, 6 do
     local f = C.Icon(P, 28)
@@ -1525,6 +1552,7 @@ function C.DrawRight(cls)
     if R.subHover then R.subHover:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
     R.partyTip:Hide(); R.sumHover:Hide(); if R.lootMore then R.lootMore:Hide() end
+    if R.party then C.DrawParty({}) end
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1561,43 +1589,29 @@ function C.DrawRight(cls)
   if (R.sub:GetStringWidth() or 0) > 2 * PAGE_MID - 30 then Sub(false) end
   R.subRun = run.heroic and run or nil
   if R.subRun then R.subHover:Show() else R.subHover:Hide() end
-  -- a co-op run: the party's damage per second after the others, then every hero with
-  -- theirs, the most first (their best spell on hovering the party's line)
-  local heroes = {}
-  if run.party then
-    for i = 1, table.getn(run.party) do if run.party[i] and run.party[i].n then table.insert(heroes, run.party[i]) end end
-    table.sort(heroes, function(a, b) return (tonumber(a.d) or 0) > (tonumber(b.d) or 0) end)
-    while table.getn(heroes) > C.PARTY_MAX do table.remove(heroes) end
-  end
-  local nS = table.getn(SUMMARY) + (run.party and (1 + table.getn(heroes)) or 0)
-  local dy = C.PlaceRows(nS)
-  C.PlaceLower(dy)
+  -- the summary's ten places; a co-op run's party under them, on lines of its own
+  C.PlaceRows(table.getn(SUMMARY))
   for k = table.getn(SUMMARY) + 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
-  if run.party then R.partyTip:Show() else R.partyTip:Hide() end
   if run.stats then R.sumHover:Show() else R.sumHover:Hide() end
-  for k = 1, nS do
+  for k = 1, table.getn(SUMMARY) do
     local row = R.rows[k]
-    local hero = nil
-    if SUMMARY[k] then
-      row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
-    elseif k == table.getn(SUMMARY) + 1 then
-      row.l:SetText(AzT("Party DPS")); row.v:SetText(C.Big(run.partyDps))
-    else
-      hero = heroes[k - table.getn(SUMMARY) - 1]
-      row.l:SetText("  " .. hero.n); row.v:SetText(C.Big(hero.p))
-      if AzlFitText then AzlFitText(row.l, 92, 12, 9) end
-    end
+    row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
     -- the numbers in the heading's own ink: green for a run survived, red for one lost
     if run.won then row.v:SetTextColor(0.1, 0.45, 0.04) else row.v:SetTextColor(0.6, 0.1, 0.05) end
-    -- a hero's name in the softer ink of notes, under the party's line
-    if hero then row.l:SetTextColor(Z.INK_SOFT[1], Z.INK_SOFT[2], Z.INK_SOFT[3])
-    else row.l:SetTextColor(Z.INK[1], Z.INK[2], Z.INK[3]); if AzlFitText and not SUMMARY[k] then AzlFitText(row.l, 92, 12, 9) end end
     row.l:Show(); row.v:Show()
   end
+  C.PlaceLower(C.DrawParty(run))
   -- the build it was played with, and what the hero really had
   if run.build then
     R.buildHead:SetText(AzT("Build"))
-    R.buildLine:SetText(AzlB.Short(run.build.name or "", 22) .. "  ·  " .. AzT("%d/%d collected", run.build.got or 0, run.build.all or 0))
+    local line = AzlB.Short(run.build.name or "", 22) .. "  ·  " .. AzT("%d/%d collected", run.build.got or 0, run.build.all or 0)
+    local ban = type(run.build.ban) == "table" and run.build.ban or {}
+    if table.getn(ban) > 0 then
+      local done = 0
+      for k = 1, table.getn(ban) do if ban[k].d then done = done + 1 end end
+      line = line .. "  ·  " .. AzT("Banish") .. " " .. done .. "/" .. table.getn(ban)
+    end
+    R.buildLine:SetText(line)
   else
     R.buildHead:SetText(AzT("Spells and Jewelry"))
     R.buildLine:SetText(AzT("No build loaded"))
@@ -1742,6 +1756,86 @@ function C.PlaceRows(n)
     end
   end
   return dy
+end
+
+-- A co-op run's party under the summary: a fine line, the party's damage per second, then
+-- every hero, the most first, with a bar of their share (two to a line from three heroes on,
+-- with a shorter bar); returns how far the sections below move down. The party's line keeps
+-- its tooltip (every hero's best spell).
+function C.MakeParty(P)
+  local Z, R = AZL, C.R
+  local G = {}
+  local dv = P:CreateTexture(nil, "ARTWORK"); dv:SetTexture(Z.WHITE)
+  dv:SetVertexColor(Z.INK[1], Z.INK[2], Z.INK[3]); dv:SetAlpha(0.3); dv:SetHeight(1)
+  G.line = dv
+  G.l = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12)); G.l:SetText(AzT("Party DPS"))
+  G.v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
+  G.heroes = {}
+  for k = 1, C.PARTY_MAX do
+    local h = {}
+    h.n = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 11)); h.n:SetJustifyH("LEFT")
+    h.v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 11)); h.v:SetJustifyH("RIGHT")
+    local bg = P:CreateTexture(nil, "ARTWORK"); bg:SetTexture(Z.WHITE); bg:SetVertexColor(0.16, 0.09, 0.03); bg:SetAlpha(0.9)
+    local fill = P:CreateTexture(nil, "OVERLAY"); fill:SetTexture(Z.WHITE); fill:SetVertexColor(0.8, 0.6, 0.18)
+    h.bg, h.fill = bg, fill
+    G.heroes[k] = h
+  end
+  R.party = G
+end
+
+function C.DrawParty(run)
+  local R, ui = C.R, AZL.ui
+  local G = R.party
+  G.line:Hide(); G.l:Hide(); G.v:Hide(); R.partyTip:Hide()
+  for k = 1, C.PARTY_MAX do local h = G.heroes[k]; h.n:Hide(); h.v:Hide(); h.bg:Hide(); h.fill:Hide() end
+  if not run.party then return 0 end
+  local heroes = {}
+  for i = 1, table.getn(run.party) do if run.party[i] and run.party[i].n then table.insert(heroes, run.party[i]) end end
+  table.sort(heroes, function(a, b) return (tonumber(a.d) or 0) > (tonumber(b.d) or 0) end)
+  while table.getn(heroes) > C.PARTY_MAX do table.remove(heroes) end
+  local total = tonumber(run.partyDmg) or 0
+  if total <= 0 then for i = 1, table.getn(heroes) do total = total + (tonumber(heroes[i].d) or 0) end end
+  local col = run.won and { 0.1, 0.45, 0.04 } or { 0.6, 0.1, 0.05 }
+  local L, Rr = PAGE_MID - 150, PAGE_MID + 150
+  local y = -74 - 4 * 17 - 19      -- under the summary's last line
+  G.line:ClearAllPoints()
+  G.line:SetPoint("LEFT", ui.right, "TOPLEFT", L + 10, y); G.line:SetPoint("RIGHT", ui.right, "TOPLEFT", Rr - 10, y)
+  G.line:Show()
+  y = y - 6
+  G.l:ClearAllPoints(); G.l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", L, y)
+  G.v:ClearAllPoints(); G.v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", Rr, y)
+  G.v:SetText(C.Big(run.partyDps)); G.v:SetTextColor(col[1], col[2], col[3])
+  G.l:Show(); G.v:Show()
+  R.partyTip:ClearAllPoints(); R.partyTip:SetPoint("TOPLEFT", ui.right, "TOPLEFT", L - 4, y + 2)
+  R.partyTip:SetWidth(308); R.partyTip:Show()
+  R.partyPin:ClearAllPoints(); R.partyPin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, y + 2)
+  y = y - 16
+  local two = table.getn(heroes) >= 3
+  for k = 1, table.getn(heroes) do
+    local h, hero = G.heroes[k], heroes[k]
+    local c, rw = 0, k - 1
+    if two then c, rw = Mod(k - 1, 2), math.floor((k - 1) / 2) end
+    local hy = y - rw * 15
+    local share = (total > 0 and tonumber(hero.d)) and hero.d / total or 0
+    local x0 = two and (L + 8 + c * 156) or (L + 8)
+    local nameW = two and 58 or 84
+    local barX, barW = (two and (x0 + 60) or (x0 + 86)), (two and 34 or 136)
+    local right = two and (x0 + 144) or Rr
+    h.n:ClearAllPoints(); h.n:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x0, hy); h.n:SetWidth(nameW)
+    h.n:SetText(hero.n)
+    if AzlFitText then AzlFitText(h.n, nameW, 11, 8) end
+    h.bg:ClearAllPoints(); h.bg:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX, hy - 2)
+    h.bg:SetWidth(barW); h.bg:SetHeight(8)
+    h.fill:ClearAllPoints(); h.fill:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX + 1, hy - 3)
+    h.fill:SetWidth(math.max(1, (barW - 2) * share)); h.fill:SetHeight(6)
+    h.v:ClearAllPoints(); h.v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", right, hy)
+    h.v:SetText(two and C.Big(hero.p) or (C.Big(hero.p) .. "  " .. math.floor(share * 100 + 0.5) .. "%"))
+    h.v:SetTextColor(col[1], col[2], col[3])
+    h.n:Show(); h.v:Show(); h.bg:Show(); h.fill:Show()
+  end
+  local rows = two and math.ceil(table.getn(heroes) / 2) or table.getn(heroes)
+  local bottom = y - math.max(0, rows - 1) * 15 - 12
+  return math.min(0, (bottom - 10) - (-166))
 end
 
 -- the sections under the summary (build, spells and jewelry, boss loot), moved down by dy
