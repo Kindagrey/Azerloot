@@ -73,6 +73,39 @@ function B.Entry(cls, rec)
   return nil
 end
 
+-- Banish: up to three cards (spells or jewelry) a build does not want; when the game offers
+-- one, the player banishes it (the game's talents allow it a few times a run). b.ban[1..3].
+B.NBAN = 3
+function B.Banned(b, key)
+  if not (b and type(b.ban) == "table") then return nil end
+  for k = 1, B.NBAN do if b.ban[k] and RecKey(b.ban[k]) == key then return k end end
+  return nil
+end
+function B.BanCount(b)
+  local n = 0
+  if b and type(b.ban) == "table" then for k = 1, B.NBAN do if b.ban[k] then n = n + 1 end end end
+  return n
+end
+-- a part into banish place k of build i (nil empties it); not one the build holds, nor its
+-- starting spell, nor one banished in another place already
+function B.SetBan(cls, i, k, entry)
+  local b = B.Get(cls, i)
+  if not (b and k and k >= 1 and k <= B.NBAN) then return end
+  if type(b.ban) ~= "table" then b.ban = {} end
+  if entry then
+    local rec = FromEntry(entry)
+    local key = RecKey(rec)
+    if rec.kind == "Spell" and rec.id == B.StartKey(cls, b) then return end
+    if B.Has(b, key) then return end
+    local at = B.Banned(b, key)
+    if at and at ~= k then return end
+    b.ban[k] = rec
+  else
+    b.ban[k] = nil
+  end
+  B.Changed(cls, i)
+end
+
 function B.Has(b, key)
   if not b then return nil end
   for i = 1, table.getn(b.items) do if RecKey(b.items[i]) == key then return i end end
@@ -192,6 +225,9 @@ function B.DropGone()
             if (rec.kind == "Spell" or rec.kind == "Legendary") and not B.Entry(cls, rec) then table.remove(b.items, n) end
           end
           if b.start and not B.StartAlt(cls, b.start) then b.start = nil end
+          if type(b.ban) == "table" then
+            for k = 1, B.NBAN do if b.ban[k] and not B.Entry(cls, b.ban[k]) then b.ban[k] = nil end end
+          end
         end
       end
     end
@@ -243,6 +279,7 @@ function B.Add(cls, i, entry, oldKey, pos)
   local rec = FromEntry(entry)
   if IsStart(cls, rec, b) then return true end
   if B.Has(b, RecKey(rec)) then return true end
+  if B.Banned(b, RecKey(rec)) then return nil end
   local at
   if oldKey then
     at = B.Has(b, oldKey)
@@ -656,20 +693,42 @@ local function NameIdx(list, name)
   for i = 1, table.getn(list) do if list[i] == name then return i end end
   return nil
 end
+local function PartCode(rec)
+  local D = AZL.D
+  if rec.kind == "Spell" then return "S." .. rec.id
+  elseif rec.kind == "Legendary" then return "L." .. rec.id
+  elseif rec.kind == "Rings" then return Idx(D.rings, rec.id) and ("R." .. Idx(D.rings, rec.id))
+  elseif rec.kind == "Trinkets" then return Idx(D.trinkets, rec.id) and ("T." .. Idx(D.trinkets, rec.id))
+  elseif rec.kind == "Amulets" and Idx(D.amulets, rec.id) then return "A." .. NameIdx(AmuletNames(), rec.id) end
+  return nil
+end
+local function PartRec(t, id)
+  local D = AZL.D
+  if t == "S" then return { kind = "Spell", id = id }
+  elseif t == "L" then return { kind = "Legendary", id = id }
+  elseif t == "R" and D.rings[tonumber(id) or 0] then return { kind = "Rings", id = D.rings[tonumber(id)].name }
+  elseif t == "T" and D.trinkets[tonumber(id) or 0] then return { kind = "Trinkets", id = D.trinkets[tonumber(id)].name }
+  elseif t == "A" then
+    local nm = AmuletNames()[tonumber(id) or 0]
+    if nm == "Star of Mystaria" then return { kind = "Trinkets", id = nm }
+    elseif nm and Idx(D.amulets, nm) then return { kind = "Amulets", id = nm } end
+  end
+  return nil
+end
 function B.Encode(cls, b)
   local D = AZL.D
   local parts = {}
   -- (a starting spell a talent gives instead of the class's own, first: older versions skip it)
   if b.start and B.StartAlt(cls, b.start) then table.insert(parts, "X." .. b.start) end
   for n = 1, table.getn(b.items) do
-    local rec = b.items[n]
-    local code
-    if rec.kind == "Spell" then code = "S." .. rec.id
-    elseif rec.kind == "Legendary" then code = "L." .. rec.id
-    elseif rec.kind == "Rings" then code = Idx(D.rings, rec.id) and ("R." .. Idx(D.rings, rec.id))
-    elseif rec.kind == "Trinkets" then code = Idx(D.trinkets, rec.id) and ("T." .. Idx(D.trinkets, rec.id))
-    elseif rec.kind == "Amulets" and Idx(D.amulets, rec.id) then code = "A." .. NameIdx(AmuletNames(), rec.id) end
+    local code = PartCode(b.items[n])
     if code then table.insert(parts, code) end
+  end
+  if type(b.ban) == "table" then
+    for k = 1, B.NBAN do
+      local code = b.ban[k] and PartCode(b.ban[k])
+      if code then table.insert(parts, "B." .. k .. "." .. code) end
+    end
   end
   return "AZL2~" .. cls .. "~" .. Clean(b.name) .. "~" .. (tonumber(b.spec) or 1) .. "~" .. Clean(b.note) .. "~" .. table.concat(parts, ",")
 end
@@ -687,18 +746,27 @@ function B.Decode(code)
     local rec
     if t == "X" then
       if B.StartAlt(cls, id) then b.start = id end
-    elseif t == "S" then rec = { kind = "Spell", id = id }
-    elseif t == "L" then rec = { kind = "Legendary", id = id }
-    elseif t == "R" and D.rings[tonumber(id) or 0] then rec = { kind = "Rings", id = D.rings[tonumber(id)].name }
-    elseif t == "T" and D.trinkets[tonumber(id) or 0] then rec = { kind = "Trinkets", id = D.trinkets[tonumber(id)].name }
-    elseif t == "A" then
-      local nm = AmuletNames()[tonumber(id) or 0]
-      if nm == "Star of Mystaria" then rec = { kind = "Trinkets", id = nm }
-      elseif nm and Idx(D.amulets, nm) then rec = { kind = "Amulets", id = nm } end
+    elseif t == "B" then
+      -- a banished card, in its place
+      local _, _, k, t2, id2 = string.find(id, "^(%d)%.(%a)%.(.+)$")
+      k = tonumber(k)
+      local br = t2 and PartRec(t2, id2)
+      if k and k >= 1 and k <= B.NBAN and br and B.Entry(cls, br) then
+        b.ban = b.ban or {}
+        b.ban[k] = br
+      end
+    else
+      rec = PartRec(t, id)
     end
     if rec and B.Entry(cls, rec) and not B.Has(b, RecKey(rec)) and not IsStart(cls, rec, b) then
       local sl = Slot(rec.kind)
       if count[sl] < MAX[sl] then count[sl] = count[sl] + 1; table.insert(b.items, rec) end
+    end
+  end
+  if type(b.ban) == "table" then
+    for k = 1, B.NBAN do
+      local br = b.ban[k]
+      if br and (B.Has(b, RecKey(br)) or IsStart(cls, br, b)) then b.ban[k] = nil end
     end
   end
   return cls, b
@@ -844,6 +912,7 @@ B.XPBar = XPBar   -- (the boss warner's health bar is one of these, in red)
 local SLOT_ICON = {
   Spell = "Interface\\PaperDoll\\UI-Backpack-EmptySlot", Rings = "Interface\\PaperDoll\\UI-PaperDoll-Slot-Finger",
   Trinkets = "Interface\\PaperDoll\\UI-PaperDoll-Slot-Trinket", Neck = "Interface\\PaperDoll\\UI-PaperDoll-Slot-Neck",
+  Ban = "Interface\\PaperDoll\\UI-Backpack-EmptySlot",
 }
 local function PartSlot(parent, size, clickable)
   local Z = AZL
@@ -889,7 +958,7 @@ local function PartSlot(parent, size, clickable)
     pl:SetScript("OnEnter", function()
       this.tex:SetVertexColor(1, 1, 0.75); this:SetWidth(22); this:SetHeight(22)
       local sb = this.slotButton
-      local what = { Spell = "Empty spell slot", Rings = "Empty ring slot", Trinkets = "Empty trinket slot", Neck = "Empty amulet slot" }
+      local what = { Spell = "Empty spell slot", Rings = "Empty ring slot", Trinkets = "Empty trinket slot", Neck = "Empty amulet slot", Ban = "Empty banish slot" }
       GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
       GameTooltip:AddLine(AzT(what[sb.slot] or "Empty spell slot"), 1, 0.82, 0)
       GameTooltip:AddLine(AzT("Click the + to choose one from a short list."), 0.8, 0.8, 0.8, 1)
@@ -1436,7 +1505,7 @@ function B.MakePane()
   R.note = nt
   local d1 = Z.Tex(area, "divider.tga", "ARTWORK")
   d1:SetWidth(330); d1:SetHeight(16)
-  d1:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 22, -62)
+  d1:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 22, -58)
 
   -- the parts: six spells, then the jewelry (two rings, two trinkets, one amulet)
   local function CenteredHead(y)
@@ -1453,17 +1522,17 @@ function B.MakePane()
     end
     return h
   end
-  R.spellHead = CenteredHead(-76)
-  R.jewelHead = CenteredHead(-136)
+  R.spellHead = CenteredHead(-70)
+  R.jewelHead = CenteredHead(-128)
   R.parts = {}
   for k = 1, 11 do
     local s = PartSlot(area, 30, true)
     s.place = (k <= 6) and k or (k - 6)
     -- centred on the page; each jewel stands between two spells, as in a triangle
     if k <= 6 then
-      s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 145 + (k - 1) * 52, -98)
+      s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 145 + (k - 1) * 52, -90)
     else
-      s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 119 + (k - 7) * 52, -158)
+      s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 119 + (k - 7) * 52, -148)
     end
     s:SetScript("OnClick", function()
       local cls = AZL.PlayerClass()
@@ -1525,13 +1594,54 @@ function B.MakePane()
     end
     R.parts[k] = s
   end
-  local d2 = Z.Tex(area, "divider.tga", "ARTWORK")
-  d2:SetWidth(330); d2:SetHeight(16)
-  d2:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 22, -202)
+  -- Banish: three places in a row under the jewelry, between its pieces (the middle one under
+  -- the first trinket, the others between the rings and between the second trinket and the
+  -- amulet), so the three rows make a triangle
+  R.banHead = CenteredHead(-198)
+  R.bans = {}
+  for k = 1, B.NBAN do
+    local s = PartSlot(area, 30, true)
+    s.slot, s.banIdx = "Ban", k
+    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -216)
+    -- a banished card: its picture greyed, a small red x on it
+    local x = s:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    local face = x:GetFont()
+    if face then x:SetFont(face, 15, "OUTLINE") end
+    x:SetTextColor(0.9, 0.12, 0.06); x:SetText("x")
+    x:SetPoint("CENTER", s, "BOTTOMRIGHT", -7, 8); x:Hide()
+    s.banX = x
+    s:SetScript("OnClick", function()
+      local cls = AZL.PlayerClass()
+      if arg1 == "RightButton" then
+        B.ClosePicker(); GameTooltip:Hide()
+        if this.entry then B.SetBan(cls, B.sel, this.banIdx, nil) end
+        return
+      end
+      if not this.entry then return end   -- an empty place opens with its +
+      if IsShiftKeyDown and IsShiftKeyDown() then B.ClosePicker(); B.OpenPage(this.entry); return end
+      GameTooltip:Hide()
+      B.OpenPicker(this)
+    end)
+    s:SetScript("OnEnter", function()
+      this:Lit(true)
+      if B.picker and B.picker:IsVisible() and B.picker.owner == this then return end
+      if this.entry then
+        B.EntryTip(this, this.entry, AzT("Banished by this build. When the game offers it, banish it. Click to choose another, right-click empties the place."))
+      else
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(AzT("Empty banish slot"), 1, 0.82, 0)
+        GameTooltip:AddLine(AzT("Cards this build does not want: banish them when the game offers them."), 0.8, 0.8, 0.8, 1)
+        GameTooltip:AddLine(AzT("Click the + to choose one from a short list."), 0.8, 0.8, 0.8, 1)
+        GameTooltip:Show()
+      end
+    end)
+    s:SetScript("OnLeave", function() this:Lit(false); GameTooltip:Hide() end)
+    R.bans[k] = s
+  end
 
   -- the profile: five bars in the style of the experience bar
   -- centred between two ink lines, as Spells and Jewelry; the bars begin 3 px below it
-  local ph2 = CenteredHead(-217)
+  local ph2 = CenteredHead(-256)
   ph2:SetText(AzT("Battle Traits"))
   local AXES = {
     { "crowds", "Crowds", { 0.92, 0.45, 0.1 }, "How well it clears the big crowds: spells that hit many enemies, areas, explosions." },
@@ -1542,12 +1652,17 @@ function B.MakePane()
   }
   R.bars = {}
   for k = 1, 5 do
-    local y = -239 - (k - 1) * 15
+    -- in two columns, three and two, to leave room for the banish places above
+    local col, row = 0, k - 1
+    if k > 3 then col, row = 1, k - 4 end
+    local y = -276 - row * 15
+    local lx = (col == 0) and 30 or 196
     local lb = Z.Engraved(Z.Font(area, "GameFontNormal", Z.INK, 12))
-    lb:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, y)
+    lb:SetPoint("TOPLEFT", ui.right, "TOPLEFT", lx, y)
     lb:SetText(AzT(AXES[k][2]))
-    local bar = XPBar(area, 214, 10, AXES[k][3])
-    bar:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 128, y - 2)
+    if AzlFitText then AzlFitText(lb, 66, 12, 9) end
+    local bar = XPBar(area, (col == 0) and 74 or 76, 10, AXES[k][3])
+    bar:SetPoint("TOPLEFT", ui.right, "TOPLEFT", lx + 70, y - 2)
     local hit = CreateFrame("Frame", nil, area)
     hit:SetPoint("TOPLEFT", lb, "TOPLEFT", -2, 2); hit:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 2, -3)
     hit:EnableMouse(true)
@@ -1565,12 +1680,12 @@ function B.MakePane()
     R.bars[k] = bar
   end
   -- the same for the strengths and weaknesses; their lines begin 3 px below it
-  local sh = CenteredHead(-320)
+  local sh = CenteredHead(-324)
   sh:SetText(AzT("Strengths and weaknesses"))
   R.lines = {}
   for k = 1, 5 do
     local l = Z.Font(area, "GameFontNormal", Z.INK, 11)
-    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -339)
+    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -341)
     else l:SetPoint("TOPLEFT", R.lines[k - 1], "BOTTOMLEFT", 0, -2) end
     l:SetWidth(318); l:SetJustifyH("LEFT")
     l:SetShadowColor(0, 0, 0, 0); l:SetShadowOffset(1, -1)
@@ -1773,9 +1888,25 @@ function B.Draw()
   p1.startChoice = p1.locked and B.START_ALT[cls] and true or false
   if p1.locked then p1.startTag:Show(); if p1.plus then p1.plus:Hide() end else p1.startTag:Hide() end
   for k = 1, 5 do R.parts[6 + k]:Fill(jewel[k] or nil, SLOT_KINDS[k]) end
+  local nb = 0
+  for k = 1, B.NBAN do
+    local s = R.bans[k]
+    local e = type(b.ban) == "table" and b.ban[k] and B.Entry(cls, b.ban[k]) or nil
+    s:Fill(e, "Ban")
+    if e then
+      nb = nb + 1
+      if s.icon.SetDesaturated then s.icon:SetDesaturated(true) end
+      s.icon:SetVertexColor(0.85, 0.72, 0.7)
+      s.banX:Show()
+    else
+      if s.icon.SetDesaturated then s.icon:SetDesaturated(false) end
+      s.banX:Hide()
+    end
+  end
+  R.banHead:SetText(AzT("Banish") .. "  " .. nb .. "/" .. B.NBAN)
   local p, lines = B.Profile(cls, b)
   for k = 1, 5 do R.bars[k]:SetValue(p[R.bars[k].key]) end
-  local room = 79 -- from the first line down to the buttons
+  local room = 77 -- from the first line down to the buttons
   for k = 1, 5 do
     local l = lines[k]
     if l and room > 0 then
@@ -2128,6 +2259,26 @@ local function Choices(cls, slot, filled)
   return out
 end
 
+-- a banish place: the class's spells (not its starting one), or all the jewelry
+local function BanChoices(cls, tab, filled)
+  local Z = AZL
+  local out = {}
+  local function Put(list) for i = 1, table.getn(list) do table.insert(out, list[i]) end end
+  if filled then table.insert(out, { none = true }) end
+  if tab == "Spell" then
+    local b = B.Get(cls, B.sel or 0)
+    local st = B.StartKey(cls, b)
+    local all = Z.SpellEntries(cls)
+    for i = 1, table.getn(all) do if all[i].item.key ~= st then table.insert(out, all[i]) end end
+  else
+    table.insert(out, { head = AzT("Rings") }); Put(Z.ItemEntries("Rings"))
+    table.insert(out, { head = AzT("Trinkets") }); Put(Z.ItemEntries("Trinkets"))
+    table.insert(out, { head = AzT("Basic Amulets") }); Put(Z.ItemEntries("Amulets"))
+    table.insert(out, { head = AzT("Class Amulets") }); Put(Z.ClassEntries(Z.ClassInfo(cls)))
+  end
+  return out
+end
+
 local function PickerRow(p, i)
   local Z = AZL
   local r = CreateFrame("Button", nil, p)
@@ -2162,9 +2313,7 @@ local function PickerRow(p, i)
     end
     if not this.entry then return end
     this.hover:Show()
-    local hint
-    if this.inBuild then hint = AzT("Already in this build") end
-    B.EntryTip(this, this.entry, hint)
+    B.EntryTip(this, this.entry, this.inBuild and this.hint or nil)
   end)
   r:SetScript("OnLeave", function() this.hover:Hide(); GameTooltip:Hide() end)
   r:EnableMouseWheel(true)
@@ -2203,8 +2352,21 @@ function B.DrawPicker()
     else
       local title, col = Z.EntryTitle(e)
       local key = Z.WishKey(e)
-      local inBuild = b and not p.startMode and (B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls, b))) and key ~= curKey
-      r.entry = e; r.inBuild = inBuild and true or false
+      -- what cannot be chosen here: a part the build holds, or one it banishes (in a banish
+      -- place: one banished in another of them)
+      local held = b and (B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls, b)))
+      local banned = b and B.Banned(b, key)
+      local inBuild, hint = false, nil
+      if p.startMode then
+        inBuild = false
+      elseif p.owner and p.owner.slot == "Ban" then
+        if held then inBuild, hint = true, AzT("Already in this build")
+        elseif banned and key ~= curKey then inBuild, hint = true, AzT("Already banished in this build") end
+      else
+        if held and key ~= curKey then inBuild, hint = true, AzT("Already in this build")
+        elseif banned then inBuild, hint = true, AzT("Banished in this build") end
+      end
+      r.entry = e; r.inBuild = inBuild and true or false; r.hint = hint
       r.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark")); r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93); r.icon:Show()
       r.text:SetText(title)
       if inBuild then r.text:SetTextColor(0.55, 0.55, 0.55); r.icon:SetAlpha(0.5)
@@ -2242,6 +2404,7 @@ function B.PickNone()
   local old = p and p.owner and p.owner.entry
   B.CloseMenu()
   GameTooltip:Hide()
+  if p and p.owner and p.owner.slot == "Ban" then B.SetBan(cls, B.sel, p.owner.banIdx, nil); return end
   if old and B.Get(cls, B.sel or 0) then B.Remove(cls, B.sel, Z.WishKey(old)) end
 end
 
@@ -2261,7 +2424,15 @@ function B.Pick(entry)
     B.SetStart(cls, B.sel, entry.item.key)
     return
   end
-  if B.Has(b, key) then return end
+  if p.owner and p.owner.slot == "Ban" then
+    local at = B.Banned(b, key)
+    if B.Has(b, key) or key == "spell:" .. tostring(B.StartKey(cls, b)) or (at and at ~= p.owner.banIdx) then return end
+    B.CloseMenu()
+    GameTooltip:Hide()
+    B.SetBan(cls, B.sel, p.owner.banIdx, entry)
+    return
+  end
+  if B.Has(b, key) or B.Banned(b, key) then return end
   B.CloseMenu()
   GameTooltip:Hide()
   B.Add(cls, B.sel, entry, old and Z.WishKey(old) or nil, p.owner and p.owner.place)
@@ -2304,6 +2475,36 @@ function B.OpenPicker(btn)
     p.thumb = thumb
     p.rows = {}
     for i = 1, PICK_ROWS do p.rows[i] = PickerRow(p, i) end
+    -- a banish place's two lists, Spells and Jewelry, as two words at the heading's right
+    p.tabs = {}
+    for t = 1, 2 do
+      local tb = CreateFrame("Button", nil, p)
+      tb:SetHeight(16)
+      local tt = tb:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+      tt:SetPoint("CENTER", tb, "CENTER", 0, 0)
+      tb.text = tt
+      tb.key = (t == 1) and "Spell" or "Jewelry"
+      tt:SetText(AzT((t == 1) and "Spells" or "Jewelry"))
+      tb:SetWidth((tt:GetStringWidth() or 40) + 10)
+      local ul = tb:CreateTexture(nil, "ARTWORK"); ul:SetTexture(Z.WHITE); ul:SetHeight(1)
+      ul:SetVertexColor(1, 0.82, 0); ul:SetPoint("BOTTOMLEFT", tb, "BOTTOMLEFT", 4, 0); ul:SetPoint("BOTTOMRIGHT", tb, "BOTTOMRIGHT", -4, 0)
+      tb.line = ul
+      tb:SetScript("OnClick", function()
+        local pk = B.picker
+        if not pk or pk.banTab == this.key then return end
+        pk.banTab = this.key
+        local own = pk.owner
+        pk.list = BanChoices(AZL.PlayerClass(), pk.banTab, own and own.entry and true or false)
+        pk.offset = 0
+        B.BanTabs()
+        B.DrawPicker()
+      end)
+      tb:SetScript("OnEnter", function() this.text:SetTextColor(1, 0.95, 0.7) end)
+      tb:SetScript("OnLeave", function() B.BanTabs() end)
+      p.tabs[t] = tb
+    end
+    p.tabs[2]:SetPoint("TOPRIGHT", p, "TOPRIGHT", -10, -8)
+    p.tabs[1]:SetPoint("RIGHT", p.tabs[2], "LEFT", -2, 0)
     table.insert(UISpecialFrames, "AzerlootBuildPicker")
     p:SetScript("OnHide", function() if B.catcher then B.catcher:Hide() end end)
     p.offset = 0
@@ -2322,11 +2523,18 @@ function B.OpenPicker(btn)
       if e then table.insert(p.list, e) end
     end
     p.head:SetText(AzT("Choose your starting spell"))
+  elseif btn.slot == "Ban" then
+    -- the list of the card already there, else the one used last
+    if btn.entry then p.banTab = (btn.entry.kind == "Spell") and "Spell" or "Jewelry" end
+    p.banTab = p.banTab or "Spell"
+    p.list = BanChoices(cls, p.banTab, btn.entry and true or false)
+    p.head:SetText(AzT("Banish"))
   else
     p.list = Choices(cls, btn.slot, btn.entry and true or false)
     local heads = { Spell = "Choose a spell", Rings = "Choose a ring", Trinkets = "Choose a trinket", Neck = "Choose an amulet" }
     p.head:SetText(AzT(heads[btn.slot] or "Choose a spell"))
   end
+  B.BanTabs()
   -- open with the part already there in sight
   p.offset = 0
   if btn.entry then
@@ -2343,6 +2551,23 @@ function B.OpenPicker(btn)
   p:SetPoint("TOPLEFT", btn, "BOTTOMLEFT", -4, -4)
   Catcher():Show()
   p:Show()
+end
+
+-- the picker's two words for a banish place: shown there only, the chosen one in gold
+function B.BanTabs()
+  local p = B.picker
+  if not (p and p.tabs) then return end
+  local on = p.owner and p.owner.slot == "Ban" and not p.startMode
+  for t = 1, 2 do
+    local tb = p.tabs[t]
+    if on then
+      tb:Show()
+      if p.banTab == tb.key then tb.text:SetTextColor(1, 0.82, 0); tb.line:Show()
+      else tb.text:SetTextColor(0.62, 0.58, 0.5); tb.line:Hide() end
+    else
+      tb:Hide()
+    end
+  end
 end
 
 local function MenuRow(menu, i)
@@ -2662,6 +2887,70 @@ local function TrackerParts(tr)
   pk.since = 0
   pk.calm = true
   tr.pick = pk
+end
+
+-- under the head card: the loaded build's banished cards, small, with a red x each; returns
+-- the new top
+function B.TrackerBans(tr, W, y, b)
+  local Z = AZL
+  local row = tr.banRow
+  if type(row) ~= "table" then
+    row = CreateFrame("Frame", nil, tr)
+    row:SetHeight(16)
+    local lb = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lb:SetPoint("LEFT", row, "LEFT", 0, 0); lb:SetTextColor(0.85, 0.5, 0.42)
+    row.label = lb
+    row.icons = {}
+    for k = 1, B.NBAN do
+      local f = CreateFrame("Frame", nil, row)
+      f:SetWidth(15); f:SetHeight(15)
+      local ic = f:CreateTexture(nil, "ARTWORK"); ic:SetAllPoints(f); ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+      f.icon = ic
+      local x = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+      local face = x:GetFont()
+      if face then x:SetFont(face, 11, "OUTLINE") end
+      x:SetTextColor(1, 0.15, 0.08); x:SetText("x"); x:SetPoint("CENTER", f, "BOTTOMRIGHT", -2, 3)
+      f:EnableMouse(true)
+      f:SetScript("OnEnter", function()
+        if not this.entry then return end
+        local title, col = Z.EntryTitle(this.entry)
+        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(title, col[1], col[2], col[3])
+        GameTooltip:AddLine(AzT("Cards this build does not want: banish them when the game offers them."), 0.85, 0.85, 0.85, 1)
+        GameTooltip:Show()
+      end)
+      f:SetScript("OnLeave", function() GameTooltip:Hide() end)
+      row.icons[k] = f
+    end
+    tr.banRow = row
+  end
+  local cls = Z.PlayerClass()
+  local n = 0
+  if b and not B.Picking() then
+    local lastF = nil
+    row.label:SetText(AzT("Banish") .. ":")
+    for k = 1, B.NBAN do
+      local f = row.icons[k]
+      local e = type(b.ban) == "table" and b.ban[k] and B.Entry(cls, b.ban[k]) or nil
+      f.entry = e
+      if e then
+        n = n + 1
+        f.icon:SetTexture("Interface\\Icons\\" .. (e.item.icon or "INV_Misc_QuestionMark"))
+        if f.icon.SetDesaturated then f.icon:SetDesaturated(true) end
+        f:ClearAllPoints()
+        if lastF then f:SetPoint("LEFT", lastF, "RIGHT", 4, 0) else f:SetPoint("LEFT", row.label, "RIGHT", 5, 0) end
+        lastF = f
+        f:Show()
+      else
+        f:Hide()
+      end
+    end
+  end
+  if n == 0 then row:Hide(); return y end
+  row:ClearAllPoints(); row:SetPoint("TOPLEFT", tr, "TOPLEFT", 10, y - 1)
+  row:SetWidth(W - 20)
+  row:Show()
+  return y - 19
 end
 
 -- draws the build line (and the choice) under the window's title; returns the new top

@@ -5840,6 +5840,10 @@ RefreshTracker = function()
   if runPick then lines = {} end
   local cardBottom, below, hinted = AzlTrackerCard(cardBuild, ci, waiting)
   if cardBuild or hinted then y = below end
+  -- the loaded build's banished cards, a small row under the card
+  local banTop = y
+  if AzlB and AzlB.TrackerBans then y = AzlB.TrackerBans(tracker, W, y - 4, (not runPick) and cardBuild or nil) end
+  if y == banTop - 4 then y = banTop end   -- (no row: nothing taken)
   -- the head card itself takes a click: the choice of a build opens under it
   local pb = tracker.pickBtn
   if pb then
@@ -5852,6 +5856,11 @@ RefreshTracker = function()
   end
   -- the head card on its own panel, like the sections below it
   table.insert(pan, { t = -4, b = cardBottom, card = true })
+  -- the banished cards on a slim panel of their own, like the sections
+  if y < banTop then
+    table.insert(pan, { t = banTop - 2, b = y + 1 })
+    y = y - 4
+  end
   -- the boss warner's strip (modules\BossWarn.lua) under the head: the next boss, or the one
   -- alive with its health; on its own panel, like a section (under a run's choice of a build
   -- too: a run started without one still has its boss timer)
