@@ -1607,12 +1607,12 @@ function B.MakePane()
   -- Banish: three places in a row under the jewelry, between its pieces (the middle one under
   -- the first trinket, the others between the rings and between the second trinket and the
   -- amulet), so the three rows make a triangle
-  R.banHead = CenteredHead(-208)
+  R.banHead = CenteredHead(-196)   -- (the jewelry with its words as far from this line as from its own)
   R.bans = {}
   for k = 1, B.NBAN do
     local s = PartSlot(area, 30, true)
     s.slot, s.banIdx = "Ban", k
-    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -229)   -- (centred between the two ink lines, 13 px each side)
+    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -217)   -- (centred between the two ink lines, 13 px each side)
     -- a banished card: its picture greyed, a small red x on it
     local x = s:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     local face = x:GetFont()
@@ -1651,7 +1651,7 @@ function B.MakePane()
 
   -- the profile: five bars in the style of the experience bar
   -- centred between two ink lines, as Spells and Jewelry; the bars begin 3 px below it
-  local ph2 = CenteredHead(-264)
+  local ph2 = CenteredHead(-252)
   ph2:SetText(AzT("Battle Traits"))
   local AXES = {
     { "crowds", "Crowds", { 0.92, 0.45, 0.1 }, "How well it clears the big crowds: spells that hit many enemies, areas, explosions." },
@@ -1665,7 +1665,7 @@ function B.MakePane()
     -- in two columns, three and two, to leave room for the banish places above
     local col, row = 0, k - 1
     if k > 3 then col, row = 1, k - 4 end
-    local y = -281 - row * 15
+    local y = -269 - row * 15
     local lx = (col == 0) and 30 or 196
     local lb = Z.Engraved(Z.Font(area, "GameFontNormal", Z.INK, 12))
     lb:SetPoint("TOPLEFT", ui.right, "TOPLEFT", lx, y)
@@ -1690,12 +1690,12 @@ function B.MakePane()
     R.bars[k] = bar
   end
   -- the same for the strengths and weaknesses; their lines begin 3 px below it
-  local sh = CenteredHead(-328)
+  local sh = CenteredHead(-316)
   sh:SetText(AzT("Strengths and weaknesses"))
   R.lines = {}
   for k = 1, 5 do
     local l = Z.Font(area, "GameFontNormal", Z.INK, 11)
-    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -345)
+    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -333)
     else l:SetPoint("TOPLEFT", R.lines[k - 1], "BOTTOMLEFT", 0, -2) end
     l:SetWidth(318); l:SetJustifyH("LEFT")
     l:SetShadowColor(0, 0, 0, 0); l:SetShadowOffset(1, -1)
@@ -1916,7 +1916,7 @@ function B.Draw()
   R.banHead:SetText(AzT("Banish") .. "  " .. nb .. "/" .. B.NBAN)
   local p, lines = B.Profile(cls, b)
   for k = 1, 5 do R.bars[k]:SetValue(p[R.bars[k].key]) end
-  local room = 75 -- from the first line down to the buttons
+  local room = 85 -- from the first line down to the buttons
   for k = 1, 5 do
     local l = lines[k]
     if l and room > 0 then
