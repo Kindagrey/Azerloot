@@ -1643,7 +1643,7 @@ function B.MakePane()
     -- in two columns, three and two, to leave room for the banish places above
     local col, row = 0, k - 1
     if k > 3 then col, row = 1, k - 4 end
-    local y = -269 - row * 15
+    local y = -276 - row * 15   -- (room under the heading)
     local lx = (col == 0) and 30 or 196
     local lb = Z.Engraved(Z.Font(area, "GameFontNormal", Z.INK, 12))
     lb:SetPoint("TOPLEFT", ui.right, "TOPLEFT", lx, y)
@@ -1668,12 +1668,12 @@ function B.MakePane()
     R.bars[k] = bar
   end
   -- the same for the strengths and weaknesses; their lines begin 3 px below it
-  local sh = CenteredHead(-316)
+  local sh = CenteredHead(-329)   -- (room under the last bar)
   sh:SetText(AzT("Strengths and weaknesses"))
   R.lines = {}
   for k = 1, 5 do
     local l = Z.Font(area, "GameFontNormal", Z.INK, 11)
-    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -333)
+    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -346)
     else l:SetPoint("TOPLEFT", R.lines[k - 1], "BOTTOMLEFT", 0, -2) end
     l:SetWidth(318); l:SetJustifyH("LEFT")
     l:SetShadowColor(0, 0, 0, 0); l:SetShadowOffset(1, -1)
@@ -1894,7 +1894,7 @@ function B.Draw()
   R.banHead:SetText(AzT("Banish") .. "  " .. nb .. "/" .. B.NBAN)
   local p, lines = B.Profile(cls, b)
   for k = 1, 5 do R.bars[k]:SetValue(p[R.bars[k].key]) end
-  local room = 85 -- from the first line down to the buttons
+  local room = 74 -- from the first line down to the buttons
   for k = 1, 5 do
     local l = lines[k]
     if l and room > 0 then
