@@ -1801,9 +1801,10 @@ function C.MakeParty(P)
   for k = 1, C.PARTY_MAX do
     local h = {}
     h.n = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 11)); h.n:SetJustifyH("LEFT")
-    h.v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 11)); h.v:SetJustifyH("RIGHT")
+    h.v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 11)); h.v:SetJustifyH("LEFT")
+    h.pct = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 11)); h.pct:SetJustifyH("RIGHT")
     -- the bar of the wishlist window's boss health and the battle traits, in gold
-    h.bar = AzlB.XPBar(P, 136, 9, { 1, 0.74, 0.16 })
+    h.bar = AzlB.XPBar(P, 120, 9, { 1, 0.74, 0.16 })
     h.bar:Hide()
     G.heroes[k] = h
   end
@@ -1814,7 +1815,7 @@ function C.DrawParty(run)
   local R, ui = C.R, AZL.ui
   local G = R.party
   G.line:Hide(); G.l:Hide(); G.v:Hide(); R.partyTip:Hide()
-  for k = 1, C.PARTY_MAX do local h = G.heroes[k]; h.n:Hide(); h.v:Hide(); h.bar:Hide() end
+  for k = 1, C.PARTY_MAX do local h = G.heroes[k]; h.n:Hide(); h.v:Hide(); h.pct:Hide(); h.bar:Hide() end
   if not run.party then return 0 end
   local heroes = {}
   for i = 1, table.getn(run.party) do if run.party[i] and run.party[i].n then table.insert(heroes, run.party[i]) end end
@@ -1842,17 +1843,22 @@ function C.DrawParty(run)
     local share = (total > 0 and tonumber(hero.d)) and hero.d / total or 0
     local x0 = two and (L + 8 + c * 156) or (L + 8)
     local nameW = two and 58 or 84
-    local barX, barW = (two and (x0 + 60) or (x0 + 86)), (two and 34 or 136)
+    local barX, barW = (two and (x0 + 60) or (x0 + 86)), (two and 34 or 120)
     local right = two and (x0 + 144) or Rr
     h.n:ClearAllPoints(); h.n:SetPoint("TOPLEFT", ui.right, "TOPLEFT", x0, hy); h.n:SetWidth(nameW)
     h.n:SetText(hero.n)
     if AzlFitText then AzlFitText(h.n, nameW, 11, 8) end
     h.bar:ClearAllPoints(); h.bar:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX, hy - 2)
     h.bar:Snap(); h.bar:SetValue(share)
-    h.v:ClearAllPoints(); h.v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", right, hy)
-    h.v:SetText(two and C.Big(hero.p) or (C.Big(hero.p) .. "  " .. math.floor(share * 100 + 0.5) .. "%"))
+    -- the damage per second begins at the same place on every line, a little after the bar;
+    -- the share stands at the right edge
+    h.v:ClearAllPoints(); h.v:SetPoint("TOPLEFT", ui.right, "TOPLEFT", barX + barW + 9, hy)
+    h.v:SetText(C.Big(hero.p))
     h.v:SetTextColor(col[1], col[2], col[3])
-    h.n:Show(); h.v:Show(); h.bar:Show()
+    h.pct:ClearAllPoints(); h.pct:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", right, hy)
+    h.pct:SetText(math.floor(share * 100 + 0.5) .. "%")
+    h.pct:SetTextColor(col[1], col[2], col[3])
+    h.n:Show(); h.v:Show(); h.pct:Show(); h.bar:Show()
   end
   return 0
 end
