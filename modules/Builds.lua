@@ -1578,6 +1578,16 @@ function B.MakePane()
       local two = { false, " 2", false, " 2", false }
       cap:SetText(AzlSlotWord(caps[k - 6]) .. (two[k - 6] or ""))
     end
+    if k <= 6 then
+      -- the spell places numbered, for the order to take them in
+      local nf = CreateFrame("Frame", nil, s)
+      nf:SetAllPoints(s); nf:SetFrameLevel(s:GetFrameLevel() + 5)
+      local nt = nf:CreateFontString(nil, "OVERLAY")
+      nt:SetFont(Z.FONT, 10, "OUTLINE"); nt:SetTextColor(1, 0.86, 0.45)
+      nt:SetPoint("TOPLEFT", nf, "TOPLEFT", 2, -2)
+      nt:SetText(tostring(k))
+      s.numTag = nt
+    end
     s.locked = false
     if k == 1 then
       -- the starting spell's place: a small gold word under it, and no + or list

@@ -4794,13 +4794,23 @@ function AzlAnchorTracker()
   if type(sc) ~= "number" or sc <= 0 then sc = 1 end
   local p = TrackerDB().trackerPos
   tracker:ClearAllPoints()
+  -- a window placed low on the screen goes up as far as its length needs, so it stays whole
+  -- on the screen at its own size; its place is kept, and it goes back down once shorter
+  local y = type(p) == "table" and p[3]
+  if type(y) == "number" then
+    local h, sh = tracker:GetHeight(), UIParent:GetHeight()
+    if type(h) == "number" and type(sh) == "number" and h > 0 and sh > 0 then
+      local lim = -(sh - 6 - h * sc)
+      if y < lim then y = math.min(-2, lim) end
+    end
+  end
   -- (a window on the screen's right half is kept from the right edge: when the screen's
   -- width in the interface's units changes, say with the game's UI scale, it stays on its
   -- side instead of drifting across)
   if type(p) == "table" and p[4] == "R" and type(p[5]) == "number" and type(p[3]) == "number" then
-    tracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", p[5] / sc, p[3] / sc)
+    tracker:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", p[5] / sc, y / sc)
   elseif type(p) == "table" and type(p[3]) == "number" then
-    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1] / sc, p[3] / sc)
+    tracker:SetPoint("TOPLEFT", UIParent, "TOPLEFT", p[1] / sc, y / sc)
   elseif type(p) == "table" and type(p[1]) == "number" and type(p[2]) == "number" then
     tracker:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", p[1] / sc, p[2] / sc)
   else
@@ -4885,14 +4895,13 @@ function AzlTextHeight(fs, width)
   return n * (size + 3)
 end
 function AzlFitTracker()
-  if not tracker or (tracker.grip and tracker.grip.sizing) then return end
+  if not tracker or tracker.moving or (tracker.grip and tracker.grip.sizing) then return end
   local sh, h = UIParent:GetHeight(), tracker:GetHeight()
   if type(sh) ~= "number" or type(h) ~= "number" then return end
   if sh <= 0 or h <= 0 then return end
-  local p = TrackerDB().trackerPos
-  local fromTop = (type(p) == "table" and type(p[3]) == "number") and p[3] or -220
-  if type(p) == "table" and type(p[3]) ~= "number" and type(p[2]) == "number" then fromTop = p[2] - sh end
-  local room = sh + fromTop - 8          -- from the window's top to the screen's bottom
+  -- made smaller only when it is longer than the whole screen: one placed low goes up instead
+  -- (AzlAnchorTracker); measured from its own top it shrank as soon as it was dragged down
+  local room = sh - 12
   local base = tonumber(TrackerDB().trackerScale) or 1
   local cur = tracker:GetScale()
   if type(cur) ~= "number" or cur <= 0 then cur = 1 end
@@ -4908,12 +4917,12 @@ function AzlFitTracker()
   elseif fit < cur - 0.005 then want = fit * 0.97; F.at = { F.lines, room }
   elseif cur < base - 0.005 and fit > cur + 0.08 and not same then want = math.min(base, fit * 0.97)
   end
-  if not want then return end
-  want = math.max(0.45, math.min(base, want))
-  if math.abs(want - cur) > 0.005 then
-    tracker:SetScale(want)
-    AzlAnchorTracker()
+  if want then
+    want = math.max(0.45, math.min(base, want))
+    if math.abs(want - cur) > 0.005 then tracker:SetScale(want) end
   end
+  -- placed again each time: a window grown longer goes up, a shorter one back down
+  AzlAnchorTracker()
 end
 -- the window kept by its upper left corner: dragged or sized, it is pinned there again, so
 -- it grows and shrinks downwards and opens at the same place in every run

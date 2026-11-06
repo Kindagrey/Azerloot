@@ -672,6 +672,14 @@ function C.Head(P, page, y)
   l1:SetPoint("LEFT", page, "TOPLEFT", PAGE_MID - 150, y - 8); l1:SetPoint("RIGHT", h, "LEFT", -8, 0)
   l2:SetPoint("LEFT", h, "RIGHT", 8, 0); l2:SetPoint("RIGHT", page, "TOPLEFT", PAGE_MID + 150, y - 8)
   h.l1, h.l2 = l1, l2
+  -- (moved down a little on a co-op run's page, whose party takes more lines above)
+  h.MoveY = function(self, ny)
+    self:ClearAllPoints(); self:SetPoint("TOP", page, "TOPLEFT", PAGE_MID, ny)
+    self.l1:ClearAllPoints()
+    self.l1:SetPoint("LEFT", page, "TOPLEFT", PAGE_MID - 150, ny - 8); self.l1:SetPoint("RIGHT", self, "LEFT", -8, 0)
+    self.l2:ClearAllPoints()
+    self.l2:SetPoint("LEFT", self, "RIGHT", 8, 0); self.l2:SetPoint("RIGHT", page, "TOPLEFT", PAGE_MID + 150, ny - 8)
+  end
   return h
 end
 
@@ -1272,19 +1280,12 @@ function C.MakeRight(P)
   end)
   tt:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.timeTip = tt
-  for k = 1, table.getn(SUMMARY) + 1 do
+  for k = 1, table.getn(SUMMARY) + 1 + C.PARTY_MAX do
     local l = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
     local v = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
     R.rows[k] = { l = l, v = v }
   end
   C.PlaceRows(table.getn(SUMMARY))
-  -- after the party's number: the hero who dealt the most damage, in the page's green ink
-  -- (a class's own colour is hard to read on the parchment)
-  local top = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_GOOD, 12))
-  top:SetShadowColor(0.02, 0.14, 0, 1)
-  top:SetPoint("LEFT", R.rows[table.getn(SUMMARY) + 1].v, "RIGHT", 6, 0)
-  top:SetWidth(150); top:SetJustifyH("LEFT")
-  R.partyTop = top
 
   R.buildHead = C.Head(P, ui.right, -166)
   local bl = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK, 12))
@@ -1312,6 +1313,29 @@ function C.MakeRight(P)
   local lt = Z.Engraved(Z.Font(P, "GameFontNormal", Z.INK_SOFT, 12))
   lt:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -374); lt:SetWidth(310)
   R.loot = lt
+  local more = CreateFrame("Frame", nil, P)
+  more:SetWidth(28); more:SetHeight(28)
+  local mb = more:CreateTexture(nil, "BORDER"); mb:SetTexture(Z.WHITE); mb:SetAllPoints(more)
+  mb:SetVertexColor(0.16, 0.09, 0.03); mb:SetAlpha(0.55)
+  local mt = Z.Engraved(Z.Font(more, "GameFontNormal", Z.INK, 13))
+  mt:SetPoint("CENTER", more, "CENTER", 0, 0); mt:SetTextColor(1, 0.86, 0.5)
+  more.text = mt
+  more:EnableMouse(true)
+  more:SetScript("OnEnter", function()
+    if not this.rest then return end
+    local cls = AZL.PlayerClass()
+    C.TipBeside(this)
+    GameTooltip:AddLine(AzT("Boss Loot"), 1, 0.82, 0)
+    for k = 1, table.getn(this.rest) do
+      local piece, zone = C.FindPiece(cls, this.rest[k])
+      local c = AZL.RARITY_COLOR[(piece and piece.rarity) or (zone and zone.rarity) or "Common"] or { 1, 1, 1 }
+      GameTooltip:AddLine(AzG(this.rest[k]), c[1], c[2], c[3])
+    end
+    GameTooltip:Show()
+  end)
+  more:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  more:Hide()
+  R.lootMore = more
   R.lootIcons = {}
   for k = 1, C.LOOT_MAX do
     local f = C.Icon(P, 28)
@@ -1487,7 +1511,7 @@ function C.DrawRight(cls)
     for k = 1, table.getn(parts) do parts[k]:Hide() end
     if R.subHover then R.subHover:Hide() end
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
-    R.partyTip:Hide(); R.partyTop:SetText(""); R.sumHover:Hide()
+    R.partyTip:Hide(); R.sumHover:Hide(); if R.lootMore then R.lootMore:Hide() end
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1524,34 +1548,37 @@ function C.DrawRight(cls)
   if (R.sub:GetStringWidth() or 0) > 2 * PAGE_MID - 30 then Sub(false) end
   R.subRun = run.heroic and run or nil
   if R.subRun then R.subHover:Show() else R.subHover:Hide() end
-  -- a co-op run: the party's damage per second after the others (each hero on hovering it)
-  local nS = table.getn(SUMMARY) + (run.party and 1 or 0)
-  C.PlaceRows(nS)
-  local extra = R.rows[table.getn(SUMMARY) + 1]
-  extra.l:Hide(); extra.v:Hide()
+  -- a co-op run: the party's damage per second after the others, then every hero with
+  -- theirs, the most first (their best spell on hovering the party's line)
+  local heroes = {}
+  if run.party then
+    for i = 1, table.getn(run.party) do if run.party[i] and run.party[i].n then table.insert(heroes, run.party[i]) end end
+    table.sort(heroes, function(a, b) return (tonumber(a.d) or 0) > (tonumber(b.d) or 0) end)
+    while table.getn(heroes) > C.PARTY_MAX do table.remove(heroes) end
+  end
+  local nS = table.getn(SUMMARY) + (run.party and (1 + table.getn(heroes)) or 0)
+  local dy = C.PlaceRows(nS)
+  C.PlaceLower(dy)
+  for k = table.getn(SUMMARY) + 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
   if run.party then R.partyTip:Show() else R.partyTip:Hide() end
   if run.stats then R.sumHover:Show() else R.sumHover:Hide() end
-  R.partyTop:SetText("")
-  if run.party then
-    local best = nil
-    for i = 1, table.getn(run.party) do
-      local h = run.party[i]
-      if h and h.n and (not best or (tonumber(h.d) or 0) > (tonumber(best.d) or 0)) then best = h end
-    end
-    if best then
-      R.partyTop:SetText("-  " .. best.n)
-      if AzlFitText then AzlFitText(R.partyTop, 150, 12, 9) end
-    end
-  end
   for k = 1, nS do
     local row = R.rows[k]
+    local hero = nil
     if SUMMARY[k] then
       row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
-    else
+    elseif k == table.getn(SUMMARY) + 1 then
       row.l:SetText(AzT("Party DPS")); row.v:SetText(C.Big(run.partyDps))
+    else
+      hero = heroes[k - table.getn(SUMMARY) - 1]
+      row.l:SetText("  " .. hero.n); row.v:SetText(C.Big(hero.p))
+      if AzlFitText then AzlFitText(row.l, 92, 12, 9) end
     end
     -- the numbers in the heading's own ink: green for a run survived, red for one lost
     if run.won then row.v:SetTextColor(0.1, 0.45, 0.04) else row.v:SetTextColor(0.6, 0.1, 0.05) end
+    -- a hero's name in the softer ink of notes, under the party's line
+    if hero then row.l:SetTextColor(Z.INK_SOFT[1], Z.INK_SOFT[2], Z.INK_SOFT[3])
+    else row.l:SetTextColor(Z.INK[1], Z.INK[2], Z.INK[3]); if AzlFitText and not SUMMARY[k] then AzlFitText(row.l, 92, 12, 9) end end
     row.l:Show(); row.v:Show()
   end
   -- the build it was played with, and what the hero really had
@@ -1621,10 +1648,23 @@ function C.DrawRight(cls)
     R.miss:SetText("")
   end
   local loot = run.loot or {}
-  local n = math.min(table.getn(loot), C.LOOT_MAX)
-  if n > 0 then R.loot:SetText("") else R.loot:SetText(AzT("No boss loot in this run.")) end
-  -- each row centred, with the same room to either side
   local per, size, gap = C.LOOT_ROW, 28, 10
+  local ly = C.lootY or -374
+  -- rows that fit above the page's foot (the second goes when the party pushed it down)
+  local rows = ((ly - (size + 12) - size) >= -446) and 2 or 1
+  local cap = math.min(C.LOOT_MAX, rows * per)
+  local total = table.getn(loot)
+  local n = math.min(total, cap)
+  if total > cap then n = cap - 1 end   -- (the last place tells how many more)
+  if total > 0 then R.loot:SetText("") else R.loot:SetText(AzT("No boss loot in this run.")) end
+  R.lootMore:Hide()
+  if total > n then
+    local rest = {}
+    for k = n + 1, total do table.insert(rest, loot[k]) end
+    R.lootMore.rest = rest
+    R.lootMore.text:SetText("+" .. (total - n))
+  end
+  -- each row centred, with the same room to either side
   for k = 1, C.LOOT_MAX do
     local f = R.lootIcons[k]
     if k <= n then
@@ -1633,7 +1673,7 @@ function C.DrawRight(cls)
       local col = k - 1 - row * per
       local w = inRow * size + (inRow - 1) * gap
       f:ClearAllPoints()
-      f:SetPoint("TOPLEFT", Z.ui.right, "TOPLEFT", PAGE_MID - w / 2 + col * (size + gap), -374 - row * (size + 12))
+      f:SetPoint("TOPLEFT", Z.ui.right, "TOPLEFT", PAGE_MID - w / 2 + col * (size + gap), ly - row * (size + 12))
       local piece, zone = C.FindPiece(cls, loot[k])
       f.piece = piece or { name = loot[k] }
       f.zoneName = zone and zone.name
@@ -1650,14 +1690,29 @@ function C.DrawRight(cls)
       f:Hide()
     end
   end
+  -- the "+n" in the place after the last icon shown
+  if total > n then
+    local row = math.floor(n / per)
+    local inRow = math.min(per, n + 1 - row * per)
+    local col = n - row * per
+    local w = inRow * size + (inRow - 1) * gap
+    R.lootMore:ClearAllPoints()
+    R.lootMore:SetPoint("TOPLEFT", Z.ui.right, "TOPLEFT", PAGE_MID - w / 2 + col * (size + gap), ly - row * (size + 12))
+    R.lootMore:Show()
+  end
 end
 
 -- the summary's places, two to a line: ten as always, a line closer together with an eleventh
 -- (a co-op run's party DPS), so the build's heading keeps its place
+C.PARTY_MAX = 5
 function C.PlaceRows(n)
   local R, ui = C.R, AZL.ui
   local top, step = -74, 17
   if n > table.getn(SUMMARY) then top, step = -72, 15 end
+  -- the build's heading under the last line: further down when a party takes more lines
+  local lines = math.ceil(n / 2)
+  local bottom = top - (lines - 1) * step - 13
+  local dy = math.min(0, (bottom - 10) - (-166))
   for k = 1, table.getn(R.rows) do
     local col, row = Mod(k - 1, 2), math.floor((k - 1) / 2)
     local x = PAGE_MID - 150 + col * 160
@@ -1673,6 +1728,27 @@ function C.PlaceRows(n)
       R.timePin:ClearAllPoints(); R.timePin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, y + 2)
     end
   end
+  return dy
+end
+
+-- the sections under the summary (build, spells and jewelry, boss loot), moved down by dy
+function C.PlaceLower(dy)
+  local R, ui = C.R, AZL.ui
+  dy = dy or 0
+  R.buildHead:MoveY(-166 + dy)
+  R.buildLine:ClearAllPoints(); R.buildLine:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -188 + dy)
+  for k = 1, 6 do
+    R.spells[k]:ClearAllPoints()
+    R.spells[k]:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 145 + (k - 1) * 50 + 6, -208 + dy)
+  end
+  for k = 1, 5 do
+    R.jewels[k]:ClearAllPoints()
+    R.jewels[k]:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 119 + (k - 1) * 50 + 6, -258 + dy)
+  end
+  R.miss:ClearAllPoints(); R.miss:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -304 + dy)
+  R.lootHead:MoveY(-346 + dy)
+  R.loot:ClearAllPoints(); R.loot:SetPoint("TOP", ui.right, "TOPLEFT", PAGE_MID, -374 + dy)
+  C.lootY = -374 + dy
 end
 
 -- a co-op run's party: every hero, the most damage first, in their class's colour
