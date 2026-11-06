@@ -2794,6 +2794,24 @@ local function ApplyAllFaces()
   for fs, e in pairs(fontReg) do ApplyFace(fs, e) end
 end
 
+-- A small wooden button that invites a click or a hover: a warm light behind its word that
+-- slowly swells and fades (on the wood, under the letters)
+function AzlBreathe(btn, word)
+  local g = btn:CreateTexture(nil, "ARTWORK")
+  g:SetTexture(GLOW); g:SetBlendMode("ADD"); g:SetVertexColor(1, 0.72, 0.3)
+  g:SetPoint("CENTER", word or btn, "CENTER", 0, 0)
+  local ticker = CreateFrame("Frame", nil, btn)
+  ticker.glow, ticker.word, ticker.t = g, word, 0
+  ticker:SetScript("OnUpdate", function()
+    this.t = this.t + (arg1 or 0)
+    local w = 0.5 + 0.5 * math.sin(this.t * 2.4)
+    local tw = (this.word and this.word.GetStringWidth and this.word:GetStringWidth()) or 40
+    this.glow:SetWidth(tw + 18 + 10 * w); this.glow:SetHeight(18 + 6 * w)
+    this.glow:SetAlpha(0.12 + 0.38 * w)
+  end)
+  return g
+end
+
 local function Font(parent, template, c, size)
   local f = parent:CreateFontString(nil, "OVERLAY", template)
   if size then
@@ -4041,6 +4059,7 @@ local function Build()
   bli:SetTexture("Interface\\GossipFrame\\TabardGossipIcon"); bli:SetWidth(14); bli:SetHeight(14)
   bli:SetPoint("RIGHT", blt, "LEFT", -4, 0)
   bl:SetWidth((blt:GetStringWidth() or 90) + 14 + 4 + 28)
+  AzlBreathe(bl, blt)
   Highlight(bl, 0.2, 3)
   bl:SetScript("OnClick", function()
     state.lootBook = true; state.lootBoss = nil

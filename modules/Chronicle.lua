@@ -1214,29 +1214,8 @@ function C.MakeRight(P)
   local sh = AzlB.WoodButton(P, AzT("Stats"), function() local f = this:GetScript("OnEnter"); if f then f() end end)
   sh:SetHeight(20)
   sh:SetPoint("RIGHT", ui.right, "TOPLEFT", PAGE_MID + 150, -52 - 8)
-  -- a fine gold edge and a warm light on the wood, slowly breathing, so the eye finds that
-  -- it can be hovered (drawn above the button's wood: behind it the light did not show)
-  local hl = CreateFrame("Frame", nil, sh)
-  hl:SetAllPoints(sh); hl:SetFrameLevel(sh:GetFrameLevel() + 2)
-  local halo = hl:CreateTexture(nil, "OVERLAY")
-  halo:SetTexture(AZL.GLOW); halo:SetBlendMode("ADD"); halo:SetVertexColor(1, 0.72, 0.28)
-  halo:SetPoint("TOPLEFT", sh, "TOPLEFT", -2, 3); halo:SetPoint("BOTTOMRIGHT", sh, "BOTTOMRIGHT", 2, -3)
-  local edges = {}
-  local function Edge(a1, a2, wd, ht)
-    local e = hl:CreateTexture(nil, "OVERLAY"); e:SetTexture(AZL.WHITE); e:SetVertexColor(1, 0.8, 0.32)
-    e:SetPoint(a1, sh, a1, 0, 0); e:SetPoint(a2, sh, a2, 0, 0)
-    if wd then e:SetWidth(wd) else e:SetHeight(ht) end
-    table.insert(edges, e)
-  end
-  Edge("TOPLEFT", "TOPRIGHT", nil, 1); Edge("BOTTOMLEFT", "BOTTOMRIGHT", nil, 1)
-  Edge("TOPLEFT", "BOTTOMLEFT", 1, nil); Edge("TOPRIGHT", "BOTTOMRIGHT", 1, nil)
-  sh.halo, sh.edges, sh.breath = halo, edges, 0
-  sh:SetScript("OnUpdate", function()
-    this.breath = this.breath + (arg1 or 0)
-    local w = 0.5 + 0.5 * math.sin(this.breath * 2.2)
-    this.halo:SetAlpha(0.08 + 0.2 * w)
-    for k = 1, 4 do this.edges[k]:SetAlpha(0.35 + 0.55 * w) end
-  end)
+  -- a warm light behind its word, slowly swelling and fading: it can be hovered
+  if AzlBreathe then AzlBreathe(sh, sh.text) end
   R.sumHead.l2:ClearAllPoints()
   R.sumHead.l2:SetPoint("LEFT", R.sumHead, "RIGHT", 8, 0); R.sumHead.l2:SetPoint("RIGHT", sh, "LEFT", -6, 0)
   sh:SetScript("OnEnter", function()
