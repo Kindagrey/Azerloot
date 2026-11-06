@@ -1240,6 +1240,27 @@ function C.MakeRight(P)
   sh:SetScript("OnLeave", function() GameTooltip:Hide() end)
   R.sumHover = sh
   R.sumHelp = sh
+  -- a co-op run: a "Party" button at the line's left end swaps the summary for the party, in
+  -- the same room (nothing below moves); clicked again, the summary comes back
+  local gb = AzlB.WoodButton(P, AzT("Party"), function()
+    C.partyView = not C.partyView
+    C.Draw()
+  end)
+  gb:SetHeight(20)
+  gb:SetPoint("LEFT", ui.right, "TOPLEFT", PAGE_MID - 150, -52 - 8)
+  if AzlBreathe then AzlBreathe(gb, gb.text) end
+  gb:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_TOP")
+    if C.partyView then GameTooltip:AddLine(AzT("Summary"), 1, 0.82, 0)
+    else
+      GameTooltip:AddLine(AzT("Party"), 1, 0.82, 0)
+      GameTooltip:AddLine(AzT("Every hero's damage per second, in place of the summary."), 0.85, 0.85, 0.85, 1)
+    end
+    GameTooltip:Show()
+  end)
+  gb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  gb:Hide()
+  R.partyBtn = gb
   -- the tooltips of this page open beside the book, level with what is hovered and going
   -- down: above it they ran under the game's timer at the top of the screen
   local pin = CreateFrame("Frame", nil, P); pin:SetWidth(1); pin:SetHeight(1)
@@ -1532,6 +1553,7 @@ function C.DrawRight(cls)
     for k = 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
     R.partyTip:Hide(); R.sumHover:Hide(); if R.lootMore then R.lootMore:Hide() end
     if R.party then C.DrawParty({}) end
+    if R.partyBtn then R.partyBtn:Hide() end
     for k = 1, 6 do R.spells[k]:Hide() end
     for k = 1, 5 do R.jewels[k]:Hide() end
     for k = 1, C.LOOT_MAX do R.lootIcons[k]:Hide() end
@@ -1568,18 +1590,31 @@ function C.DrawRight(cls)
   if (R.sub:GetStringWidth() or 0) > 2 * PAGE_MID - 30 then Sub(false) end
   R.subRun = run.heroic and run or nil
   if R.subRun then R.subHover:Show() else R.subHover:Hide() end
-  -- the summary's ten places; a co-op run's party under them, on lines of its own
+  -- the summary's ten places, or (a co-op run, its Party button pressed) the party there
   C.PlaceRows(table.getn(SUMMARY))
   for k = table.getn(SUMMARY) + 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
   if run.stats then R.sumHover:Show() else R.sumHover:Hide() end
+  local party = run.party and C.partyView
+  if run.party then
+    R.partyBtn:SetLabel(AzT(party and "Summary" or "Party")); R.partyBtn:SetHeight(20); R.partyBtn:Show()
+    R.sumHead.l1:ClearAllPoints()
+    R.sumHead.l1:SetPoint("LEFT", R.partyBtn, "RIGHT", 6, 0); R.sumHead.l1:SetPoint("RIGHT", R.sumHead, "LEFT", -8, 0)
+  else
+    R.partyBtn:Hide()
+    R.sumHead.l1:ClearAllPoints()
+    R.sumHead.l1:SetPoint("LEFT", Z.ui.right, "TOPLEFT", PAGE_MID - 150, -52 - 8); R.sumHead.l1:SetPoint("RIGHT", R.sumHead, "LEFT", -8, 0)
+  end
+  R.sumHead:SetText(AzT(party and "Party" or "Summary"))
   for k = 1, table.getn(SUMMARY) do
     local row = R.rows[k]
     row.l:SetText(AzT(SUMMARY[k][1])); row.v:SetText(SUMMARY[k][2](run))
     -- the numbers in the heading's own ink: green for a run survived, red for one lost
     if run.won then row.v:SetTextColor(0.1, 0.45, 0.04) else row.v:SetTextColor(0.6, 0.1, 0.05) end
-    row.l:Show(); row.v:Show()
+    if party then row.l:Hide(); row.v:Hide() else row.l:Show(); row.v:Show() end
   end
-  C.PlaceLower(C.DrawParty(run))
+  if party then R.timeTip:Hide() else R.timeTip:Show() end
+  C.DrawParty(party and run or {})
+  C.PlaceLower(0)
   -- the build it was played with, and what the hero really had
   if run.build then
     R.buildHead:SetText(AzT("Build"))
@@ -1776,11 +1811,7 @@ function C.DrawParty(run)
   if total <= 0 then for i = 1, table.getn(heroes) do total = total + (tonumber(heroes[i].d) or 0) end end
   local col = run.won and { 0.1, 0.45, 0.04 } or { 0.6, 0.1, 0.05 }
   local L, Rr = PAGE_MID - 150, PAGE_MID + 150
-  local y = -74 - 4 * 17 - 19      -- under the summary's last line
-  G.line:ClearAllPoints()
-  G.line:SetPoint("LEFT", ui.right, "TOPLEFT", L + 10, y); G.line:SetPoint("RIGHT", ui.right, "TOPLEFT", Rr - 10, y)
-  G.line:Show()
-  y = y - 6
+  local y = -74                    -- where the summary's first line stands
   G.l:ClearAllPoints(); G.l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", L, y)
   G.v:ClearAllPoints(); G.v:SetPoint("TOPRIGHT", ui.right, "TOPLEFT", Rr, y)
   G.v:SetText(C.Big(run.partyDps)); G.v:SetTextColor(col[1], col[2], col[3])
@@ -1788,13 +1819,13 @@ function C.DrawParty(run)
   R.partyTip:ClearAllPoints(); R.partyTip:SetPoint("TOPLEFT", ui.right, "TOPLEFT", L - 4, y + 2)
   R.partyTip:SetWidth(308); R.partyTip:Show()
   R.partyPin:ClearAllPoints(); R.partyPin:SetPoint("TOPRIGHT", ui.right, "TOPRIGHT", 0, y + 2)
-  y = y - 16
-  local two = table.getn(heroes) >= 3
+  y = y - 17
+  local two = false   -- (one hero to a line: five fit where the summary's lines stand)
   for k = 1, table.getn(heroes) do
     local h, hero = G.heroes[k], heroes[k]
     local c, rw = 0, k - 1
     if two then c, rw = Mod(k - 1, 2), math.floor((k - 1) / 2) end
-    local hy = y - rw * 15
+    local hy = y - rw * 14
     local share = (total > 0 and tonumber(hero.d)) and hero.d / total or 0
     local x0 = two and (L + 8 + c * 156) or (L + 8)
     local nameW = two and 58 or 84
@@ -1812,9 +1843,7 @@ function C.DrawParty(run)
     h.v:SetTextColor(col[1], col[2], col[3])
     h.n:Show(); h.v:Show(); h.bg:Show(); h.fill:Show()
   end
-  local rows = two and math.ceil(table.getn(heroes) / 2) or table.getn(heroes)
-  local bottom = y - math.max(0, rows - 1) * 15 - 12
-  return math.min(0, (bottom - 10) - (-166))
+  return 0
 end
 
 -- the sections under the summary (build, spells and jewelry, boss loot), moved down by dy
