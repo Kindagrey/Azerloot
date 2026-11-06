@@ -1184,28 +1184,6 @@ function B.MakeDoll(P)
   local sh = Z.Engraved(Z.Heading(Z.Font(P, "GameFontNormal", Z.INK), 15))
   sh:SetPoint("TOPLEFT", ui.left, "TOPLEFT", 22, -300)
   sh:SetText(AzT("Run Stats"))
-  local shq = P:CreateTexture(nil, "OVERLAY"); shq:SetWidth(14); shq:SetHeight(14)
-  shq:SetTexture("Interface\\GossipFrame\\ActiveQuestIcon")
-  shq:SetPoint("LEFT", sh, "RIGHT", 3, 0)
-  local shb = CreateFrame("Frame", nil, P)
-  shb:SetPoint("TOPLEFT", sh, "TOPLEFT", -2, 2); shb:SetPoint("BOTTOMRIGHT", shq, "BOTTOMRIGHT", 2, -3)
-  shb:EnableMouse(true)
-  shb:SetScript("OnEnter", function()
-    local s, old = RunStats()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(AzT("Run Stats"), 1, 0.82, 0)
-    if old then GameTooltip:AddLine(AzT("The last numbers the game sent; they change as soon as it sends new ones."), 0.6, 0.6, 0.6, 1) end
-    if not s then
-      GameTooltip:AddLine(AzT("The game sends these numbers in a run; open your character window once if they stay empty."), 0.85, 0.85, 0.85, 1)
-    else
-      for i = 1, table.getn(MORE) do
-        local r = MORE[i]
-        if r[3] == true or Num(s[r[3]]) ~= 0 then GameTooltip:AddDoubleLine(AzT(r[1]), r[2](s), 1, 0.82, 0, 1, 1, 1) end
-      end
-    end
-    GameTooltip:Show()
-  end)
-  shb:SetScript("OnLeave", function() GameTooltip:Hide() end)
   local sd = Z.Tex(P, "divider.tga", "ARTWORK")
   sd:SetWidth(330); sd:SetHeight(16)
   sd:SetPoint("TOPLEFT", ui.left, "TOPLEFT", 15, -314)
