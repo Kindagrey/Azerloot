@@ -1605,11 +1605,23 @@ function C.DrawRight(cls)
   -- the summary's ten places, or (a co-op run, its Party button pressed) the party there
   C.PlaceRows(table.getn(SUMMARY))
   for k = table.getn(SUMMARY) + 1, table.getn(R.rows) do R.rows[k].l:Hide(); R.rows[k].v:Hide() end
-  if run.stats then R.sumHover:Show() else R.sumHover:Hide() end
   local party = run.party and C.partyView
+  -- the Stats button belongs to the summary: gone while the party stands in its place
+  if run.stats and not party then R.sumHover:Show() else R.sumHover:Hide() end
+  -- the heading's right line: up to the Stats button, or to the page's edge without it
+  R.sumHead.l2:ClearAllPoints(); R.sumHead.l2:SetPoint("LEFT", R.sumHead, "RIGHT", 8, 0)
+  if R.sumHover:IsShown() then R.sumHead.l2:SetPoint("RIGHT", R.sumHover, "LEFT", -6, 0)
+  else R.sumHead.l2:SetPoint("RIGHT", Z.ui.right, "TOPLEFT", PAGE_MID + 150, -52 - 8) end
   if run.party then
     R.partyBtn:SetLabel(AzT(party and "Summary" or "Party")); R.partyBtn:SetHeight(20); R.partyBtn:Show()
-    if party then R.partyBtn.arrow:SetTexCoord(0, 1, 1, 0) else R.partyBtn.arrow:SetTexCoord(0, 1, 0, 1) end
+    -- (the arrow turned up: its point at the top, its wide end low in the picture, so it sits
+    -- a little lower to look centred beside the word)
+    R.partyBtn.arrow:ClearAllPoints()
+    if party then
+      R.partyBtn.arrow:SetTexCoord(0, 1, 1, 0); R.partyBtn.arrow:SetPoint("RIGHT", R.partyBtn, "RIGHT", -8, -3)
+    else
+      R.partyBtn.arrow:SetTexCoord(0, 1, 0, 1); R.partyBtn.arrow:SetPoint("RIGHT", R.partyBtn, "RIGHT", -8, -1)
+    end
     R.sumHead.l1:ClearAllPoints()
     R.sumHead.l1:SetPoint("LEFT", R.partyBtn, "RIGHT", 6, 0); R.sumHead.l1:SetPoint("RIGHT", R.sumHead, "LEFT", -8, 0)
   else
