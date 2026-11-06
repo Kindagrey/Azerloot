@@ -1601,12 +1601,12 @@ function B.MakePane()
   -- Banish: three places in a row under the jewelry, between its pieces (the middle one under
   -- the first trinket, the others between the rings and between the second trinket and the
   -- amulet), so the three rows make a triangle
-  R.banHead = CenteredHead(-198)
+  R.banHead = CenteredHead(-205)
   R.bans = {}
   for k = 1, B.NBAN do
     local s = PartSlot(area, 30, true)
     s.slot, s.banIdx = "Ban", k
-    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -216)
+    s:SetPoint("TOPLEFT", ui.right, "TOPLEFT", PAGE_MID - 93 + (k - 1) * 78, -223)
     -- a banished card: its picture greyed, a small red x on it
     local x = s:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     local face = x:GetFont()
@@ -1645,7 +1645,7 @@ function B.MakePane()
 
   -- the profile: five bars in the style of the experience bar
   -- centred between two ink lines, as Spells and Jewelry; the bars begin 3 px below it
-  local ph2 = CenteredHead(-256)
+  local ph2 = CenteredHead(-261)
   ph2:SetText(AzT("Battle Traits"))
   local AXES = {
     { "crowds", "Crowds", { 0.92, 0.45, 0.1 }, "How well it clears the big crowds: spells that hit many enemies, areas, explosions." },
@@ -1659,7 +1659,7 @@ function B.MakePane()
     -- in two columns, three and two, to leave room for the banish places above
     local col, row = 0, k - 1
     if k > 3 then col, row = 1, k - 4 end
-    local y = -276 - row * 15
+    local y = -281 - row * 15
     local lx = (col == 0) and 30 or 196
     local lb = Z.Engraved(Z.Font(area, "GameFontNormal", Z.INK, 12))
     lb:SetPoint("TOPLEFT", ui.right, "TOPLEFT", lx, y)
@@ -1684,12 +1684,12 @@ function B.MakePane()
     R.bars[k] = bar
   end
   -- the same for the strengths and weaknesses; their lines begin 3 px below it
-  local sh = CenteredHead(-324)
+  local sh = CenteredHead(-328)
   sh:SetText(AzT("Strengths and weaknesses"))
   R.lines = {}
   for k = 1, 5 do
     local l = Z.Font(area, "GameFontNormal", Z.INK, 11)
-    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -341)
+    if k == 1 then l:SetPoint("TOPLEFT", ui.right, "TOPLEFT", 30, -345)
     else l:SetPoint("TOPLEFT", R.lines[k - 1], "BOTTOMLEFT", 0, -2) end
     l:SetWidth(318); l:SetJustifyH("LEFT")
     l:SetShadowColor(0, 0, 0, 0); l:SetShadowOffset(1, -1)
@@ -1910,7 +1910,7 @@ function B.Draw()
   R.banHead:SetText(AzT("Banish") .. "  " .. nb .. "/" .. B.NBAN)
   local p, lines = B.Profile(cls, b)
   for k = 1, 5 do R.bars[k]:SetValue(p[R.bars[k].key]) end
-  local room = 77 -- from the first line down to the buttons
+  local room = 75 -- from the first line down to the buttons
   for k = 1, 5 do
     local l = lines[k]
     if l and room > 0 then
@@ -2896,14 +2896,14 @@ function B.TrackerBans(tr, W, y, b)
   local row = tr.banRow
   if type(row) ~= "table" then
     row = CreateFrame("Frame", nil, tr)
-    row:SetHeight(16)
+    row:SetHeight(20)
     local lb = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     lb:SetPoint("LEFT", row, "LEFT", 0, 0); lb:SetTextColor(0.85, 0.5, 0.42)
     row.label = lb
     row.icons = {}
     for k = 1, B.NBAN do
       local f = CreateFrame("Frame", nil, row)
-      f:SetWidth(15); f:SetHeight(15)
+      f:SetWidth(16); f:SetHeight(16)
       local ic = f:CreateTexture(nil, "ARTWORK"); ic:SetAllPoints(f); ic:SetTexCoord(0.07, 0.93, 0.07, 0.93)
       f.icon = ic
       local x = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -2947,10 +2947,10 @@ function B.TrackerBans(tr, W, y, b)
     end
   end
   if n == 0 then row:Hide(); return y end
-  row:ClearAllPoints(); row:SetPoint("TOPLEFT", tr, "TOPLEFT", 10, y - 1)
+  row:ClearAllPoints(); row:SetPoint("TOPLEFT", tr, "TOPLEFT", 10, y - 4)
   row:SetWidth(W - 20)
   row:Show()
-  return y - 19
+  return y - 28
 end
 
 -- draws the build line (and the choice) under the window's title; returns the new top
